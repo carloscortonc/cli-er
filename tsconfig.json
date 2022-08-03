@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "strict": true,
+    "outDir": "dist",
+    "rootDir": "src",
+  },
+  "include": ["./**/*"],
+}
