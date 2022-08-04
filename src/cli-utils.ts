@@ -125,7 +125,7 @@ export function executeScript({ location, options }: ParsingOutput) {
     return;
   }
   const base = path.dirname(require.main.filename);
-  const scriptPath = [location.join("/").concat(".js"), location.join("/").concat("/index.js")]
+  const scriptPath = [path.join(...location).concat(".js"), path.join(...location, "index.js")]
     .map((p) => path.join(base, p))
     .find(fs.existsSync);
 
