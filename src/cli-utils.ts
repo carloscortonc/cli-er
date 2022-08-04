@@ -209,14 +209,16 @@ export function generateHelp(definition: Definition) {
   formatter.process("name", formattedNames);
 
   // Format all sections
-  formattedHelp = Object.values(sections).reduce((acc, { title, content }) => {
-    acc += `${title}\n`;
-    content.forEach((item: ExtendedDefinitionElement) => {
-      acc += formatElement(item, formatter, sectionIndentation);
-    });
-    acc += "\n";
-    return acc;
-  }, formattedHelp);
+  formattedHelp = Object.values(sections)
+    .filter((section) => section.content.length > 0)
+    .reduce((acc, { title, content }) => {
+      acc += `${title}\n`;
+      content.forEach((item: ExtendedDefinitionElement) => {
+        acc += formatElement(item, formatter, sectionIndentation);
+      });
+      acc += "\n";
+      return acc;
+    }, formattedHelp);
 
   process.stdout.write(formattedHelp);
 }
