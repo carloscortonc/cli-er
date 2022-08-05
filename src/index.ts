@@ -13,8 +13,12 @@ const DEFAULT_OPTIONS: CliOptions = {
 export default class Cli {
   definition: Definition;
   options: CliOptions;
-  /** Initialize, merge options if provided */
-  constructor(definition: Definition, options = {}) {
+  /** Creates a new Cli instance
+   *
+   * @param {Definition} definition The definition of the cli application
+   * @param {Partial<CliOptions>} options Options to customize the behavior of the tool
+   */
+  constructor(definition: Definition, options: Partial<CliOptions> = {}) {
     this.definition = completeDefinition(definition);
     this.options = DEFAULT_OPTIONS;
     merge(this.options, options);
