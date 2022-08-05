@@ -38,7 +38,7 @@ export default class Cli {
    * @param {string[]} args list of arguments to be processed
    */
   run(args?: string[]) {
-    const args_ = args !== undefined ? args : process.argv.slice(2);
+    const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
     executeScript(opts);
   }
