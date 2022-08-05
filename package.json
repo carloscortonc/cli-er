@@ -2,6 +2,16 @@
   "name": "cli-er",
   "version": "0.1.0",
   "description": "Tool for building advance cli applications",
+  "repository": "github:carloscortonc/cli-er",
+  "author": "Carlos Cortón Cobas <carloscortoncobas98@gmail.com>",
+  "homepage": "https://github.com/carloscortonc/cli-er#readme",
+  "bugs": "https://github.com/carloscortonc/cli-er/issues",
+  "license": "MIT",
+  "keywords": [
+    "cli",
+    "command",
+    "nodejs"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -10,13 +20,6 @@
   "scripts": {
     "build": "rimraf dist && yarn tsup"
   },
-  "keywords": [
-    "cli",
-    "command",
-    "nodejs"
-  ],
-  "author": "carloscortonc <carloscortoncobas98@gmail.com>",
-  "license": "MIT",
   "dependencies": {
     "lodash.merge": "^4.6.2"
   },
