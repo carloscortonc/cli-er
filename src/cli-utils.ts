@@ -5,7 +5,7 @@ import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions } 
 
 /** Determine the correct aliases depending on the kind of element */
 function getAliases(key: string, element: DefinitionElement) {
-  if ([Kind.NAMESPACE, Kind.COMMAND].includes(element.kind!)) {
+  if ([Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
     return [key];
   } else if (!element.aliases) {
     return [`--${key}`];
@@ -109,7 +109,7 @@ export function parseArguments(args: string[], definition: Definition, cliOption
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const optionDefinition = aliases[optionKey] as DefinitionElement;
     if (aliases.hasOwnProperty(curr) && !aliases.hasOwnProperty(next) && next !== undefined) {
-      output.options[optionDefinition.key!] = evaluateValue(next, optionDefinition.type);
+      output.options[optionDefinition.key!] = evaluateValue(next, optionDefinition.type as Type);
       i++; // skip next array value, already processed
     } else if (aliases.hasOwnProperty(curr) && (aliases[curr] as DefinitionElement).type === Type.BOOLEAN) {
       output.options[optionKey] = true;
