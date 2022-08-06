@@ -3,7 +3,7 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   splitting: false,
   sourcemap: false,
-  // minify: true,
+  minify: true,
   clean: true,
   dts: true,
   esbuildOptions: (options) => {
