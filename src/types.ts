@@ -10,17 +10,19 @@ export enum Type {
 
 type OptionValue = string | boolean | string[] | undefined;
 
+type ValueOf<T> = T[keyof T];
+
 export type DefinitionElement = {
   /** Kind of element */
-  kind?: Kind;
+  kind?: ValueOf<Kind>;
   /** Nested options definition */
   options?: Definition;
   /** Description of the element */
   description?: string;
   /** Type of option */
-  type?: Type;
+  type?: ValueOf<Type>;
   /** Default value for the option */
-  default: OptionValue;
+  default?: OptionValue;
   /** Aliases for an option */
   aliases?: string[];
   /** Used internally to identify options */
