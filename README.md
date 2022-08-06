@@ -1,6 +1,6 @@
 # cli-er
 
-Tool for building advance CLI applications using a definition object, with a folder structure strategy that helps organize all the logic and help-generation included  
+Tool for building advance CLI applications using a definition object. It implements a folder structure strategy that helps organize all the logic, also including help-generation  
 </br>
 
 _cli.js_:
