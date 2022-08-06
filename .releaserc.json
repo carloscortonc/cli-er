@@ -5,8 +5,15 @@
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     "@semantic-release/npm",
-    ["@semantic-release/git", {"message": "chore(release): ${nextRelease.version}"}],
-    ["@saithodev/semantic-release-backmerge", {"backmergeStrategy": "merge", "message": "chore(release): ${nextRelease.version} - sync main to develop"}],
+    ["@semantic-release/git", { "message": "chore(release): ${nextRelease.version}" }],
+    [
+      "@saithodev/semantic-release-backmerge",
+      {
+        "branches": [{ "from": "main", "to": "develop" }],
+        "backmergeStrategy": "merge",
+        "message": "chore(release): ${nextRelease.version} - sync main to develop"
+      }
+    ],
     ["@semantic-release/github", { "successComment": false, "failComment": false }]
   ]
 }
