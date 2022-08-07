@@ -40,7 +40,7 @@ export default class Cli {
   run(args?: string[]) {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
-    executeScript(opts);
+    executeScript(opts, this.options);
   }
   /**
    * Generate and output help documentation
