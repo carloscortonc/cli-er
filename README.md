@@ -37,7 +37,7 @@ const definition = {
 };
 ```
 
-it will allows us to structure the code as follows:
+it will allow us to structure the code as follows:
 
 ```sh
 .
@@ -46,7 +46,7 @@ it will allows us to structure the code as follows:
    └── cmd.js
 ```
 
-and we can then execute:
+so we can then execute:
 
 ```
 node entrypoint.js nms cmd commandvalue
@@ -71,9 +71,9 @@ Parses the given list of arguments based on the provided definition, and returns
 
 Parses the given options by calling `parse(args)`, and executes the script in the computed location, forwarding the parsed options. If no arguments are provided, the value defaults to `process.argv.slice(2)`.
 
-### help()
+### help(location?)
 
-Generates and outputs help message based on the provided definition. At the moment only first-level definition is processed , so nested options will not be documented. Given the following code:
+Generates and outputs help message based on the provided definition. Given the following code:
 
 ```js
 const definition = {
@@ -114,4 +114,19 @@ Commands:
 
 Global options:
   -g, --global  Option shared between all commands (default: globalvalue)
+```
+
+The optional argument _location_ enables the generation of scoped help. For the above definition, the following code:
+
+```js
+new Cli(definition).help(["nms"]);
+```
+
+will output:
+
+```
+Description for the namespace
+
+Commands:
+  cmd  Description for the command
 ```

@@ -1,6 +1,6 @@
 import path from "path";
 import merge from "lodash.merge";
-import { completeDefinition, parseArguments, executeScript, generateHelp } from "./cli-utils";
+import { completeDefinition, parseArguments, executeScript, generateScopedHelp } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions } from "./types";
 
 const DEFAULT_OPTIONS: CliOptions = {
@@ -44,8 +44,10 @@ export default class Cli {
   }
   /**
    * Generate and output help documentation
+   *
+   * @param {string[]} location scope to generate help
    */
-  help() {
-    generateHelp(this.definition);
+  help(location: string[] = []) {
+    generateScopedHelp(this.definition, location);
   }
 }

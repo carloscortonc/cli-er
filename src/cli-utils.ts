@@ -125,6 +125,10 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     Logger.error("There was a problem finding base script location");
     return;
   }
+  if (location.length === 0) {
+    Logger.error("No location provided to execute the script");
+    return;
+  }
   const scriptPaths = [
     path.join(...location).concat(`.${cliOptions.extension}`),
     path.join(...location, `index.${cliOptions.extension}`),
@@ -141,8 +145,30 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   }
 }
 
+export function generateScopedHelp(definition: Definition, location: string[]) {
+  let elementInfo = "";
+  let definitionRef = definition;
+  for (let i = 0; i < location.length; i++) {
+    const key = location[i];
+    if (definitionRef.hasOwnProperty(key) && [Kind.NAMESPACE, Kind.COMMAND].includes(definitionRef[key].kind as Kind)) {
+      const el = definitionRef[key];
+      if (i === location.length - 1) {
+        elementInfo += `\n${el.description}\n`;
+      }
+      definitionRef = definitionRef[key].options as Definition;
+    } else {
+      //Some element in location was incorrect. Output the entire help
+      elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
+      definitionRef = definition;
+      break;
+    }
+  }
+  process.stdout.write(elementInfo);
+  generateHelp(definitionRef);
+}
+
 /** Print the resulting documentation of formatting the given definition */
-export function generateHelp(definition: Definition) {
+function generateHelp(definition: Definition) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
   enum Section {
