@@ -111,8 +111,8 @@ export function parseArguments(args: string[], definition: Definition, cliOption
     if (aliases.hasOwnProperty(curr) && !aliases.hasOwnProperty(next) && next !== undefined) {
       output.options[optionDefinition.key!] = evaluateValue(next, optionDefinition.type as Type);
       i++; // skip next array value, already processed
-    } else if (aliases.hasOwnProperty(curr) && (aliases[curr] as DefinitionElement).type === Type.BOOLEAN) {
-      output.options[optionKey] = true;
+    } else if (aliases.hasOwnProperty(optionKey) && (aliases[optionKey] as DefinitionElement).type === Type.BOOLEAN) {
+      output.options[optionDefinition.key as string] = true;
     }
   }
   return output;
