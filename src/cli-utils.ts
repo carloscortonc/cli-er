@@ -14,7 +14,15 @@ function getAliases(key: string, element: DefinitionElement) {
 }
 
 /** Process definition and complete any missing fields */
-export function completeDefinition(definition: Definition) {
+export function completeDefinition(definition: Definition, cliOptions: CliOptions) {
+  // Auto-include help option
+  if (cliOptions.help.autoInclude) {
+    definition.help = {
+      type: "boolean",
+      aliases: cliOptions.help.aliases,
+      description: "Display global help, or scoped to a namespace/command",
+    };
+  }
   for (const element in definition) {
     completeElementDefinition(element, definition[element]);
   }
@@ -168,7 +176,7 @@ export function generateScopedHelp(definition: Definition, location: string[]) {
 }
 
 /** Print the resulting documentation of formatting the given definition */
-function generateHelp(definition: Definition) {
+function generateHelp(definition: Definition = {}) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
   enum Section {

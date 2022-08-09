@@ -8,6 +8,10 @@ const DEFAULT_OPTIONS: CliOptions = {
   //@ts-expect-error
   baseScriptLocation: path.dirname(require.main.filename),
   commandsPath: "commands",
+  help: {
+    autoInclude: true,
+    aliases: ["-h", "--help"],
+  },
 };
 
 export default class Cli {
@@ -19,9 +23,9 @@ export default class Cli {
    * @param {Partial<CliOptions>} options Options to customize the behavior of the tool
    */
   constructor(definition: Definition, options: Partial<CliOptions> = {}) {
-    this.definition = completeDefinition(definition);
     this.options = DEFAULT_OPTIONS;
     merge(this.options, options);
+    this.definition = completeDefinition(definition, this.options);
     return this;
   }
   /**
@@ -40,6 +44,9 @@ export default class Cli {
   run(args?: string[]) {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
+    if (this.options.help.autoInclude && opts.options.help) {
+      return generateScopedHelp(this.definition, opts.location);
+    }
     executeScript(opts, this.options);
   }
   /**
