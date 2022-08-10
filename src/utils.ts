@@ -1,3 +1,5 @@
+import mergeWith from "lodash.mergewith";
+
 export const clone = (o: any) => JSON.parse(JSON.stringify(o));
 
 /** Utility class to format column values to a fixed length */
@@ -20,4 +22,14 @@ export class ColumnFormatter {
 export class Logger {
   static log = (...message: any[]) => console.log(...message);
   static error = (...message: any[]) => this.log("ERROR", ...message);
+}
+
+/** Merge two objects using lodash mergeWith, customizing array-merge */
+export function merge(objValue: object, srcValue: object) {
+  function customizer(a: object, b: object) {
+    if (Array.isArray(a)) {
+      return b;
+    }
+  }
+  mergeWith(objValue, srcValue, customizer);
 }

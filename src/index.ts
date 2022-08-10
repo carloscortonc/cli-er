@@ -1,18 +1,7 @@
 import path from "path";
-import merge from "lodash.merge";
 import { completeDefinition, parseArguments, executeScript, generateScopedHelp } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial } from "./types";
-
-const DEFAULT_OPTIONS: CliOptions = {
-  extension: "js",
-  //@ts-expect-error
-  baseScriptLocation: path.dirname(require.main.filename),
-  commandsPath: "commands",
-  help: {
-    autoInclude: true,
-    aliases: ["-h", "--help"],
-  },
-};
+import { merge } from "./utils";
 
 export default class Cli {
   definition: Definition;
@@ -23,7 +12,16 @@ export default class Cli {
    * @param {DeepPartial<CliOptions>} options Options to customize the behavior of the tool
    */
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
-    this.options = DEFAULT_OPTIONS;
+    this.options = {
+      extension: "js",
+      //@ts-expect-error
+      baseScriptLocation: path.dirname(require.main.filename),
+      commandsPath: "commands",
+      help: {
+        autoInclude: true,
+        aliases: ["-h", "--help"],
+      },
+    };
     merge(this.options, options);
     this.definition = completeDefinition(definition, this.options);
     return this;
