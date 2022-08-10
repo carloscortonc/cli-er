@@ -12,6 +12,10 @@ type OptionValue = string | boolean | string[] | undefined;
 
 type ValueOf<T> = T[keyof T];
 
+export type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};
+
 export type DefinitionElement = {
   /** Kind of element */
   kind?: ValueOf<Kind>;

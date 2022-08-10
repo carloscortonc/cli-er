@@ -1,7 +1,7 @@
 import path from "path";
 import merge from "lodash.merge";
 import { completeDefinition, parseArguments, executeScript, generateScopedHelp } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions } from "./types";
+import { Definition, ParsingOutput, CliOptions, DeepPartial } from "./types";
 
 const DEFAULT_OPTIONS: CliOptions = {
   extension: "js",
@@ -20,9 +20,9 @@ export default class Cli {
   /** Creates a new Cli instance
    *
    * @param {Definition} definition The definition of the cli application
-   * @param {Partial<CliOptions>} options Options to customize the behavior of the tool
+   * @param {DeepPartial<CliOptions>} options Options to customize the behavior of the tool
    */
-  constructor(definition: Definition, options: Partial<CliOptions> = {}) {
+  constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
     this.options = DEFAULT_OPTIONS;
     merge(this.options, options);
     this.definition = completeDefinition(definition, this.options);
