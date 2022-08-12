@@ -12,6 +12,10 @@ type OptionValue = string | boolean | string[] | undefined;
 
 type ValueOf<T> = T[keyof T];
 
+export type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};
+
 export type DefinitionElement = {
   /** Kind of element */
   kind?: ValueOf<Kind>;
@@ -47,4 +51,11 @@ export type CliOptions = {
   baseScriptLocation: string;
   /** Path where the single-command scripts (not contained in any namespace) are stored */
   commandsPath: string;
+  /** Help-related configuration */
+  help: {
+    /** Whether to generate help option */
+    autoInclude: boolean;
+    /** Aliases to be used for help option */
+    aliases: string[];
+  };
 };

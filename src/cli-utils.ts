@@ -14,7 +14,15 @@ function getAliases(key: string, element: DefinitionElement) {
 }
 
 /** Process definition and complete any missing fields */
-export function completeDefinition(definition: Definition) {
+export function completeDefinition(definition: Definition, cliOptions: CliOptions) {
+  // Auto-include help option
+  if (cliOptions.help.autoInclude) {
+    definition.help = {
+      type: "boolean",
+      aliases: cliOptions.help.aliases,
+      description: "Display global help, or scoped to a namespace/command",
+    };
+  }
   for (const element in definition) {
     completeElementDefinition(element, definition[element]);
   }
@@ -111,34 +119,64 @@ export function parseArguments(args: string[], definition: Definition, cliOption
     if (aliases.hasOwnProperty(curr) && !aliases.hasOwnProperty(next) && next !== undefined) {
       output.options[optionDefinition.key!] = evaluateValue(next, optionDefinition.type as Type);
       i++; // skip next array value, already processed
-    } else if (aliases.hasOwnProperty(curr) && (aliases[curr] as DefinitionElement).type === Type.BOOLEAN) {
-      output.options[optionKey] = true;
+    } else if (aliases.hasOwnProperty(optionKey) && (aliases[optionKey] as DefinitionElement).type === Type.BOOLEAN) {
+      output.options[optionDefinition.key as string] = true;
     }
   }
   return output;
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
-export function executeScript({ location, options }: ParsingOutput) {
-  if (require.main === undefined) {
+export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions) {
+  const base = cliOptions.baseScriptLocation;
+  if (!base) {
     Logger.error("There was a problem finding base script location");
     return;
   }
-  const base = path.dirname(require.main.filename);
-  const scriptPath = [path.join(...location).concat(".js"), path.join(...location, "index.js")]
-    .map((p) => path.join(base, p))
-    .find(fs.existsSync);
+  if (location.length === 0) {
+    Logger.error("No location provided to execute the script");
+    return;
+  }
+  const scriptPaths = [
+    path.join(...location).concat(`.${cliOptions.extension}`),
+    path.join(...location, `index.${cliOptions.extension}`),
+  ].map((p) => path.join(base, p));
+
+  const validScriptPath = scriptPaths.find(fs.existsSync);
 
   try {
     //@ts-expect-error if no script path was found, the failed require will be captured in the catch below
-    require(scriptPath)(options);
+    require(validScriptPath)(options);
   } catch (_) {
-    Logger.error("There was a problem finding the script to run");
+    Logger.error("There was a problem finding the script to run. Considered paths were:");
+    scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
   }
 }
 
+export function generateScopedHelp(definition: Definition, location: string[]) {
+  let elementInfo = "";
+  let definitionRef = definition;
+  for (let i = 0; i < location.length; i++) {
+    const key = location[i];
+    if (definitionRef.hasOwnProperty(key) && [Kind.NAMESPACE, Kind.COMMAND].includes(definitionRef[key].kind as Kind)) {
+      const el = definitionRef[key];
+      if (i === location.length - 1) {
+        elementInfo += `\n${el.description}\n`;
+      }
+      definitionRef = definitionRef[key].options as Definition;
+    } else {
+      //Some element in location was incorrect. Output the entire help
+      elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
+      definitionRef = definition;
+      break;
+    }
+  }
+  process.stdout.write(elementInfo);
+  generateHelp(definitionRef);
+}
+
 /** Print the resulting documentation of formatting the given definition */
-export function generateHelp(definition: Definition) {
+function generateHelp(definition: Definition = {}) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
   enum Section {
