@@ -1,0 +1,23 @@
+{
+  "nms": {
+    "kind": "namespace",
+    "description": "Description for the namespace",
+    "options": {
+      "cmd": {
+        "kind": "command",
+        "type": "string",
+        "description": "Description for the command"
+      }
+    }
+  },
+  "gcmd": {
+    "kind": "command",
+    "description": "Description for global command"
+  },
+  "globalOption": {
+    "type": "string",
+    "aliases": ["-g", "--global"],
+    "default": "globalvalue",
+    "description": "Option shared between all commands"
+  }
+}

@@ -1,7 +1,7 @@
 import path from "path";
 import { completeDefinition, parseArguments, executeScript, generateScopedHelp } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial } from "./types";
-import { merge } from "./utils";
+import { clone, merge } from "./utils";
 
 export default class Cli {
   definition: Definition;
@@ -23,7 +23,7 @@ export default class Cli {
       },
     };
     merge(this.options, options);
-    this.definition = completeDefinition(definition, this.options);
+    this.definition = completeDefinition(clone(definition), this.options);
     return this;
   }
   /**
