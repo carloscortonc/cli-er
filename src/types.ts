@@ -46,7 +46,7 @@ export type ParsingOutput = {
 
 export type CliOptions = {
   /** extension of the script files to be executed */
-  extension: "js";
+  extension: string;
   /** Base path where the `ProcessingOutput.location` will start from */
   baseScriptLocation: string;
   /** Path where the single-command scripts (not contained in any namespace) are stored */
