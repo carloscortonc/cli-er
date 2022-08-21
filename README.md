@@ -1,4 +1,6 @@
 # cli-er
+[![NPM version](https://img.shields.io/npm/v/cli-er.svg)](https://www.npmjs.com/package/cli-er)
+[![build](https://github.com/carloscortonc/cli-er/actions/workflows/build.yml/badge.svg)](https://github.com/carloscortonc/cli-er/actions/workflows/build.yml)
 
 Tool for building advance CLI applications using a definition object. It implements a folder structure strategy that helps organize all the logic, also including help-generation  
 </br>
@@ -19,7 +21,7 @@ Invocation:
 node cli.js [namespace(s)|command] [OPTIONS]
 ```
 
-## Example
+#### Example
 
 Given the following definition (entrypoint.js):
 
