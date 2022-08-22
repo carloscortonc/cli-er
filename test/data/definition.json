@@ -15,7 +15,6 @@
     "description": "Description for global command"
   },
   "globalOption": {
-    "type": "string",
     "aliases": ["-g", "--global"],
     "default": "globalvalue",
     "description": "Option shared between all commands"

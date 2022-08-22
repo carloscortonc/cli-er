@@ -1,4 +1,5 @@
 # cli-er
+
 [![NPM version](https://img.shields.io/npm/v/cli-er.svg)](https://www.npmjs.com/package/cli-er)
 [![build](https://github.com/carloscortonc/cli-er/actions/workflows/build.yml/badge.svg)](https://github.com/carloscortonc/cli-er/actions/workflows/build.yml)
 
@@ -95,7 +96,6 @@ const definition = {
     description: "Description for global command",
   },
   globalOption: {
-    type: "string",
     aliases: ["-g", "--global"],
     default: "globalvalue",
     description: "Option shared between all commands",

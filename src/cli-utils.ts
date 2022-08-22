@@ -36,6 +36,10 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
   element.description = element.description ?? "-";
   // Set kind to Option if missing
   element.kind = element.kind ?? Kind.OPTION;
+  // Set option type to string if missing
+  if (element.kind === Kind.OPTION && !element.type) {
+    element.type = Type.STRING;
+  }
   // Add name as key
   element.key = name;
   for (const optionKey in element.options ?? {}) {

@@ -4,6 +4,7 @@ export enum Kind {
   OPTION = "option",
 }
 export enum Type {
+  STRING = "string",
   BOOLEAN = "boolean",
   LIST = "list",
 }

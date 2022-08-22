@@ -47,6 +47,7 @@ describe("completeDefinition", () => {
           },
         },
       },
+      opt: { type: "string" },
     });
   });
   it("Includes help option if auto-include help option is enabled", () => {
