@@ -8,7 +8,7 @@ export enum Type {
   LIST = "list",
 }
 
-type OptionValue = string | boolean | string[] | undefined;
+export type OptionValue = string | boolean | string[] | undefined;
 
 type ValueOf<T> = T[keyof T];
 

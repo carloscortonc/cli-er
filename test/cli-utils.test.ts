@@ -85,6 +85,16 @@ describe("parseArguments", () => {
     };
     expect(parseArguments(["--opt", "one,two"], d, cliOptions).options.opt).toStrictEqual(["one", "two"]);
   });
+  it("Parse LIST value by repeated appearances", () => {
+    const d = {
+      opt: { type: "list", aliases: ["--opt"], key: "opt" },
+    };
+    expect(parseArguments(["--opt", "one,two", "--opt", "three"], d, cliOptions).options.opt).toStrictEqual([
+      "one",
+      "two",
+      "three",
+    ]);
+  });
   it("Parse definition: no arguments", () => {
     //Get completed definition from Cli
     const d = new Cli(definition, { help: { autoInclude: false } }).definition;
