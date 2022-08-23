@@ -136,14 +136,18 @@ function evaluateValue(value: string, current: OptionValue, type?: Type) {
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
-export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions) {
+export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions, definition: Definition) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
     Logger.error("There was a problem finding base script location");
     return;
   }
   if (location.length === 0) {
-    Logger.error("No location provided to execute the script");
+    if (cliOptions.help.showOnFail) {
+      generateHelp(definition);
+    } else {
+      Logger.error("No location provided to execute the script");
+    }
     return;
   }
   const scriptPaths = [
@@ -157,6 +161,9 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     //@ts-expect-error if no script path was found, the failed require will be captured in the catch below
     require(validScriptPath)(options);
   } catch (_) {
+    if (cliOptions.help.showOnFail) {
+      generateScopedHelp(definition, location);
+    }
     Logger.error("There was a problem finding the script to run. Considered paths were:");
     scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
   }
@@ -180,7 +187,7 @@ export function generateScopedHelp(definition: Definition, location: string[]) {
       break;
     }
   }
-  process.stdout.write(elementInfo);
+  Logger.raw(elementInfo);
   generateHelp(definitionRef);
 }
 
@@ -267,5 +274,5 @@ function generateHelp(definition: Definition = {}) {
       return acc;
     }, formattedHelp);
 
-  process.stdout.write(formattedHelp);
+  Logger.raw(formattedHelp);
 }

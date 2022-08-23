@@ -42,6 +42,7 @@ describe("Cli.constructor", () => {
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
+        showOnFail: true,
       },
     });
   });
@@ -55,6 +56,7 @@ describe("Cli.constructor", () => {
       help: {
         autoInclude: overrides.help.autoInclude,
         aliases: ["--help"],
+        showOnFail: true,
       },
     });
   });
@@ -82,7 +84,7 @@ describe("Cli.parse", () => {
 describe("Cli.run", () => {
   it("Calling run with no args prints error", () => {
     const spy = jest.spyOn(utils.Logger, "error");
-    const c = new Cli(definition, { help: { autoInclude: false } });
+    const c = new Cli(definition, { help: { autoInclude: false, showOnFail: false } });
     c.run([]);
     expect(spy).toHaveBeenCalledWith("No location provided to execute the script");
   });
@@ -90,7 +92,11 @@ describe("Cli.run", () => {
     const spy = jest.spyOn(cliutils, "executeScript");
     const c = new Cli(definition);
     c.run(["nms", "cmd"]);
-    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ location: ["nms", "cmd"] }), expect.anything());
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ location: ["nms", "cmd"] }),
+      expect.anything(),
+      expect.anything()
+    );
   });
   it("Calling run with help option invokes help-generation", () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();

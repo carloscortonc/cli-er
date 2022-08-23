@@ -31,6 +31,7 @@ describe("completeDefinition", () => {
     help: {
       autoInclude: false,
       aliases: [],
+      showOnFail: true,
     },
   };
   it("Completes missing fields in definition with nested content ", () => {
@@ -54,6 +55,7 @@ describe("completeDefinition", () => {
     const cliOptions_ = {
       ...cliOptions,
       help: {
+        ...cliOptions.help,
         autoInclude: true,
         aliases: ["-h"],
       },
@@ -117,35 +119,64 @@ describe("parseArguments", () => {
 describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
   it("Logs error if no baseScriptLocation configured", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error");
-    executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" });
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation(() => {});
+    executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" }, {});
     expect(errorlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
-  it("Logs error if no location provided", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error");
-    executeScript({ location: [], options: {} }, cliOptions);
+  it("Logs error if no location provided (no options.help.showOnFail)", () => {
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation(() => {});
+    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
+    executeScript(
+      { location: [], options: {} },
+      { ...cliOptions, help: { ...cliOptions.help, showOnFail: false } },
+      {}
+    );
     expect(errorlogger).toHaveBeenCalledWith("No location provided to execute the script");
+    expect(rawlogger).not.toHaveBeenCalled();
   });
-  it("Logs error if script require fails", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error");
-    executeScript({ location: ["not-existing"], options: {} }, cliOptions);
+  it("Prints help if no location provided (with options.help.showOnFail)", () => {
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation(() => {});
+    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
+    executeScript({ location: [], options: {} }, cliOptions, { opt: { description: "description" } });
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Global options:"));
+    expect(errorlogger).not.toHaveBeenCalled();
+  });
+  it("Logs error if script require fails (no options.help.showOnFail)", () => {
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation(() => {});
+    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
+    jest.spyOn(utils.Logger, "log").mockImplementation(() => {});
+    executeScript(
+      { location: ["not-existing"], options: {} },
+      { ...cliOptions, help: { ...cliOptions.help, showOnFail: false } },
+      {}
+    );
     expect(errorlogger).toHaveBeenCalledWith(
       expect.stringContaining("There was a problem finding the script to run. ")
     );
+    expect(rawlogger).not.toHaveBeenCalled();
+  });
+  it("Logs error + prints scoped help if script require fails (with options.help.showOnFail)", () => {
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation(() => {});
+    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
+    executeScript({ location: ["not-existing"], options: {} }, cliOptions, { opt: { description: "description" } });
+    expect(errorlogger).toHaveBeenCalledWith(
+      expect.stringContaining("There was a problem finding the script to run. ")
+    );
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Global options:"));
   });
   it("Executes script if found", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error");
-    executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions);
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation(() => {});
+    executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions, {});
     expect(gcmd).toHaveBeenCalledWith({ gcmd: "gcmdvalue" });
     expect(errorlogger).not.toHaveBeenCalled();
   });
 });
 
 describe("generateScopedHelp", () => {
-  const printSpy = jest.spyOn(process.stdout, "write");
+  const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
   it("With empty location (first level definition)", () => {
     let output = "";
-    printSpy.mockImplementation((m: any) => !!(output += m));
+    rawlogger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(definition, []);
     expect(output).toBe(`
 Namespaces:
@@ -161,7 +192,7 @@ Global options:
   });
   it("With location", () => {
     let output = "";
-    printSpy.mockImplementation((m: any) => !!(output += m));
+    rawlogger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(definition, ["nms"]);
     expect(output).toBe(`
 Description for the namespace

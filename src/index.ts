@@ -20,6 +20,7 @@ export default class Cli {
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
+        showOnFail: true,
       },
     };
     merge(this.options, options);
@@ -45,7 +46,7 @@ export default class Cli {
     if (this.options.help.autoInclude && opts.options.help) {
       return generateScopedHelp(this.definition, opts.location);
     }
-    executeScript(opts, this.options);
+    executeScript(opts, this.options, this.definition);
   }
   /**
    * Generate and output help documentation
