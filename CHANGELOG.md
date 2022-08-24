@@ -1,3 +1,18 @@
+# [0.3.0](https://github.com/carloscortonc/cli-er/compare/v0.2.0...v0.3.0) (2022-08-24)
+
+
+### Features
+
+* allow multiple appearances for list-type options ([80731c6](https://github.com/carloscortonc/cli-er/commit/80731c674290d50e0d6fb4e48a24ec83847946d0))
+* set string as default option-type ([bfa621b](https://github.com/carloscortonc/cli-er/commit/bfa621bcff46a88dbe49fb7009a9a42faeedd823))
+* show scoped help if run method fails ([c8b12f1](https://github.com/carloscortonc/cli-er/commit/c8b12f1817e51e09f233191432ac8da464a523e1))
+* target es6 for node v12 support ([bfdc0c7](https://github.com/carloscortonc/cli-er/commit/bfdc0c7c19d75726203f15b9384570fa485ca998))
+
+
+### Bug Fixes
+
+* **types:** modify "extension" type in CliOptions ([9446ebc](https://github.com/carloscortonc/cli-er/commit/9446ebc4e7a4e00ff7e24a8491441935641066c8))
+
 # [0.2.0](https://github.com/carloscortonc/cli-er/compare/v0.1.1...v0.2.0) (2022-08-12)
 
 
