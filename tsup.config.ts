@@ -1,6 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
+  target: "es6",
   splitting: false,
   sourcemap: false,
   minify: true,

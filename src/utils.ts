@@ -20,6 +20,7 @@ export class ColumnFormatter {
 
 /** Utility class for generating consistent logs. Space for improvement and customization */
 export class Logger {
+  static raw = (message: string) => process.stdout.write(message);
   static log = (...message: any[]) => console.log(...message);
   static error = (...message: any[]) => this.log("ERROR", ...message);
 }

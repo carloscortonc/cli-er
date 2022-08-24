@@ -2,6 +2,7 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
     "moduleResolution": "node",
     "module": "commonjs",
     "strict": true,
@@ -9,4 +10,5 @@
     "rootDir": "src",
   },
   "include": ["./**/*"],
+  "exclude": ["test"]
 }

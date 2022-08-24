@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { ColumnFormatter, Logger } from "./utils";
-import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions } from "./types";
+import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions, OptionValue } from "./types";
 
 /** Determine the correct aliases depending on the kind of element */
 function getAliases(key: string, element: DefinitionElement) {
@@ -36,6 +36,10 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
   element.description = element.description ?? "-";
   // Set kind to Option if missing
   element.kind = element.kind ?? Kind.OPTION;
+  // Set option type to string if missing
+  if (element.kind === Kind.OPTION && !element.type) {
+    element.type = Type.STRING;
+  }
   // Add name as key
   element.key = name;
   for (const optionKey in element.options ?? {}) {
@@ -58,17 +62,6 @@ export function parseArguments(args: string[], definition: Definition, cliOption
     otherAliases.forEach((alias: string) => {
       aliases[alias] = mainAlias;
     });
-  };
-  const evaluateValue = (value: string, type?: Type) => {
-    if (type === Type.BOOLEAN) {
-      return [true, "true"].includes(value);
-    } else if (type === Type.LIST) {
-      if (Array.isArray(value)) {
-        return value;
-      }
-      return typeof value === "string" ? value.split(",") : [];
-    }
-    return value;
   };
 
   // Only process global options if no args are provided
@@ -116,25 +109,45 @@ export function parseArguments(args: string[], definition: Definition, cliOption
       next = args[i + 1];
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const optionDefinition = aliases[optionKey] as DefinitionElement;
+    const outputKey = optionDefinition && (optionDefinition.key as string);
     if (aliases.hasOwnProperty(curr) && !aliases.hasOwnProperty(next) && next !== undefined) {
-      output.options[optionDefinition.key!] = evaluateValue(next, optionDefinition.type as Type);
+      output.options[outputKey] = evaluateValue(next, output.options[outputKey], optionDefinition.type as Type);
       i++; // skip next array value, already processed
     } else if (aliases.hasOwnProperty(optionKey) && (aliases[optionKey] as DefinitionElement).type === Type.BOOLEAN) {
-      output.options[optionDefinition.key as string] = true;
+      output.options[outputKey] = true;
     }
   }
   return output;
 }
 
+/** Evaluate the value of an option */
+function evaluateValue(value: string, current: OptionValue, type?: Type) {
+  if (type === Type.BOOLEAN) {
+    return [true, "true"].includes(value);
+  } else if (type === Type.LIST) {
+    let newValue;
+    if (Array.isArray(value)) {
+      newValue = value;
+    }
+    newValue = typeof value === "string" ? value.split(",") : [];
+    return ((current as string[]) || []).concat(newValue);
+  }
+  return value;
+}
+
 /** Given the processed options, determine the script location and invoke it with the processed options */
-export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions) {
+export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions, definition: Definition) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
     Logger.error("There was a problem finding base script location");
     return;
   }
   if (location.length === 0) {
-    Logger.error("No location provided to execute the script");
+    if (cliOptions.help.showOnFail) {
+      generateHelp(definition);
+    } else {
+      Logger.error("No location provided to execute the script");
+    }
     return;
   }
   const scriptPaths = [
@@ -148,6 +161,9 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     //@ts-expect-error if no script path was found, the failed require will be captured in the catch below
     require(validScriptPath)(options);
   } catch (_) {
+    if (cliOptions.help.showOnFail) {
+      generateScopedHelp(definition, location);
+    }
     Logger.error("There was a problem finding the script to run. Considered paths were:");
     scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
   }
@@ -171,7 +187,7 @@ export function generateScopedHelp(definition: Definition, location: string[]) {
       break;
     }
   }
-  process.stdout.write(elementInfo);
+  Logger.raw(elementInfo);
   generateHelp(definitionRef);
 }
 
@@ -258,5 +274,5 @@ function generateHelp(definition: Definition = {}) {
       return acc;
     }, formattedHelp);
 
-  process.stdout.write(formattedHelp);
+  Logger.raw(formattedHelp);
 }

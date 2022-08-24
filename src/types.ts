@@ -4,11 +4,12 @@ export enum Kind {
   OPTION = "option",
 }
 export enum Type {
+  STRING = "string",
   BOOLEAN = "boolean",
   LIST = "list",
 }
 
-type OptionValue = string | boolean | string[] | undefined;
+export type OptionValue = string | boolean | string[] | undefined;
 
 type ValueOf<T> = T[keyof T];
 
@@ -46,7 +47,7 @@ export type ParsingOutput = {
 
 export type CliOptions = {
   /** extension of the script files to be executed */
-  extension: "js";
+  extension: string;
   /** Base path where the `ProcessingOutput.location` will start from */
   baseScriptLocation: string;
   /** Path where the single-command scripts (not contained in any namespace) are stored */
@@ -57,5 +58,7 @@ export type CliOptions = {
     autoInclude: boolean;
     /** Aliases to be used for help option */
     aliases: string[];
+    /** Whether to print help when script run fails */
+    showOnFail: boolean;
   };
 };

@@ -1,7 +1,7 @@
 import path from "path";
 import { completeDefinition, parseArguments, executeScript, generateScopedHelp } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial } from "./types";
-import { merge } from "./utils";
+import { clone, merge } from "./utils";
 
 export default class Cli {
   definition: Definition;
@@ -20,10 +20,11 @@ export default class Cli {
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
+        showOnFail: true,
       },
     };
     merge(this.options, options);
-    this.definition = completeDefinition(definition, this.options);
+    this.definition = completeDefinition(clone(definition), this.options);
     return this;
   }
   /**
@@ -45,7 +46,7 @@ export default class Cli {
     if (this.options.help.autoInclude && opts.options.help) {
       return generateScopedHelp(this.definition, opts.location);
     }
-    executeScript(opts, this.options);
+    executeScript(opts, this.options, this.definition);
   }
   /**
    * Generate and output help documentation
