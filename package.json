@@ -21,7 +21,7 @@
     "node": ">=12"
   },
   "scripts": {
-    "build": "rimraf dist && yarn tsup",
+    "build": "rimraf dist && yarn tsup && node ./scripts/fix-types.js",
     "test": "jest --silent"
   },
   "dependencies": {
