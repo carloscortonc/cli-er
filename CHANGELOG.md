@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/carloscortonc/cli-er/compare/v0.3.0...v0.3.1) (2022-08-31)
+
+
+### Bug Fixes
+
+* **types:** types not available from plain js files ([dc78657](https://github.com/carloscortonc/cli-er/commit/dc78657b1a20010cb7bdee9cc216be0ee48c64a0))
+
 # [0.3.0](https://github.com/carloscortonc/cli-er/compare/v0.2.0...v0.3.0) (2022-08-24)
 
 
