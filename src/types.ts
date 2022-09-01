@@ -30,6 +30,8 @@ export type DefinitionElement = {
   default?: OptionValue;
   /** Aliases for an option */
   aliases?: string[];
+  /** Action to be executed when matched */
+  action?: (out: ParsingOutput) => void;
   /** Used internally to identify options */
   key?: string;
 };

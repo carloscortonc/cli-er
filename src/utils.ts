@@ -1,6 +1,7 @@
 import mergeWith from "lodash.mergewith";
+import lodashclone from "lodash.clonedeep";
 
-export const clone = (o: any) => JSON.parse(JSON.stringify(o));
+export const clone = (o: any) => lodashclone(o);
 
 /** Utility class to format column values to a fixed length */
 export class ColumnFormatter {

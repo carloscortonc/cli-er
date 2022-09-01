@@ -98,10 +98,21 @@ describe("Cli.run", () => {
       expect.anything()
     );
   });
+  it("Calling run on element with action invokes such action", () => {
+    const action = jest.fn();
+    const c = new Cli({
+      cmd: {
+        kind: "command",
+        action,
+      },
+    });
+    c.run(["cmd"]);
+    expect(action).toHaveBeenCalled();
+  });
   it("Calling run with help option invokes help-generation", () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
     const c = new Cli(definition);
     c.run(["--help"]);
-    expect(spy).toHaveBeenCalledWith(expect.anything(), []);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
 });

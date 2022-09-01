@@ -162,32 +162,27 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     require(validScriptPath)(options);
   } catch (_) {
     if (cliOptions.help.showOnFail) {
-      generateScopedHelp(definition, location);
+      generateScopedHelp(definition, location, cliOptions);
     }
     Logger.error("There was a problem finding the script to run. Considered paths were:");
     scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
   }
 }
 
-export function generateScopedHelp(definition: Definition, location: string[]) {
-  let elementInfo = "";
+export function generateScopedHelp(definition: Definition, location: string[], cliOptions: CliOptions) {
   let definitionRef = definition;
-  for (let i = 0; i < location.length; i++) {
-    const key = location[i];
-    if (definitionRef.hasOwnProperty(key) && [Kind.NAMESPACE, Kind.COMMAND].includes(definitionRef[key].kind as Kind)) {
-      const el = definitionRef[key];
-      if (i === location.length - 1) {
-        elementInfo += `\n${el.description}\n`;
-      }
-      definitionRef = definitionRef[key].options as Definition;
+  if (location.length > 0) {
+    let elementInfo = "";
+    const element = getDefinitionElement(definition, location, cliOptions);
+    if (element && [Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
+      elementInfo += `\n${element.description}\n`;
+      definitionRef = element.options as Definition;
     } else {
       //Some element in location was incorrect. Output the entire help
       elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
-      definitionRef = definition;
-      break;
     }
+    Logger.raw(elementInfo);
   }
-  Logger.raw(elementInfo);
   generateHelp(definitionRef);
 }
 
@@ -275,4 +270,28 @@ function generateHelp(definition: Definition = {}) {
     }, formattedHelp);
 
   Logger.raw(formattedHelp);
+}
+
+/** Get the scoped definition element for the given location */
+export function getDefinitionElement(
+  definition: Definition,
+  rawLocation: string[],
+  cliOptions: CliOptions
+): DefinitionElement | undefined {
+  let definitionRef = definition;
+  const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
+  for (let i = 0; i < location.length; i++) {
+    const key = location[i];
+    if (i === location.length - 1) {
+      return definitionRef[key];
+    } else if (
+      definitionRef.hasOwnProperty(key) &&
+      [Kind.NAMESPACE, Kind.COMMAND].includes(definitionRef[key].kind as Kind)
+    ) {
+      definitionRef = definitionRef[key].options as Definition;
+    } else {
+      return undefined;
+    }
+  }
+  return definitionRef;
 }

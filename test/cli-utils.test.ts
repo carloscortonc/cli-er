@@ -1,4 +1,10 @@
-import { completeDefinition, parseArguments, executeScript, generateScopedHelp } from "../src/cli-utils";
+import {
+  completeDefinition,
+  parseArguments,
+  executeScript,
+  generateScopedHelp,
+  getDefinitionElement,
+} from "../src/cli-utils";
 import Cli from "../src";
 import * as utils from "../src/utils";
 import definition from "./data/definition.json";
@@ -173,11 +179,12 @@ describe("executeScript", () => {
 });
 
 describe("generateScopedHelp", () => {
+  const cliOptions = new Cli({}).options;
   const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
   it("With empty location (first level definition)", () => {
     let output = "";
     rawlogger.mockImplementation((m: any) => !!(output += m));
-    generateScopedHelp(definition, []);
+    generateScopedHelp(definition, [], cliOptions);
     expect(output).toBe(`
 Namespaces:
   nms           Description for the namespace
@@ -193,7 +200,7 @@ Global options:
   it("With location", () => {
     let output = "";
     rawlogger.mockImplementation((m: any) => !!(output += m));
-    generateScopedHelp(definition, ["nms"]);
+    generateScopedHelp(definition, ["nms"], cliOptions);
     expect(output).toBe(`
 Description for the namespace
 
@@ -201,5 +208,31 @@ Commands:
   cmd  Description for the command
 
 `);
+  });
+});
+
+describe("getDefinitionElement", () => {
+  const cliOptions = new Cli({}).options;
+  it("Returns the original definition when provided with empty location array", () => {
+    expect(getDefinitionElement(definition, [], cliOptions)).toStrictEqual(definition);
+  });
+  it("Returns the scoped definition", () => {
+    expect(getDefinitionElement(definition, ["nms"], cliOptions)).toStrictEqual({
+      description: "Description for the namespace",
+      kind: "namespace",
+      options: {
+        cmd: {
+          description: "Description for the command",
+          kind: "command",
+          type: "string",
+        },
+      },
+    });
+  });
+  it("Does not take into account commandPath when encountered", () => {
+    expect(getDefinitionElement(definition, ["commands", "gcmd"], cliOptions)).toStrictEqual({
+      description: "Description for global command",
+      kind: "command",
+    });
   });
 });
