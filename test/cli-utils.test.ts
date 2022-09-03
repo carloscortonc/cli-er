@@ -112,6 +112,13 @@ describe("parseArguments", () => {
       options: { globalOption: "globalvalue" },
     });
   });
+  it("Parse definition: command with no type", () => {
+    const d = new Cli(definition, { help: { autoInclude: false } }).definition;
+    expect(parseArguments(["gcmd"], d, cliOptions)).toStrictEqual({
+      location: [cliOptions.commandsPath, "gcmd"],
+      options: { globalOption: "globalvalue" },
+    });
+  });
   it("Parse definition: namespace + command", () => {
     //Get completed definition from Cli
     const d = new Cli(definition, { help: { autoInclude: false } }).definition;

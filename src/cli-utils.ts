@@ -88,7 +88,9 @@ export function parseArguments(args: string[], definition: Definition, cliOption
           output.options[key] = element.default;
         } else if (element.aliases!.includes(arg)) {
           if (element.kind === Kind.COMMAND) {
-            output.options[key] = element.default;
+            if (element.type !== undefined) {
+              output.options[key] = element.default;
+            }
             if (output.location.length === 0) {
               output.location.push(cliOptions.commandsPath);
             }
