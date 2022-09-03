@@ -115,9 +115,13 @@ describe("parseArguments", () => {
   it("Parse definition: namespace + command", () => {
     //Get completed definition from Cli
     const d = new Cli(definition, { help: { autoInclude: false } }).definition;
+    expect(parseArguments(["nms", "cmd"], d, cliOptions)).toStrictEqual({
+      location: ["nms", "cmd"],
+      options: { globalOption: "globalvalue", cmd: undefined, opt: undefined },
+    });
     expect(parseArguments(["nms", "cmd", "cmdValue"], d, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
-      options: { globalOption: "globalvalue", cmd: "cmdValue" },
+      options: { globalOption: "globalvalue", cmd: "cmdValue", opt: undefined },
     });
   });
 });
@@ -225,6 +229,11 @@ describe("getDefinitionElement", () => {
           description: "Description for the command",
           kind: "command",
           type: "string",
+          options: {
+            opt: {
+              type: "boolean",
+            },
+          },
         },
       },
     });

@@ -56,6 +56,10 @@ export function parseArguments(args: string[], definition: Definition, cliOption
   const aliases: { [key: string]: DefinitionElement | string } = {};
 
   const processElement = (element: DefinitionElement) => {
+    //Do not include namespaces in aliases, as they will never have any value associated
+    if (element.kind === Kind.NAMESPACE) {
+      return;
+    }
     const [mainAlias, ...otherAliases] = element.aliases!;
     aliases[mainAlias] = element;
     // The remaining aliases will point to the name of the main alias
@@ -79,10 +83,7 @@ export function parseArguments(args: string[], definition: Definition, cliOption
       const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
       for (let i = 0; i < entries.length; i++) {
         const [key, element] = entries[i];
-        //Do not include namespaces in aliases, as they will never have any value associated
-        if (element.kind !== Kind.NAMESPACE) {
-          processElement(element);
-        }
+        processElement(element);
         if (element.kind === Kind.OPTION) {
           output.options[key] = element.default;
         } else if (element.aliases!.includes(arg)) {
@@ -91,6 +92,13 @@ export function parseArguments(args: string[], definition: Definition, cliOption
             if (output.location.length === 0) {
               output.location.push(cliOptions.commandsPath);
             }
+            output.location.push(key);
+            Object.entries((definitionRef[key].options as Definition) || {}).forEach(([optionKey, optionDef]) => {
+              processElement(optionDef);
+              output.options[optionKey] = optionDef.default;
+            });
+            // No more namespaces/commands are allowed to follow, so end
+            break argsLoop;
           }
           output.location.push(key);
           definitionRef = definitionRef[key].options as Definition;
