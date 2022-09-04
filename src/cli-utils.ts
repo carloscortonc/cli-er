@@ -29,7 +29,7 @@ export function completeDefinition(definition: Definition, cliOptions: CliOption
     definition.help = {
       type: "boolean",
       aliases: cliOptions.help.aliases,
-      description: "Display global help, or scoped to a namespace/command",
+      description: cliOptions.help.description,
     };
   }
   //Auto-include version option
@@ -37,7 +37,7 @@ export function completeDefinition(definition: Definition, cliOptions: CliOption
     definition.version = {
       type: "boolean",
       aliases: cliOptions.version.aliases,
-      description: "Display version",
+      description: cliOptions.version.description,
     };
   }
   for (const element in definition) {

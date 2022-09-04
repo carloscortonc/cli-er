@@ -35,11 +35,13 @@ describe("Cli.constructor", () => {
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
+        description: "Display global help, or scoped to a namespace/command",
         showOnFail: true,
       },
       version: {
         autoInclude: true,
         aliases: ["-v", "--version"],
+        description: "Display version",
       },
     });
   });
@@ -47,8 +49,8 @@ describe("Cli.constructor", () => {
     const overrides = {
       baseLocation: "..",
       baseScriptLocation: "./",
-      help: { autoInclude: false, aliases: ["--help"] },
-      version: { aliases: ["--version"] },
+      help: { autoInclude: false, aliases: ["--help"], description: "" },
+      version: { aliases: ["--version"], description: "" },
     };
     const c = new Cli({}, overrides);
     expect(c.options).toStrictEqual({
@@ -59,11 +61,13 @@ describe("Cli.constructor", () => {
       help: {
         autoInclude: overrides.help.autoInclude,
         aliases: ["--help"],
+        description: "",
         showOnFail: true,
       },
       version: {
         autoInclude: true,
         aliases: ["--version"],
+        description: "",
       },
     });
   });

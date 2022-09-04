@@ -27,11 +27,13 @@ export default class Cli {
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
+        description: "Display global help, or scoped to a namespace/command",
         showOnFail: true,
       },
       version: {
         autoInclude: true,
         aliases: ["-v", "--version"],
+        description: "Display version",
       },
     };
     merge(this.options, options);

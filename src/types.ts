@@ -66,6 +66,8 @@ export type CliOptions = {
     autoInclude: boolean;
     /** Aliases to be used for help option */
     aliases: string[];
+    /** Description for the option */
+    description: string;
     /** Whether to print help when script run fails */
     showOnFail: boolean;
   };
@@ -75,5 +77,7 @@ export type CliOptions = {
     autoInclude: boolean;
     /** Aliases to be used for version option */
     aliases: string[];
+    /** Description for the option */
+    description: string;
   };
 };

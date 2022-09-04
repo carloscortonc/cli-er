@@ -40,11 +40,13 @@ describe("completeDefinition", () => {
     help: {
       autoInclude: false,
       aliases: [],
+      description: "",
       showOnFail: true,
     },
     version: {
       autoInclude: false,
       aliases: [],
+      description: "",
     },
   };
   it("Completes missing fields in definition with nested content ", () => {
@@ -64,7 +66,7 @@ describe("completeDefinition", () => {
       opt: { type: "string" },
     });
   });
-  it("Includes help option if auto-include help option is enabled", () => {
+  it("Includes help option if auto-include help is enabled", () => {
     const cliOptions_ = {
       ...cliOptions,
       help: {
@@ -78,7 +80,26 @@ describe("completeDefinition", () => {
       help: {
         type: "boolean",
         aliases: ["-h"],
-        description: "Display global help, or scoped to a namespace/command",
+        description: "",
+      },
+    });
+  });
+  it("Includes version option if auto-include version is enabled", () => {
+    const cliOptions_ = {
+      ...cliOptions,
+      version: {
+        ...cliOptions.version,
+        autoInclude: true,
+        aliases: ["-v"],
+        description: "",
+      },
+    };
+    const completedDefinition = completeDefinition(definition, cliOptions_);
+    expect(completedDefinition).toMatchObject({
+      version: {
+        type: "boolean",
+        aliases: ["-v"],
+        description: "",
       },
     });
   });
