@@ -132,6 +132,14 @@ describe("parseArguments", () => {
       "three",
     ]);
   });
+  it("Parse NUMBER value", () => {
+    const d = {
+      opt: { type: "number", aliases: ["--opt"], key: "opt" },
+    };
+    expect(parseArguments(["--opt", "1"], d, cliOptions).options.opt).toBe(1);
+    expect(parseArguments(["--opt", "not-a-number"], d, cliOptions).options.opt).toBe(NaN);
+    expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(undefined);
+  });
   it("Parse definition: no arguments", () => {
     //Get completed definition from Cli
     const d = new Cli(definition, { help: { autoInclude: false }, version: { autoInclude: false } }).definition;

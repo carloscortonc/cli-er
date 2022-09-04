@@ -158,6 +158,8 @@ function evaluateValue(value: string, current: OptionValue, type?: Type) {
     }
     newValue = typeof value === "string" ? value.split(",") : [];
     return ((current as string[]) || []).concat(newValue);
+  } else if (type === Type.NUMBER) {
+    return parseInt(value);
   }
   return value;
 }
