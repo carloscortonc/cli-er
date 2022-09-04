@@ -1,7 +1,16 @@
 import path from "path";
 import fs from "fs";
+import readPackageUp from "read-pkg-up";
 import { ColumnFormatter, Logger } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions, OptionValue } from "./types";
+
+/** Get the location of the main cli application */
+export function getEntryPoint() {
+  if (require.main && require.main.filename) {
+    return path.dirname(require.main.filename);
+  }
+  return undefined;
+}
 
 /** Determine the correct aliases depending on the kind of element */
 function getAliases(key: string, element: DefinitionElement) {
@@ -21,6 +30,14 @@ export function completeDefinition(definition: Definition, cliOptions: CliOption
       type: "boolean",
       aliases: cliOptions.help.aliases,
       description: "Display global help, or scoped to a namespace/command",
+    };
+  }
+  //Auto-include version option
+  if (cliOptions.version.autoInclude) {
+    definition.version = {
+      type: "boolean",
+      aliases: cliOptions.version.aliases,
+      description: "Display version",
     };
   }
   for (const element in definition) {
@@ -149,8 +166,7 @@ function evaluateValue(value: string, current: OptionValue, type?: Type) {
 export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions, definition: Definition) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
-    Logger.error("There was a problem finding base script location");
-    return;
+    return Logger.error("There was a problem finding base script location");
   }
   if (location.length === 0) {
     if (cliOptions.help.showOnFail) {
@@ -304,4 +320,16 @@ export function getDefinitionElement(
     }
   }
   return definitionRef;
+}
+
+/** Find and format the version of the application using this library */
+export function formatVersion(cliOptions: CliOptions) {
+  if (!cliOptions.baseLocation) {
+    return Logger.error("Unable to find base location. You may configure this value via CliOptions.baseLocation");
+  }
+  const packagejson = readPackageUp.sync({ cwd: cliOptions.baseLocation });
+  if (!packagejson || !packagejson.packageJson) {
+    return Logger.error("Error reading package.json file");
+  }
+  Logger.log(`${" ".repeat(2)}${packagejson.packageJson.name} version: ${packagejson.packageJson.version}`);
 }

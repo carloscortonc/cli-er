@@ -1,10 +1,11 @@
-import path from "path";
 import {
   completeDefinition,
   parseArguments,
   executeScript,
   generateScopedHelp,
   getDefinitionElement,
+  formatVersion,
+  getEntryPoint,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, DefinitionElement } from "./types";
 import { clone, merge } from "./utils";
@@ -20,13 +21,17 @@ export default class Cli {
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
     this.options = {
       extension: "js",
-      //@ts-expect-error
-      baseScriptLocation: path.dirname(require.main.filename),
+      baseLocation: getEntryPoint(),
+      baseScriptLocation: getEntryPoint(),
       commandsPath: "commands",
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
         showOnFail: true,
+      },
+      version: {
+        autoInclude: true,
+        aliases: ["-v", "--version"],
       },
     };
     merge(this.options, options);
@@ -52,6 +57,8 @@ export default class Cli {
     const command = getDefinitionElement(this.definition, opts.location, this.options) as DefinitionElement;
     if (this.options.help.autoInclude && opts.options.help) {
       return generateScopedHelp(this.definition, opts.location, this.options);
+    } else if (this.options.version.autoInclude && opts.options.version) {
+      return formatVersion(this.options);
     }
     if (typeof command.action === "function") {
       return command.action(opts);
@@ -65,5 +72,11 @@ export default class Cli {
    */
   help(location: string[] = []) {
     generateScopedHelp(this.definition, location, this.options);
+  }
+  /**
+   * Print formatted version of the current cli application
+   */
+  version() {
+    formatVersion(this.options);
   }
 }

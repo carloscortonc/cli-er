@@ -151,3 +151,14 @@ Description for the namespace
 Commands:
   cmd  Description for the command
 ```
+
+> **Note**
+> help-generation option is auto-included by default. This can be configured via `CliOptions.help`
+
+### version()
+
+Prints the formatted version of the current cli application: finds the package.json for the current application, and
+prints its name and version.
+
+> **Note**
+> version-generation option is auto-included by default. This can be configured via `CliOptions.version`

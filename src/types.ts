@@ -50,8 +50,14 @@ export type ParsingOutput = {
 export type CliOptions = {
   /** extension of the script files to be executed */
   extension: string;
-  /** Base path where the `ProcessingOutput.location` will start from */
-  baseScriptLocation: string;
+  /** Location of the main cli application
+   * @default path.dirname(require.main.filename)
+   */
+  baseLocation: string | undefined;
+  /** Base path where the `ProcessingOutput.location` will start from
+   * @default path.dirname(require.main.filename)
+   */
+  baseScriptLocation: string | undefined;
   /** Path where the single-command scripts (not contained in any namespace) are stored */
   commandsPath: string;
   /** Help-related configuration */
@@ -62,5 +68,12 @@ export type CliOptions = {
     aliases: string[];
     /** Whether to print help when script run fails */
     showOnFail: boolean;
+  };
+  /** Version related configuration */
+  version: {
+    /** Whether to generate version option */
+    autoInclude: boolean;
+    /** Aliases to be used for version option */
+    aliases: string[];
   };
 };
