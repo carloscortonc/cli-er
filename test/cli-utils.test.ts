@@ -191,7 +191,7 @@ describe("executeScript", () => {
     const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
     const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
     executeScript({ location: [], options: {} }, cliOptions, { opt: { description: "description" } });
-    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Global options:"));
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
     expect(errorlogger).not.toHaveBeenCalled();
   });
   it("Logs error if script require fails (no options.help.showOnFail)", () => {
@@ -206,7 +206,7 @@ describe("executeScript", () => {
     expect(errorlogger).toHaveBeenCalledWith(
       expect.stringContaining("There was a problem finding the script to run. ")
     );
-    expect(rawlogger).not.toHaveBeenCalled();
+    expect(rawlogger).toHaveBeenCalledWith("\n");
   });
   it("Logs error + prints scoped help if script require fails (with options.help.showOnFail)", () => {
     const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
@@ -215,7 +215,7 @@ describe("executeScript", () => {
     expect(errorlogger).toHaveBeenCalledWith(
       expect.stringContaining("There was a problem finding the script to run. ")
     );
-    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Global options:"));
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
   });
   it("Executes script if found", () => {
     const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
@@ -228,19 +228,24 @@ describe("executeScript", () => {
 describe("generateScopedHelp", () => {
   const cliOptions = new Cli({}).options;
   const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
+  const d = new Cli(definition).definition;
   it("With empty location (first level definition)", () => {
     let output = "";
     rawlogger.mockImplementation((m: any) => !!(output += m));
-    generateScopedHelp(definition, [], cliOptions);
+    generateScopedHelp(d, [], cliOptions);
     expect(output).toBe(`
+Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
+
 Namespaces:
-  nms           Description for the namespace
+  nms            Description for the namespace
 
 Commands:
-  gcmd          Description for global command
+  gcmd           Description for global command
 
-Global options:
-  -g, --global  Option shared between all commands (default: globalvalue)
+Options:
+  -g, --global   Option shared between all commands (default: globalvalue)
+  -h, --help     Display global help, or scoped to a namespace/command
+  -v, --version  Display version
 
 `);
   });
@@ -249,6 +254,8 @@ Global options:
     rawlogger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(definition, ["nms"], cliOptions);
     expect(output).toBe(`
+Usage:  cli-er nms COMMAND
+
 Description for the namespace
 
 Commands:

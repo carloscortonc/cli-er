@@ -95,7 +95,7 @@ invoking with `node action.js cmd --log` will log _"Log from cmd"_ into the cons
 
 ### help(location?)
 
-Generates and outputs help message based on the provided definition. Given the following code:
+Generates and outputs help message based on the provided definition. Given the following code (test.js):
 
 ```js
 const definition = {
@@ -127,13 +127,15 @@ new Cli(definition).help();
 will output:
 
 ```
+Usage:  test NAMESPACE|COMMAND [OPTIONS]
+
 Namespaces:
   nms           Description for the namespace
 
 Commands:
   gcmd          Description for global command
 
-Global options:
+Options:
   -g, --global  Option shared between all commands (default: globalvalue)
 ```
 
@@ -146,6 +148,8 @@ new Cli(definition).help(["nms"]);
 will output:
 
 ```
+Usage:  test nms
+
 Description for the namespace
 
 Commands:

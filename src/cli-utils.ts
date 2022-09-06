@@ -194,14 +194,17 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     }
     Logger.error("There was a problem finding the script to run. Considered paths were:");
     scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
+    Logger.raw("\n");
   }
 }
 
-export function generateScopedHelp(definition: Definition, location: string[], cliOptions: CliOptions) {
+export function generateScopedHelp(definition: Definition, rawLocation: string[], cliOptions: CliOptions) {
+  const packagejson = findPackageJson(cliOptions);
+  const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
+  const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
+  let elementInfo = "";
   if (location.length > 0) {
-    let elementInfo = "";
-    const element = getDefinitionElement(definition, location, cliOptions);
     if (element && [Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
       elementInfo += `\n${element.description}\n`;
       definitionRef = element.options as Definition;
@@ -209,8 +212,38 @@ export function generateScopedHelp(definition: Definition, location: string[], c
       //Some element in location was incorrect. Output the entire help
       elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
     }
-    Logger.raw(elementInfo);
   }
+  // Add usage section
+  if (packagejson) {
+    const { existingKinds, hasOptions } = Object.values(definitionRef).reduce(
+      (acc, curr) => {
+        if (curr.kind === Kind.OPTION) {
+          acc.hasOptions = true;
+        } else if (acc.existingKinds.indexOf(curr.kind as string) < 0) {
+          acc.existingKinds.push(curr.kind as string);
+        }
+        return acc;
+      },
+      { existingKinds: [] as string[], hasOptions: false }
+    );
+
+    const formatKinds = (kinds: string[]) =>
+      ` ${kinds
+        .sort((a) => (a === Kind.NAMESPACE ? -1 : 1))
+        .join("|")
+        .toUpperCase()}`;
+
+    elementInfo = [
+      `\nUsage:  ${packagejson.name}`,
+      location.length > 0 ? ` ${location.join(" ")}` : "",
+      existingKinds.length > 0 ? formatKinds(existingKinds) : "",
+      hasOptions ? " [OPTIONS]" : "",
+      "\n",
+    ]
+      .join("")
+      .concat(elementInfo);
+  }
+  Logger.raw(elementInfo);
   generateHelp(definitionRef);
 }
 
@@ -254,7 +287,7 @@ function generateHelp(definition: Definition = {}) {
       content: [],
     },
     [Section.options]: {
-      title: "Global options:",
+      title: "Options:",
       content: [],
     },
   };
@@ -324,14 +357,23 @@ export function getDefinitionElement(
   return definitionRef;
 }
 
-/** Find and format the version of the application using this library */
+/** Find the package.json of the application that is using this library */
+function findPackageJson(cliOptions: CliOptions) {
+  const packagejson = readPackageUp.sync({ cwd: cliOptions.baseLocation });
+  if (!packagejson || !packagejson.packageJson) {
+    return undefined;
+  }
+  return packagejson.packageJson;
+}
+
+/** Find and format the version of the application that is using this library */
 export function formatVersion(cliOptions: CliOptions) {
   if (!cliOptions.baseLocation) {
     return Logger.error("Unable to find base location. You may configure this value via CliOptions.baseLocation");
   }
-  const packagejson = readPackageUp.sync({ cwd: cliOptions.baseLocation });
-  if (!packagejson || !packagejson.packageJson) {
+  const packagejson = findPackageJson(cliOptions);
+  if (!packagejson) {
     return Logger.error("Error reading package.json file");
   }
-  Logger.log(`${" ".repeat(2)}${packagejson.packageJson.name} version: ${packagejson.packageJson.version}`);
+  Logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}`);
 }
