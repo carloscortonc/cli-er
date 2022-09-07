@@ -58,6 +58,8 @@ node entrypoint.js nms cmd commandvalue
 which will try to invoke `/nms/cmd.js` and `/nms/cmd/index.js` with the parsed options.
 This allows us to organize and structure the logic nicely.
 
+You can check the [docker-based example](./examples/docker) for a more in-depth demo.
+
 ## Usage
 
 `cli-er` default-exports a class, which takes in the definition object and an optional argument CliOptions. The available methods are the following:
