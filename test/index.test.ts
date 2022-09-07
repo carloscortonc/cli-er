@@ -103,11 +103,10 @@ describe("Cli.run", () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
     const c = new Cli(definition);
     c.run(["nms", "cmd"]);
-    expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({ location: ["nms", "cmd"] }),
-      expect.anything(),
-      expect.anything()
-    );
+    expect(spy.mock.calls[0][0]).toStrictEqual({
+      location: ["nms", "cmd"],
+      options: { cmd: undefined, globalOption: "globalvalue", opt: undefined },
+    });
   });
   it("Calling run on element with action invokes such action", () => {
     const action = jest.fn();

@@ -91,7 +91,7 @@ new Cli({
 }).run();
 ```
 
-invoking with `node action.js cmd --log` will log _"Log from cmd"_ into the console.
+invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
 
 ### help(location?)
 
