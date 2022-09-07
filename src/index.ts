@@ -1,6 +1,13 @@
-import path from "path";
-import { completeDefinition, parseArguments, executeScript, generateScopedHelp } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial } from "./types";
+import {
+  completeDefinition,
+  parseArguments,
+  executeScript,
+  generateScopedHelp,
+  getDefinitionElement,
+  formatVersion,
+  getEntryPoint,
+} from "./cli-utils";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, DefinitionElement } from "./types";
 import { clone, merge } from "./utils";
 
 export default class Cli {
@@ -14,13 +21,19 @@ export default class Cli {
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
     this.options = {
       extension: "js",
-      //@ts-expect-error
-      baseScriptLocation: path.dirname(require.main.filename),
+      baseLocation: getEntryPoint(),
+      baseScriptLocation: getEntryPoint(),
       commandsPath: "commands",
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
+        description: "Display global help, or scoped to a namespace/command",
         showOnFail: true,
+      },
+      version: {
+        autoInclude: true,
+        aliases: ["-v", "--version"],
+        description: "Display version",
       },
     };
     merge(this.options, options);
@@ -43,8 +56,21 @@ export default class Cli {
   run(args?: string[]) {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
+    const command = getDefinitionElement(this.definition, opts.location, this.options) as DefinitionElement;
+    // Evaluate auto-included help
     if (this.options.help.autoInclude && opts.options.help) {
-      return generateScopedHelp(this.definition, opts.location);
+      return generateScopedHelp(this.definition, opts.location, this.options);
+    } else if (this.options.help.autoInclude) {
+      delete opts.options.help;
+    }
+    // Evaluate auto-included version
+    if (this.options.version.autoInclude && opts.options.version) {
+      return formatVersion(this.options);
+    } else if (this.options.version.autoInclude) {
+      delete opts.options.version;
+    }
+    if (typeof command.action === "function") {
+      return command.action(opts);
     }
     executeScript(opts, this.options, this.definition);
   }
@@ -54,6 +80,12 @@ export default class Cli {
    * @param {string[]} location scope to generate help
    */
   help(location: string[] = []) {
-    generateScopedHelp(this.definition, location);
+    generateScopedHelp(this.definition, location, this.options);
+  }
+  /**
+   * Print formatted version of the current cli application
+   */
+  version() {
+    formatVersion(this.options);
   }
 }

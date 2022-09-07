@@ -6,7 +6,12 @@
       "cmd": {
         "kind": "command",
         "type": "string",
-        "description": "Description for the command"
+        "description": "Description for the command",
+        "options": {
+          "opt": {
+            "type": "boolean"
+          }
+        }
       }
     }
   },

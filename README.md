@@ -72,11 +72,30 @@ Parses the given list of arguments based on the provided definition, and returns
 
 ### run(args?)
 
-Parses the given options by calling `parse(args)`, and executes the script in the computed location, forwarding the parsed options. If no arguments are provided, the value defaults to `process.argv.slice(2)`.
+Parses the given options by calling `parse(args)`, and executes the script in the computed location, forwarding the parsed options. Alternatively, a command can be defined with an `action` function that will be called when the command is matched. If no arguments are provided, the args value defaults to `process.argv.slice(2)`.
+With the following example (action.js):
+
+```js
+new Cli({
+  cmd: {
+    kind: "command",
+    options: {
+      log: { type: "boolean" },
+    },
+    action: ({ options }) => {
+      if (options.log) {
+        console.log("Log from cmd");
+      }
+    },
+  },
+}).run();
+```
+
+invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
 
 ### help(location?)
 
-Generates and outputs help message based on the provided definition. Given the following code:
+Generates and outputs help message based on the provided definition. Given the following code (test.js):
 
 ```js
 const definition = {
@@ -108,13 +127,15 @@ new Cli(definition).help();
 will output:
 
 ```
+Usage:  test NAMESPACE|COMMAND [OPTIONS]
+
 Namespaces:
   nms           Description for the namespace
 
 Commands:
   gcmd          Description for global command
 
-Global options:
+Options:
   -g, --global  Option shared between all commands (default: globalvalue)
 ```
 
@@ -127,8 +148,21 @@ new Cli(definition).help(["nms"]);
 will output:
 
 ```
+Usage:  test nms
+
 Description for the namespace
 
 Commands:
   cmd  Description for the command
 ```
+
+> **Note**
+> help-generation option is auto-included by default. This can be configured via `CliOptions.help`
+
+### version()
+
+Prints the formatted version of the current cli application: finds the package.json for the current application, and
+prints its name and version.
+
+> **Note**
+> version-generation option is auto-included by default. This can be configured via `CliOptions.version`

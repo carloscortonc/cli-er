@@ -1,7 +1,16 @@
 import path from "path";
 import fs from "fs";
+import readPackageUp from "read-pkg-up";
 import { ColumnFormatter, Logger } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions, OptionValue } from "./types";
+
+/** Get the location of the main cli application */
+export function getEntryPoint() {
+  if (require.main && require.main.filename) {
+    return path.dirname(require.main.filename);
+  }
+  return undefined;
+}
 
 /** Determine the correct aliases depending on the kind of element */
 function getAliases(key: string, element: DefinitionElement) {
@@ -20,7 +29,15 @@ export function completeDefinition(definition: Definition, cliOptions: CliOption
     definition.help = {
       type: "boolean",
       aliases: cliOptions.help.aliases,
-      description: "Display global help, or scoped to a namespace/command",
+      description: cliOptions.help.description,
+    };
+  }
+  //Auto-include version option
+  if (cliOptions.version.autoInclude) {
+    definition.version = {
+      type: "boolean",
+      aliases: cliOptions.version.aliases,
+      description: cliOptions.version.description,
     };
   }
   for (const element in definition) {
@@ -56,6 +73,10 @@ export function parseArguments(args: string[], definition: Definition, cliOption
   const aliases: { [key: string]: DefinitionElement | string } = {};
 
   const processElement = (element: DefinitionElement) => {
+    //Do not include namespaces in aliases, as they will never have any value associated
+    if (element.kind === Kind.NAMESPACE) {
+      return;
+    }
     const [mainAlias, ...otherAliases] = element.aliases!;
     aliases[mainAlias] = element;
     // The remaining aliases will point to the name of the main alias
@@ -79,18 +100,24 @@ export function parseArguments(args: string[], definition: Definition, cliOption
       const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
       for (let i = 0; i < entries.length; i++) {
         const [key, element] = entries[i];
-        //Do not include namespaces in aliases, as they will never have any value associated
-        if (element.kind !== Kind.NAMESPACE) {
-          processElement(element);
-        }
+        processElement(element);
         if (element.kind === Kind.OPTION) {
           output.options[key] = element.default;
         } else if (element.aliases!.includes(arg)) {
           if (element.kind === Kind.COMMAND) {
-            output.options[key] = element.default;
+            if (element.type !== undefined) {
+              output.options[key] = element.default;
+            }
             if (output.location.length === 0) {
               output.location.push(cliOptions.commandsPath);
             }
+            output.location.push(key);
+            Object.entries((definitionRef[key].options as Definition) || {}).forEach(([optionKey, optionDef]) => {
+              processElement(optionDef);
+              output.options[optionKey] = optionDef.default;
+            });
+            // No more namespaces/commands are allowed to follow, so end
+            break argsLoop;
           }
           output.location.push(key);
           definitionRef = definitionRef[key].options as Definition;
@@ -131,6 +158,8 @@ function evaluateValue(value: string, current: OptionValue, type?: Type) {
     }
     newValue = typeof value === "string" ? value.split(",") : [];
     return ((current as string[]) || []).concat(newValue);
+  } else if (type === Type.NUMBER) {
+    return parseInt(value);
   }
   return value;
 }
@@ -139,8 +168,7 @@ function evaluateValue(value: string, current: OptionValue, type?: Type) {
 export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions, definition: Definition) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
-    Logger.error("There was a problem finding base script location");
-    return;
+    return Logger.error("There was a problem finding base script location");
   }
   if (location.length === 0) {
     if (cliOptions.help.showOnFail) {
@@ -162,30 +190,58 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     require(validScriptPath)(options);
   } catch (_) {
     if (cliOptions.help.showOnFail) {
-      generateScopedHelp(definition, location);
+      generateScopedHelp(definition, location, cliOptions);
     }
     Logger.error("There was a problem finding the script to run. Considered paths were:");
     scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
+    Logger.raw("\n");
   }
 }
 
-export function generateScopedHelp(definition: Definition, location: string[]) {
-  let elementInfo = "";
+export function generateScopedHelp(definition: Definition, rawLocation: string[], cliOptions: CliOptions) {
+  const packagejson = findPackageJson(cliOptions);
+  const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
+  const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
-  for (let i = 0; i < location.length; i++) {
-    const key = location[i];
-    if (definitionRef.hasOwnProperty(key) && [Kind.NAMESPACE, Kind.COMMAND].includes(definitionRef[key].kind as Kind)) {
-      const el = definitionRef[key];
-      if (i === location.length - 1) {
-        elementInfo += `\n${el.description}\n`;
-      }
-      definitionRef = definitionRef[key].options as Definition;
+  let elementInfo = "";
+  if (location.length > 0) {
+    if (element && [Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
+      elementInfo += `\n${element.description}\n`;
+      definitionRef = element.options as Definition;
     } else {
       //Some element in location was incorrect. Output the entire help
       elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
-      definitionRef = definition;
-      break;
     }
+  }
+  // Add usage section
+  if (packagejson) {
+    const { existingKinds, hasOptions } = Object.values(definitionRef).reduce(
+      (acc, curr) => {
+        if (curr.kind === Kind.OPTION) {
+          acc.hasOptions = true;
+        } else if (acc.existingKinds.indexOf(curr.kind as string) < 0) {
+          acc.existingKinds.push(curr.kind as string);
+        }
+        return acc;
+      },
+      { existingKinds: [] as string[], hasOptions: false }
+    );
+
+    const formatKinds = (kinds: string[]) =>
+      ` ${kinds
+        .sort((a) => (a === Kind.NAMESPACE ? -1 : 1))
+        .join("|")
+        .toUpperCase()}`;
+
+    elementInfo = [
+      `\nUsage:  ${packagejson.name}`,
+      location.length > 0 ? ` ${location.join(" ")}` : "",
+      existingKinds.length > 0 ? formatKinds(existingKinds) : "",
+      hasOptions ? " [OPTIONS]" : "",
+      "\n",
+    ]
+      .join("")
+      .concat(elementInfo);
   }
   Logger.raw(elementInfo);
   generateHelp(definitionRef);
@@ -231,7 +287,7 @@ function generateHelp(definition: Definition = {}) {
       content: [],
     },
     [Section.options]: {
-      title: "Global options:",
+      title: "Options:",
       content: [],
     },
   };
@@ -275,4 +331,49 @@ function generateHelp(definition: Definition = {}) {
     }, formattedHelp);
 
   Logger.raw(formattedHelp);
+}
+
+/** Get the scoped definition element for the given location */
+export function getDefinitionElement(
+  definition: Definition,
+  rawLocation: string[],
+  cliOptions: CliOptions
+): DefinitionElement | undefined {
+  let definitionRef = definition;
+  const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
+  for (let i = 0; i < location.length; i++) {
+    const key = location[i];
+    if (i === location.length - 1) {
+      return definitionRef[key];
+    } else if (
+      definitionRef.hasOwnProperty(key) &&
+      [Kind.NAMESPACE, Kind.COMMAND].includes(definitionRef[key].kind as Kind)
+    ) {
+      definitionRef = definitionRef[key].options as Definition;
+    } else {
+      return undefined;
+    }
+  }
+  return definitionRef;
+}
+
+/** Find the package.json of the application that is using this library */
+function findPackageJson(cliOptions: CliOptions) {
+  const packagejson = readPackageUp.sync({ cwd: cliOptions.baseLocation });
+  if (!packagejson || !packagejson.packageJson) {
+    return undefined;
+  }
+  return packagejson.packageJson;
+}
+
+/** Find and format the version of the application that is using this library */
+export function formatVersion(cliOptions: CliOptions) {
+  if (!cliOptions.baseLocation) {
+    return Logger.error("Unable to find base location. You may configure this value via CliOptions.baseLocation");
+  }
+  const packagejson = findPackageJson(cliOptions);
+  if (!packagejson) {
+    return Logger.error("Error reading package.json file");
+  }
+  Logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}`);
 }
