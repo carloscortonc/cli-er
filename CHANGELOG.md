@@ -1,3 +1,20 @@
+# [0.4.0](https://github.com/carloscortonc/cli-er/compare/v0.3.1...v0.4.0) (2022-09-07)
+
+
+### Bug Fixes
+
+* command does not get its options processed unless suplied in args ([cfe17c5](https://github.com/carloscortonc/cli-er/commit/cfe17c58cca6506d85db704703522b2c6a1005e0))
+* command should not appear in parsingOutput if missing "type" property ([0a66dbe](https://github.com/carloscortonc/cli-er/commit/0a66dbee27d242ce8db2850ab391483d9855f1ea))
+* remove autoincluded opts for script execution ([8b36ddb](https://github.com/carloscortonc/cli-er/commit/8b36ddb22514312fdcb0c05c991c916fe50709f8))
+
+
+### Features
+
+* allow custom help and version descriptions ([f2dc50e](https://github.com/carloscortonc/cli-er/commit/f2dc50ecbf705a6d15d839d002880d5635c98a1a))
+* auto-include version option by default ([cef9bcd](https://github.com/carloscortonc/cli-er/commit/cef9bcd32ec191602d4331f8e54adc214bd2f043))
+* new property "action" to be used as command callback ([70a0406](https://github.com/carloscortonc/cli-er/commit/70a040691eda6c5dba1f35d3441f0583fe757117))
+* support for "number" option type ([3b24f90](https://github.com/carloscortonc/cli-er/commit/3b24f90fc1549aa9ff1b5411531111d2b93eadab))
+
 ## [0.3.1](https://github.com/carloscortonc/cli-er/compare/v0.3.0...v0.3.1) (2022-08-31)
 
 
