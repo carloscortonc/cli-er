@@ -32,6 +32,11 @@ describe("Cli.constructor", () => {
       baseLocation: "require.main.filename",
       baseScriptLocation: "require.main.filename",
       commandsPath: "commands",
+      onFail: {
+        help: true,
+        suggestion: true,
+        scriptPaths: true,
+      },
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
@@ -51,6 +56,7 @@ describe("Cli.constructor", () => {
       baseScriptLocation: "./",
       help: { autoInclude: false, aliases: ["--help"], description: "" },
       version: { aliases: ["--version"], description: "" },
+      onFail: { suggestion: false },
     };
     const c = new Cli({}, overrides);
     expect(c.options).toStrictEqual({
@@ -58,6 +64,11 @@ describe("Cli.constructor", () => {
       baseLocation: overrides.baseLocation,
       baseScriptLocation: overrides.baseScriptLocation,
       commandsPath: "commands",
+      onFail: {
+        help: true,
+        suggestion: false,
+        scriptPaths: true,
+      },
       help: {
         autoInclude: overrides.help.autoInclude,
         aliases: ["--help"],
@@ -130,5 +141,12 @@ describe("Cli.run", () => {
     const c = new Cli(definition);
     c.run(["--version"]);
     expect(spy).toHaveBeenCalledWith(expect.anything());
+  });
+  it("Prints error if returned from parsingArguments", () => {
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const c = new Cli(definition);
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
   });
 });

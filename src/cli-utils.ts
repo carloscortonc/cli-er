@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import readPackageUp from "read-pkg-up";
+import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, Logger } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions, OptionValue } from "./types";
 
@@ -124,6 +125,8 @@ export function parseArguments(args: string[], definition: Definition, cliOption
           break;
         } else if (i === entries.length - 1) {
           // Options already processed, and no namespace/command found for current arg, so end
+          const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
+          output.error = `Command "${arg}" not found. Did you mean "${suggestion}" ?`;
           break argsLoop;
         }
       }
@@ -171,7 +174,7 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     return Logger.error("There was a problem finding base script location");
   }
   if (location.length === 0) {
-    if (cliOptions.help.showOnFail) {
+    if (cliOptions.help.showOnFail && cliOptions.onFail.help) {
       generateHelp(definition);
     } else {
       Logger.error("No location provided to execute the script");
@@ -189,12 +192,15 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     //@ts-expect-error if no script path was found, the failed require will be captured in the catch below
     require(validScriptPath)(options);
   } catch (_) {
-    if (cliOptions.help.showOnFail) {
+    if (cliOptions.help.showOnFail && cliOptions.onFail.help) {
       generateScopedHelp(definition, location, cliOptions);
     }
-    Logger.error("There was a problem finding the script to run. Considered paths were:");
-    scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
-    Logger.raw("\n");
+    Logger.error("There was a problem finding the script to run.");
+    if (cliOptions.onFail.scriptPaths) {
+      Logger.raw(" Considered paths were:\n");
+      scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
+      Logger.raw("\n");
+    }
   }
 }
 
@@ -376,4 +382,21 @@ export function formatVersion(cliOptions: CliOptions) {
     return Logger.error("Error reading package.json file");
   }
   Logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}`);
+}
+
+/** Find the closest namespace/command based on the given target and location */
+export function closestSuggestion(
+  target: string,
+  definition: Definition,
+  rawLocation: string[],
+  cliOptions: CliOptions
+) {
+  let def = definition;
+  if (rawLocation.length > 0) {
+    def = getDefinitionElement(definition, rawLocation, cliOptions)!.options!;
+  }
+  const candidates = Object.values(def || {})
+    .filter((e) => e.kind !== Kind.OPTION)
+    .reduce((acc: string[], curr) => [...acc, ...curr.aliases!], []);
+  return closest(target, candidates);
 }

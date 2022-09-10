@@ -8,7 +8,7 @@ import {
   getEntryPoint,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, DefinitionElement } from "./types";
-import { clone, merge } from "./utils";
+import { clone, Logger, merge } from "./utils";
 
 export default class Cli {
   definition: Definition;
@@ -24,6 +24,11 @@ export default class Cli {
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
       commandsPath: "commands",
+      onFail: {
+        help: true,
+        suggestion: true,
+        scriptPaths: true,
+      },
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
@@ -57,6 +62,7 @@ export default class Cli {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
     const command = getDefinitionElement(this.definition, opts.location, this.options) as DefinitionElement;
+
     // Evaluate auto-included help
     if (this.options.help.autoInclude && opts.options.help) {
       return generateScopedHelp(this.definition, opts.location, this.options);
@@ -68,6 +74,10 @@ export default class Cli {
       return formatVersion(this.options);
     } else if (this.options.version.autoInclude) {
       delete opts.options.version;
+    }
+    // Show suggestion if existing error and enabled
+    if (opts.error && this.options.onFail.suggestion) {
+      return Logger.error(opts.error);
     }
     if (typeof command.action === "function") {
       return command.action(opts);

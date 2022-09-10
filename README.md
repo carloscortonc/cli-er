@@ -66,7 +66,7 @@ You can check the [docker-based example](./examples/docker) for a more in-depth 
 
 ### parse(args)
 
-Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options. The execution of the above [example](#example) would be:
+Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If an error is generated during the process, it will be registered inside an `error` field. The execution of the above [example](#example) would be:
 
 ```
 { options: { cmd: "commandValue" }, location: ["nms", "cmd"] }
@@ -94,6 +94,8 @@ new Cli({
 ```
 
 invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
+
+If no command is found in the parsing process, an error and suggestion (the closest to the one suplied) will be shown. This can be configured via `CliOptions.onFail.suggestion`.
 
 ### help(location?)
 

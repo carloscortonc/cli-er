@@ -3,6 +3,7 @@ export enum Kind {
   COMMAND = "command",
   OPTION = "option",
 }
+
 export enum Type {
   STRING = "string",
   BOOLEAN = "boolean",
@@ -46,6 +47,8 @@ export type ParsingOutput = {
   location: string[];
   /** Calculated options */
   options: { [key: string]: OptionValue | undefined };
+  /** Error originated while parsing */
+  error?: string;
 };
 
 export type CliOptions = {
@@ -61,6 +64,15 @@ export type CliOptions = {
   baseScriptLocation: string | undefined;
   /** Path where the single-command scripts (not contained in any namespace) are stored */
   commandsPath: string;
+  /** Flags to describe the behaviour on fail conditions */
+  onFail: {
+    /** Print scoped-help */
+    help: boolean;
+    /** Show suggestion when command not found */
+    suggestion: boolean;
+    /** Print evaluated script paths inside `run` */
+    scriptPaths: boolean;
+  };
   /** Help-related configuration */
   help: {
     /** Whether to generate help option */
@@ -69,7 +81,9 @@ export type CliOptions = {
     aliases: string[];
     /** Description for the option */
     description: string;
-    /** Whether to print help when script run fails */
+    /** Whether to print help when script run fails
+     * @deprecated since v0.5.0, will be removed in v0.6.0 - use `CliOptions.onFail.help` instead
+     */
     showOnFail: boolean;
   };
   /** Version related configuration */
