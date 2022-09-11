@@ -5,12 +5,14 @@ import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, Logger } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions, OptionValue } from "./types";
 
-/** Get the location of the main cli application */
+/** Get the file location of the main cli application */
+function getEntryFile() {
+  return require.main ? require.main.filename : process.cwd();
+}
+
+/** Get the directory of the main cli application */
 export function getEntryPoint() {
-  if (require.main && require.main.filename) {
-    return path.dirname(require.main.filename);
-  }
-  return undefined;
+  return path.dirname(getEntryFile());
 }
 
 /** Determine the correct aliases depending on the kind of element */
@@ -176,7 +178,7 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
 
   const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : undefined]
     .filter((p) => p)
-    .map((p) => path.join(base, p!.concat(`.${cliOptions.extension}`)));
+    .map((p) => path.join(base, p!.concat(path.extname(getEntryFile()))));
 
   const validScriptPath = scriptPaths.find(fs.existsSync);
 
@@ -194,7 +196,8 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   }
 
   try {
-    require(validScriptPath)(options);
+    const script = require(validScriptPath);
+    (script.default || script)(options);
   } catch (e: any) {
     Logger.error(`There was a problem executing the script (${validScriptPath})`);
   }

@@ -170,3 +170,7 @@ prints its name and version.
 
 > **Note**
 > version-generation option is auto-included by default. This can be configured via `CliOptions.version`
+
+## Typescript cli
+
+You can check [this example](./examples/ts-cli) on how to write a full typescript cli application.

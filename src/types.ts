@@ -52,7 +52,9 @@ export type ParsingOutput = {
 };
 
 export type CliOptions = {
-  /** extension of the script files to be executed */
+  /** extension of the script files to be executed
+   * @deprecated since v0.5.0, will be removed in v0.6.0. Now is extracted from `path.extname(entryFile)`
+   */
   extension: string;
   /** Location of the main cli application
    * @default path.dirname(require.main.filename)

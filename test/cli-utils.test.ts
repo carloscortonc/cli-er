@@ -18,6 +18,7 @@ afterEach(() => {
 });
 
 jest.mock("./data/gcmd", () => jest.fn());
+jest.mock("path", () => ({ ...jest.requireActual("path"), extname: () => ".js" }));
 
 describe("completeDefinition", () => {
   const definition = {
