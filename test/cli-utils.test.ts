@@ -267,6 +267,17 @@ Commands:
 
 `);
   });
+  it.only("With location: resulting element has no options", () => {
+    let output = "";
+    rawlogger.mockImplementation((m: any) => !!(output += m));
+    generateScopedHelp({ cmd: { kind: "command", description: "Command with no options" } }, ["cmd"], cliOptions);
+    expect(output).toBe(`
+Usage:  cli-er cmd
+
+Command with no options
+
+`);
+  });
 });
 
 describe("getDefinitionElement", () => {

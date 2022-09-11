@@ -220,7 +220,7 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
   }
   // Add usage section
   if (packagejson) {
-    const { existingKinds, hasOptions } = Object.values(definitionRef).reduce(
+    const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
       (acc, curr) => {
         if (curr.kind === Kind.OPTION) {
           acc.hasOptions = true;
