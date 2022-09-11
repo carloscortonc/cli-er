@@ -188,46 +188,39 @@ describe("executeScript", () => {
     executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" }, {});
     expect(errorlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
-  it("Logs error if no location provided (no options.onFail.help)", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+  it("No valid script found: logs error (onFail.help=false, onFail.scriptPaths=false)", () => {
+    const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, help: false, scriptPaths: false } };
     const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
-    executeScript({ location: [], options: {} }, { ...cliOptions, onFail: { ...cliOptions.onFail, help: false } }, {});
-    expect(errorlogger).toHaveBeenCalledWith("No location provided to execute the script");
-    expect(rawlogger).not.toHaveBeenCalled();
-  });
-  it("Prints help if no location provided (with options.onFail.help)", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
-    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
-    executeScript({ location: [], options: {} }, cliOptions, { opt: { description: "description" } });
-    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(errorlogger).not.toHaveBeenCalled();
-  });
-  it("Logs error if script require fails (no options.onFail.help)", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
-    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
-    jest.spyOn(utils.Logger, "log").mockImplementation();
-    executeScript(
-      { location: ["not-existing"], options: {} },
-      { ...cliOptions, onFail: { ...cliOptions.onFail, help: false } },
-      {}
-    );
-    expect(errorlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(rawlogger).toHaveBeenCalledWith("\n");
-    expect(rawlogger).toHaveBeenCalledWith(" Considered paths were:\n");
-  });
-  it("Logs error + prints scoped help if script require fails (with options.onFail.help)", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
-    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
-    executeScript(
-      { location: ["not-existing"], options: {} },
-      { ...cliOptions, onFail: { ...cliOptions.onFail, scriptPaths: false } },
-      { opt: { description: "description" } }
-    );
-    expect(errorlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    executeScript({ location: ["non-existent"], options: {} }, cliOptions_, {});
+    expect(rawlogger).not.toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    expect(rawlogger).toHaveBeenCalledWith("There was a problem finding the script to run.");
     expect(rawlogger).not.toHaveBeenCalledWith(" Considered paths were:\n");
   });
+  it("No valid script found: prints help + logs error (onFail.help=true, onFail.scriptPaths=false)", () => {
+    const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, scriptPaths: false } };
+    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
+    executeScript({ location: ["non-existent"], options: {} }, cliOptions_, { opt: { description: "description" } });
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
+    expect(rawlogger).not.toHaveBeenCalledWith(" Considered paths were:\n");
+  });
+  it("No valid script found: prints help + logs error + prints paths (onFail.help=true, onFail.scriptPaths=true)", () => {
+    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
+    executeScript({ location: ["non-existent"], options: {} }, cliOptions, { opt: { description: "description" } });
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
+    expect(rawlogger).toHaveBeenCalledWith(" Considered paths were:\n");
+  });
+  it("Script execution fails: logs error", () => {
+    (gcmd as any).mockImplementation(() => {
+      throw new Error();
+    });
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions, {});
+    expect(errorlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem executing the script"));
+  });
   it("Executes script if found", () => {
+    (gcmd as any).mockImplementation();
     const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
     executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions, {});
     expect(gcmd).toHaveBeenCalledWith({ gcmd: "gcmdvalue" });

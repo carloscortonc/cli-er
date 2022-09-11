@@ -104,12 +104,6 @@ describe("Cli.parse", () => {
 });
 
 describe("Cli.run", () => {
-  it("Calling run with no args prints error", () => {
-    const spy = jest.spyOn(utils.Logger, "error");
-    const c = new Cli(definition, { help: { autoInclude: false, showOnFail: false } });
-    c.run([]);
-    expect(spy).toHaveBeenCalledWith("No location provided to execute the script");
-  });
   it("Calling run with arguments invokes the script in the computed location", () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
     const c = new Cli(definition);

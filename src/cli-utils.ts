@@ -173,34 +173,30 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   if (!base) {
     return Logger.error("There was a problem finding base script location");
   }
-  if (location.length === 0) {
-    if (cliOptions.help.showOnFail && cliOptions.onFail.help) {
-      generateHelp(definition);
-    } else {
-      Logger.error("No location provided to execute the script");
-    }
-    return;
-  }
-  const scriptPaths = [
-    path.join(...location).concat(`.${cliOptions.extension}`),
-    path.join(...location, `index.${cliOptions.extension}`),
-  ].map((p) => path.join(base, p));
+
+  const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : undefined]
+    .filter((p) => p)
+    .map((p) => path.join(base, p!.concat(`.${cliOptions.extension}`)));
 
   const validScriptPath = scriptPaths.find(fs.existsSync);
 
-  try {
-    //@ts-expect-error if no script path was found, the failed require will be captured in the catch below
-    require(validScriptPath)(options);
-  } catch (_) {
+  if (!validScriptPath) {
     if (cliOptions.help.showOnFail && cliOptions.onFail.help) {
-      generateScopedHelp(definition, location, cliOptions);
+      generateHelp(definition);
     }
-    Logger.error("There was a problem finding the script to run.");
+    Logger.raw("There was a problem finding the script to run.");
     if (cliOptions.onFail.scriptPaths) {
       Logger.raw(" Considered paths were:\n");
       scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
-      Logger.raw("\n");
     }
+    Logger.raw("\n");
+    return;
+  }
+
+  try {
+    require(validScriptPath)(options);
+  } catch (e: any) {
+    Logger.error(`There was a problem executing the script (${validScriptPath})`);
   }
 }
 
