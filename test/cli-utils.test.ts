@@ -119,7 +119,7 @@ describe("parseArguments", () => {
   });
   it("Parse BOOLEAN value", () => {
     const d = {
-      opt: { type: "boolean", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "boolean", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "true"], d, cliOptions).options.opt).toBe(true);
     expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(true);
@@ -127,13 +127,13 @@ describe("parseArguments", () => {
   });
   it("Parse LIST value", () => {
     const d = {
-      opt: { type: "list", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "one,two"], d, cliOptions).options.opt).toStrictEqual(["one", "two"]);
   });
   it("Parse LIST value by repeated appearances", () => {
     const d = {
-      opt: { type: "list", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "one,two", "--opt", "three"], d, cliOptions).options.opt).toStrictEqual([
       "one",
@@ -143,7 +143,7 @@ describe("parseArguments", () => {
   });
   it("Parse NUMBER value", () => {
     const d = {
-      opt: { type: "number", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "number", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "1"], d, cliOptions).options.opt).toBe(1);
     expect(parseArguments(["--opt", "not-a-number"], d, cliOptions).options.opt).toBe(NaN);
@@ -267,7 +267,7 @@ Commands:
 
 `);
   });
-  it.only("With location: resulting element has no options", () => {
+  it("With location: resulting element has no options", () => {
     let output = "";
     rawlogger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp({ cmd: { kind: "command", description: "Command with no options" } }, ["cmd"], cliOptions);
