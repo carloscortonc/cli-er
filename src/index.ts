@@ -9,6 +9,7 @@ import {
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, DefinitionElement } from "./types";
 import { clone, Logger, merge } from "./utils";
+import { CliError, ErrorType } from "./cli-errors";
 
 export default class Cli {
   definition: Definition;
@@ -28,6 +29,7 @@ export default class Cli {
         help: true,
         suggestion: true,
         scriptPaths: true,
+        stopOnUnknownOption: true,
       },
       help: {
         autoInclude: true,
@@ -75,8 +77,12 @@ export default class Cli {
     } else if (this.options.version.autoInclude) {
       delete opts.options.version;
     }
-    // Show suggestion if existing error and enabled
-    if (opts.error && this.options.onFail.suggestion) {
+    // Check if any error was generated
+    const e = CliError.analize(opts.error);
+    if (
+      (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
+      (e === ErrorType.OPTION_NOT_FOUND && this.options.onFail.stopOnUnknownOption)
+    ) {
       return Logger.error(opts.error);
     }
     if (typeof command.action === "function") {

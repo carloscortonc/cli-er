@@ -74,6 +74,8 @@ export type CliOptions = {
     suggestion: boolean;
     /** Print evaluated script paths inside `run` */
     scriptPaths: boolean;
+    /** End `run` invocation when an unknown option is encountered while parsing */
+    stopOnUnknownOption: boolean;
   };
   /** Help-related configuration */
   help: {

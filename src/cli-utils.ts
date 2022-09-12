@@ -4,6 +4,7 @@ import readPackageUp from "read-pkg-up";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, Logger } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions, OptionValue } from "./types";
+import { CliError, ErrorType } from "./cli-errors";
 
 /** Get the file location of the main cli application */
 function getEntryFile() {
@@ -35,7 +36,7 @@ export function completeDefinition(definition: Definition, cliOptions: CliOption
       description: cliOptions.help.description,
     };
   }
-  //Auto-include version option
+  // Auto-include version option
   if (cliOptions.version.autoInclude) {
     definition.version = {
       type: "boolean",
@@ -74,9 +75,10 @@ export function parseArguments(args: string[], definition: Definition, cliOption
     options: {},
   };
   const aliases: { [key: string]: DefinitionElement | string } = {};
+  let argsToProcess = args;
 
   const processElement = (element: DefinitionElement) => {
-    //Do not include namespaces in aliases, as they will never have any value associated
+    // Do not include namespaces in aliases, as they will never have any value associated
     if (element.kind === Kind.NAMESPACE) {
       return;
     }
@@ -110,6 +112,8 @@ export function parseArguments(args: string[], definition: Definition, cliOption
           if (element.kind === Kind.COMMAND) {
             if (element.type !== undefined) {
               output.options[key] = element.default;
+            } else {
+              argsToProcess = argsToProcess.slice(1);
             }
             if (output.location.length === 0) {
               output.location.push(cliOptions.commandsPath);
@@ -121,6 +125,8 @@ export function parseArguments(args: string[], definition: Definition, cliOption
             });
             // No more namespaces/commands are allowed to follow, so end
             break argsLoop;
+          } else {
+            argsToProcess = argsToProcess.slice(1);
           }
           output.location.push(key);
           definitionRef = definitionRef[key].options as Definition;
@@ -128,7 +134,7 @@ export function parseArguments(args: string[], definition: Definition, cliOption
         } else if (i === entries.length - 1) {
           // Options already processed, and no namespace/command found for current arg, so end
           const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-          output.error = `Command "${arg}" not found. Did you mean "${suggestion}" ?`;
+          output.error = CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion);
           break argsLoop;
         }
       }
@@ -136,9 +142,9 @@ export function parseArguments(args: string[], definition: Definition, cliOption
   }
 
   // Process args
-  for (let i = 0; i < args.length; i++) {
-    const curr = args[i],
-      next = args[i + 1];
+  for (let i = 0; i < argsToProcess.length; i++) {
+    const curr = argsToProcess[i],
+      next = argsToProcess[i + 1];
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const optionDefinition = aliases[optionKey] as DefinitionElement;
     const outputKey = optionDefinition && (optionDefinition.key as string);
@@ -147,6 +153,9 @@ export function parseArguments(args: string[], definition: Definition, cliOption
       i++; // skip next array value, already processed
     } else if (aliases.hasOwnProperty(optionKey) && (aliases[optionKey] as DefinitionElement).type === Type.BOOLEAN) {
       output.options[outputKey] = true;
+    } else if (!aliases.hasOwnProperty(curr) && !output.error) {
+      // Unknown option
+      output.error = CliError.format(ErrorType.OPTION_NOT_FOUND, curr);
     }
   }
   return output;
@@ -214,7 +223,7 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
       elementInfo += `\n${element.description}\n`;
       definitionRef = element.options as Definition;
     } else {
-      //Some element in location was incorrect. Output the entire help
+      // Some element in location was incorrect. Output the entire help
       elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
     }
   }

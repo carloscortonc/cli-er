@@ -97,6 +97,8 @@ invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the co
 
 If no command is found in the parsing process, an error and suggestion (the closest to the one suplied) will be shown. This can be configured via `CliOptions.onFail.suggestion`.
 
+If an unknown option if found, the default behaviour is to print the error and exit. This can be configured via `CliOptions.onFail.stopOnUnknownOption`.
+
 ### help(location?)
 
 Generates and outputs help message based on the provided definition. Given the following code (test.js):

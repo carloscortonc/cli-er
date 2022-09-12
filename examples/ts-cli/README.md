@@ -1,4 +1,4 @@
-CLI applications written in typescript can be executed with:
+CLI applications written in typescript can be executed (since v0.5.0) with:
 
 ```sh
 node -r ts-node/register ts-cli

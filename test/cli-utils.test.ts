@@ -42,6 +42,7 @@ describe("completeDefinition", () => {
       help: true,
       suggestion: true,
       scriptPaths: true,
+      stopOnUnknownOption: true,
     },
     help: {
       autoInclude: false,
@@ -178,6 +179,13 @@ describe("parseArguments", () => {
       options: expect.anything(),
       location: expect.anything(),
       error: expect.stringContaining('Command "non-existent" not found. Did you mean "cmd" ?'),
+    });
+  });
+  it("Returns error if unknown options are found", () => {
+    expect(parseArguments(["nms", "cmd", "cmdvalue", "unknown-option"], def, cliOptions)).toStrictEqual({
+      options: expect.anything(),
+      location: expect.anything(),
+      error: expect.stringContaining('Unknown option "unknown-option"'),
     });
   });
 });

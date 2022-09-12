@@ -2,6 +2,7 @@ import Cli from "../src/index";
 import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import definition from "./data/definition.json";
+import { CliError, ErrorType } from "../src/cli-errors";
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
 
@@ -36,6 +37,7 @@ describe("Cli.constructor", () => {
         help: true,
         suggestion: true,
         scriptPaths: true,
+        stopOnUnknownOption: true,
       },
       help: {
         autoInclude: true,
@@ -68,6 +70,7 @@ describe("Cli.constructor", () => {
         help: true,
         suggestion: false,
         scriptPaths: true,
+        stopOnUnknownOption: true,
       },
       help: {
         autoInclude: overrides.help.autoInclude,
@@ -136,7 +139,16 @@ describe("Cli.run", () => {
     c.run(["--version"]);
     expect(spy).toHaveBeenCalledWith(expect.anything());
   });
-  it("Prints error if returned from parsingArguments", () => {
+  it("Prints command-not-found error if configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const c = new Cli(definition);
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
+  });
+  it("Prints option-not-found error if configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_NOT_FOUND);
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
     const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
     const c = new Cli(definition);
