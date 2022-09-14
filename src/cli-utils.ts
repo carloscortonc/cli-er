@@ -42,6 +42,7 @@ export function completeDefinition(definition: Definition, cliOptions: CliOption
       type: "boolean",
       aliases: cliOptions.version.aliases,
       description: cliOptions.version.description,
+      hidden: true,
     };
   }
   for (const element in definition) {
@@ -307,27 +308,27 @@ function generateHelp(definition: Definition = {}) {
   };
 
   // Caculate all sections and process section values
-  const { sections, formattedNames }: { sections: Sections; formattedNames: string[] } = Object.entries(
-    definition
-  ).reduce(
-    (acc: any, [key, element]) => {
-      let section,
-        name = key;
-      if (element.kind === Kind.NAMESPACE) {
-        section = Section.namespaces;
-      } else if (element.kind === Kind.COMMAND) {
-        section = Section.commands;
-      } else {
-        section = Section.options;
-        name = formatAliases(element.aliases);
-      }
-      const completeElement = { ...element, name };
-      acc.formattedNames.push(name);
-      acc.sections[section].content.push(completeElement);
-      return acc;
-    },
-    { sections: sectionsTemplate, formattedNames: [] }
-  );
+  const { sections, formattedNames }: { sections: Sections; formattedNames: string[] } = Object.entries(definition)
+    .filter(([_, { hidden }]) => hidden !== true)
+    .reduce(
+      (acc: any, [key, element]) => {
+        let section,
+          name = key;
+        if (element.kind === Kind.NAMESPACE) {
+          section = Section.namespaces;
+        } else if (element.kind === Kind.COMMAND) {
+          section = Section.commands;
+        } else {
+          section = Section.options;
+          name = formatAliases(element.aliases);
+        }
+        const completeElement = { ...element, name };
+        acc.formattedNames.push(name);
+        acc.sections[section].content.push(completeElement);
+        return acc;
+      },
+      { sections: sectionsTemplate, formattedNames: [] }
+    );
 
   // Process all names from namespaces, commands and options into formatter
   formatter.process("name", formattedNames);

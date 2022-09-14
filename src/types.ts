@@ -36,6 +36,8 @@ export type DefinitionElement = {
   action?: (out: ParsingOutput) => void;
   /** Used internally to identify options */
   key?: string;
+  /** Whether to show an element when generating help */
+  hidden?: boolean;
 };
 
 export type Definition = {

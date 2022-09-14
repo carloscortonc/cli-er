@@ -249,15 +249,14 @@ describe("generateScopedHelp", () => {
 Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
 
 Namespaces:
-  nms            Description for the namespace
+  nms           Description for the namespace
 
 Commands:
-  gcmd           Description for global command
+  gcmd          Description for global command
 
 Options:
-  -g, --global   Option shared between all commands (default: globalvalue)
-  -h, --help     Display global help, or scoped to a namespace/command
-  -v, --version  Display version
+  -g, --global  Option shared between all commands (default: globalvalue)
+  -h, --help    Display global help, or scoped to a namespace/command
 
 `);
   });

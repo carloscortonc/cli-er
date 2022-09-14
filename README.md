@@ -162,6 +162,8 @@ Commands:
   cmd  Description for the command
 ```
 
+Any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition.
+
 > **Note**
 > help-generation option is auto-included by default. This can be configured via `CliOptions.help`
 
