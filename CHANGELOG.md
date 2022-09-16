@@ -1,3 +1,19 @@
+# [0.5.0](https://github.com/carloscortonc/cli-er/compare/v0.4.0...v0.5.0) (2022-09-16)
+
+
+### Features
+
+* allow to hide elements in generated help ([97149cb](https://github.com/carloscortonc/cli-er/commit/97149cb72132d22184d12126f513c63cfdf3c363))
+* enable invocation in options-only definition ([aa45f2e](https://github.com/carloscortonc/cli-er/commit/aa45f2ec1dd51cbf8fb5146501df83b2bab09973))
+* identify wrong options ([e3f1868](https://github.com/carloscortonc/cli-er/commit/e3f1868f4c9a6c24c200c1de5873493b48fd8a94))
+* show suggestion when command not found ([bb4beb2](https://github.com/carloscortonc/cli-er/commit/bb4beb262f2ebd9cf85e7b3e6ba91f5ebecc1864))
+* support for ts-scripts execution ([f85ac74](https://github.com/carloscortonc/cli-er/commit/f85ac74a227da3b8f960beb1a791f7e1d9ce7407))
+
+
+### Bug Fixes
+
+* command with no options breaks help ([9559f83](https://github.com/carloscortonc/cli-er/commit/9559f83c37ac012cb4b69e23094a7e617e00fcf0))
+
 # [0.4.0](https://github.com/carloscortonc/cli-er/compare/v0.3.1...v0.4.0) (2022-09-07)
 
 
