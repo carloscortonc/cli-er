@@ -18,6 +18,7 @@ afterEach(() => {
 });
 
 jest.mock("./data/gcmd", () => jest.fn());
+jest.mock("path", () => ({ ...jest.requireActual("path"), extname: () => ".js" }));
 
 describe("completeDefinition", () => {
   const definition = {
@@ -37,6 +38,12 @@ describe("completeDefinition", () => {
     baseLocation: "",
     baseScriptLocation: "",
     commandsPath: "",
+    onFail: {
+      help: true,
+      suggestion: true,
+      scriptPaths: true,
+      stopOnUnknownOption: true,
+    },
     help: {
       autoInclude: false,
       aliases: [],
@@ -107,10 +114,13 @@ describe("completeDefinition", () => {
 
 describe("parseArguments", () => {
   //Get default options from Cli
-  const cliOptions = new Cli({}).options;
+  const { definition: def, options: cliOptions } = new Cli(definition, {
+    help: { autoInclude: false },
+    version: { autoInclude: false },
+  });
   it("Parse BOOLEAN value", () => {
     const d = {
-      opt: { type: "boolean", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "boolean", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "true"], d, cliOptions).options.opt).toBe(true);
     expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(true);
@@ -118,13 +128,13 @@ describe("parseArguments", () => {
   });
   it("Parse LIST value", () => {
     const d = {
-      opt: { type: "list", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "one,two"], d, cliOptions).options.opt).toStrictEqual(["one", "two"]);
   });
   it("Parse LIST value by repeated appearances", () => {
     const d = {
-      opt: { type: "list", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "one,two", "--opt", "three"], d, cliOptions).options.opt).toStrictEqual([
       "one",
@@ -134,37 +144,48 @@ describe("parseArguments", () => {
   });
   it("Parse NUMBER value", () => {
     const d = {
-      opt: { type: "number", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "number", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "1"], d, cliOptions).options.opt).toBe(1);
     expect(parseArguments(["--opt", "not-a-number"], d, cliOptions).options.opt).toBe(NaN);
     expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(undefined);
   });
-  it("Parse definition: no arguments", () => {
+  it("No arguments", () => {
     //Get completed definition from Cli
-    const d = new Cli(definition, { help: { autoInclude: false }, version: { autoInclude: false } }).definition;
-    expect(parseArguments([], d, cliOptions)).toStrictEqual({
+    expect(parseArguments([], def, cliOptions)).toStrictEqual({
       location: [],
       options: { globalOption: "globalvalue" },
     });
   });
-  it("Parse definition: command with no type", () => {
-    const d = new Cli(definition, { help: { autoInclude: false }, version: { autoInclude: false } }).definition;
-    expect(parseArguments(["gcmd"], d, cliOptions)).toStrictEqual({
+  it("Command with no type", () => {
+    expect(parseArguments(["gcmd"], def, cliOptions)).toStrictEqual({
       location: [cliOptions.commandsPath, "gcmd"],
       options: { globalOption: "globalvalue" },
     });
   });
-  it("Parse definition: namespace + command", () => {
+  it("Namespace + command", () => {
     //Get completed definition from Cli
-    const d = new Cli(definition, { help: { autoInclude: false }, version: { autoInclude: false } }).definition;
-    expect(parseArguments(["nms", "cmd"], d, cliOptions)).toStrictEqual({
+    expect(parseArguments(["nms", "cmd"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: undefined, opt: undefined },
     });
-    expect(parseArguments(["nms", "cmd", "cmdValue"], d, cliOptions)).toStrictEqual({
+    expect(parseArguments(["nms", "cmd", "cmdValue"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: "cmdValue", opt: undefined },
+    });
+  });
+  it("Returns error if wrong namespace/command provided", () => {
+    expect(parseArguments(["nms", "non-existent"], def, cliOptions)).toStrictEqual({
+      options: expect.anything(),
+      location: expect.anything(),
+      error: expect.stringContaining('Command "non-existent" not found. Did you mean "cmd" ?'),
+    });
+  });
+  it("Returns error if unknown options are found", () => {
+    expect(parseArguments(["nms", "cmd", "cmdvalue", "unknown-option"], def, cliOptions)).toStrictEqual({
+      options: expect.anything(),
+      location: expect.anything(),
+      error: expect.stringContaining('Unknown option "unknown-option"'),
     });
   });
 });
@@ -176,48 +197,39 @@ describe("executeScript", () => {
     executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" }, {});
     expect(errorlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
-  it("Logs error if no location provided (no options.help.showOnFail)", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+  it("No valid script found: logs error (onFail.help=false, onFail.scriptPaths=false)", () => {
+    const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, help: false, scriptPaths: false } };
     const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
-    executeScript(
-      { location: [], options: {} },
-      { ...cliOptions, help: { ...cliOptions.help, showOnFail: false } },
-      {}
-    );
-    expect(errorlogger).toHaveBeenCalledWith("No location provided to execute the script");
-    expect(rawlogger).not.toHaveBeenCalled();
+    executeScript({ location: ["non-existent"], options: {} }, cliOptions_, {});
+    expect(rawlogger).not.toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    expect(rawlogger).toHaveBeenCalledWith("There was a problem finding the script to run.");
+    expect(rawlogger).not.toHaveBeenCalledWith(" Considered paths were:\n");
   });
-  it("Prints help if no location provided (with options.help.showOnFail)", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+  it("No valid script found: prints help + logs error (onFail.help=true, onFail.scriptPaths=false)", () => {
+    const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, scriptPaths: false } };
     const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
-    executeScript({ location: [], options: {} }, cliOptions, { opt: { description: "description" } });
+    executeScript({ location: ["non-existent"], options: {} }, cliOptions_, { opt: { description: "description" } });
     expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(errorlogger).not.toHaveBeenCalled();
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
+    expect(rawlogger).not.toHaveBeenCalledWith(" Considered paths were:\n");
   });
-  it("Logs error if script require fails (no options.help.showOnFail)", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+  it("No valid script found: prints help + logs error + prints paths (onFail.help=true, onFail.scriptPaths=true)", () => {
     const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
-    jest.spyOn(utils.Logger, "log").mockImplementation();
-    executeScript(
-      { location: ["not-existing"], options: {} },
-      { ...cliOptions, help: { ...cliOptions.help, showOnFail: false } },
-      {}
-    );
-    expect(errorlogger).toHaveBeenCalledWith(
-      expect.stringContaining("There was a problem finding the script to run. ")
-    );
-    expect(rawlogger).toHaveBeenCalledWith("\n");
-  });
-  it("Logs error + prints scoped help if script require fails (with options.help.showOnFail)", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
-    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
-    executeScript({ location: ["not-existing"], options: {} }, cliOptions, { opt: { description: "description" } });
-    expect(errorlogger).toHaveBeenCalledWith(
-      expect.stringContaining("There was a problem finding the script to run. ")
-    );
+    executeScript({ location: ["non-existent"], options: {} }, cliOptions, { opt: { description: "description" } });
     expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
+    expect(rawlogger).toHaveBeenCalledWith(" Considered paths were:\n");
+  });
+  it("Script execution fails: logs error", () => {
+    (gcmd as any).mockImplementation(() => {
+      throw new Error();
+    });
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions, {});
+    expect(errorlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem executing the script"));
   });
   it("Executes script if found", () => {
+    (gcmd as any).mockImplementation();
     const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
     executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions, {});
     expect(gcmd).toHaveBeenCalledWith({ gcmd: "gcmdvalue" });
@@ -237,15 +249,14 @@ describe("generateScopedHelp", () => {
 Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
 
 Namespaces:
-  nms            Description for the namespace
+  nms           Description for the namespace
 
 Commands:
-  gcmd           Description for global command
+  gcmd          Description for global command
 
 Options:
-  -g, --global   Option shared between all commands (default: globalvalue)
-  -h, --help     Display global help, or scoped to a namespace/command
-  -v, --version  Display version
+  -g, --global  Option shared between all commands (default: globalvalue)
+  -h, --help    Display global help, or scoped to a namespace/command
 
 `);
   });
@@ -260,6 +271,17 @@ Description for the namespace
 
 Commands:
   cmd  Description for the command
+
+`);
+  });
+  it("With location: resulting element has no options", () => {
+    let output = "";
+    rawlogger.mockImplementation((m: any) => !!(output += m));
+    generateScopedHelp({ cmd: { kind: "command", description: "Command with no options" } }, ["cmd"], cliOptions);
+    expect(output).toBe(`
+Usage:  cli-er cmd
+
+Command with no options
 
 `);
   });

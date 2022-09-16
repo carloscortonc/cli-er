@@ -7,8 +7,9 @@ import {
   formatVersion,
   getEntryPoint,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, DefinitionElement } from "./types";
-import { clone, merge } from "./utils";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, Command } from "./types";
+import { clone, Logger, merge } from "./utils";
+import { CliError, ErrorType } from "./cli-errors";
 
 export default class Cli {
   definition: Definition;
@@ -24,6 +25,12 @@ export default class Cli {
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
       commandsPath: "commands",
+      onFail: {
+        help: true,
+        suggestion: true,
+        scriptPaths: true,
+        stopOnUnknownOption: true,
+      },
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
@@ -56,7 +63,8 @@ export default class Cli {
   run(args?: string[]) {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
-    const command = getDefinitionElement(this.definition, opts.location, this.options) as DefinitionElement;
+    const command = getDefinitionElement(this.definition, opts.location, this.options) as Command;
+
     // Evaluate auto-included help
     if (this.options.help.autoInclude && opts.options.help) {
       return generateScopedHelp(this.definition, opts.location, this.options);
@@ -68,6 +76,14 @@ export default class Cli {
       return formatVersion(this.options);
     } else if (this.options.version.autoInclude) {
       delete opts.options.version;
+    }
+    // Check if any error was generated
+    const e = CliError.analize(opts.error);
+    if (
+      (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
+      (e === ErrorType.OPTION_NOT_FOUND && this.options.onFail.stopOnUnknownOption)
+    ) {
+      return Logger.error(opts.error);
     }
     if (typeof command.action === "function") {
       return command.action(opts);

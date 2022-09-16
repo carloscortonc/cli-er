@@ -2,6 +2,7 @@ import Cli from "../src/index";
 import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import definition from "./data/definition.json";
+import { CliError, ErrorType } from "../src/cli-errors";
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
 
@@ -32,6 +33,12 @@ describe("Cli.constructor", () => {
       baseLocation: "require.main.filename",
       baseScriptLocation: "require.main.filename",
       commandsPath: "commands",
+      onFail: {
+        help: true,
+        suggestion: true,
+        scriptPaths: true,
+        stopOnUnknownOption: true,
+      },
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
@@ -51,6 +58,7 @@ describe("Cli.constructor", () => {
       baseScriptLocation: "./",
       help: { autoInclude: false, aliases: ["--help"], description: "" },
       version: { aliases: ["--version"], description: "" },
+      onFail: { suggestion: false },
     };
     const c = new Cli({}, overrides);
     expect(c.options).toStrictEqual({
@@ -58,6 +66,12 @@ describe("Cli.constructor", () => {
       baseLocation: overrides.baseLocation,
       baseScriptLocation: overrides.baseScriptLocation,
       commandsPath: "commands",
+      onFail: {
+        help: true,
+        suggestion: false,
+        scriptPaths: true,
+        stopOnUnknownOption: true,
+      },
       help: {
         autoInclude: overrides.help.autoInclude,
         aliases: ["--help"],
@@ -93,12 +107,6 @@ describe("Cli.parse", () => {
 });
 
 describe("Cli.run", () => {
-  it("Calling run with no args prints error", () => {
-    const spy = jest.spyOn(utils.Logger, "error");
-    const c = new Cli(definition, { help: { autoInclude: false, showOnFail: false } });
-    c.run([]);
-    expect(spy).toHaveBeenCalledWith("No location provided to execute the script");
-  });
   it("Calling run with arguments invokes the script in the computed location", () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
     const c = new Cli(definition);
@@ -130,5 +138,21 @@ describe("Cli.run", () => {
     const c = new Cli(definition);
     c.run(["--version"]);
     expect(spy).toHaveBeenCalledWith(expect.anything());
+  });
+  it("Prints command-not-found error if configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const c = new Cli(definition);
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
+  });
+  it("Prints option-not-found error if configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_NOT_FOUND);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const c = new Cli(definition);
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
   });
 });

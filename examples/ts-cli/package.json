@@ -1,0 +1,10 @@
+{
+  "name": "ts-cli",
+  "version": "1.0.0",
+  "main": "ts-cli.ts",
+  "author": "carloscortonc",
+  "dependencies": {
+    "cli-er": "0.5.0",
+    "ts-node": "^10.9.1"
+  }
+}

@@ -58,16 +58,18 @@ node entrypoint.js nms cmd commandvalue
 which will try to invoke `/nms/cmd.js` and `/nms/cmd/index.js` with the parsed options.
 This allows us to organize and structure the logic nicely.
 
+You can check the [docker-based example](./examples/docker) for a more in-depth demo.
+
 ## Usage
 
 `cli-er` default-exports a class, which takes in the definition object and an optional argument CliOptions. The available methods are the following:
 
 ### parse(args)
 
-Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options. The execution of the above [example](#example) would be:
+Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If an error is generated during the process, it will be registered inside an `error` field. The execution of the above [example](#example) would be:
 
-```
-{ options: { cmd: "commandValue" }, location: ["nms", "cmd"] }
+```json
+{ "options": { "cmd": "commandValue" }, "location": ["nms", "cmd"] }
 ```
 
 ### run(args?)
@@ -92,6 +94,10 @@ new Cli({
 ```
 
 invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
+
+If no command is found in the parsing process, an error and suggestion (the closest to the one suplied) will be shown. This can be configured via `CliOptions.onFail.suggestion`.
+
+If an unknown option if found, the default behaviour is to print the error and exit. This can be configured via `CliOptions.onFail.stopOnUnknownOption`.
 
 ### help(location?)
 
@@ -156,6 +162,8 @@ Commands:
   cmd  Description for the command
 ```
 
+Any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition.
+
 > **Note**
 > help-generation option is auto-included by default. This can be configured via `CliOptions.help`
 
@@ -166,3 +174,7 @@ prints its name and version.
 
 > **Note**
 > version-generation option is auto-included by default. This can be configured via `CliOptions.version`
+
+## Typescript cli
+
+You can check [this example](./examples/ts-cli) on how to write a full typescript cli application.
