@@ -19,29 +19,39 @@ export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
 
-export type DefinitionElement = {
+type BasicElement = {
   /** Kind of element */
   kind?: ValueOf<Kind>;
-  /** Nested options definition */
-  options?: Definition;
   /** Description of the element */
   description?: string;
-  /** Type of option */
-  type?: ValueOf<Type>;
-  /** Default value for the option */
-  default?: OptionValue;
   /** Aliases for an option */
   aliases?: string[];
-  /** Action to be executed when matched */
-  action?: (out: ParsingOutput) => void;
   /** Used internally to identify options */
   key?: string;
   /** Whether to show an element when generating help */
   hidden?: boolean;
 };
 
-export type Definition = {
-  [key: string]: DefinitionElement;
+export type Option = BasicElement & {
+  type?: ValueOf<Type>;
+  /** Default value for the option */
+  default?: OptionValue;
+};
+
+export type Namespace = BasicElement & {
+  /** Nested options definition */
+  options?: Definition;
+};
+
+export type Command = Option & {
+  /** Nested options definition */
+  options?: Definition<Option>;
+  /** Action to be executed when matched */
+  action?: (out: ParsingOutput) => void;
+};
+
+export type Definition<T = Namespace | Command | Option> = {
+  [key: string]: T;
 };
 
 export type ParsingOutput = {

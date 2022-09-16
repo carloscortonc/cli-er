@@ -7,7 +7,7 @@ import {
   formatVersion,
   getEntryPoint,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, DefinitionElement } from "./types";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, Command } from "./types";
 import { clone, Logger, merge } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 
@@ -63,7 +63,7 @@ export default class Cli {
   run(args?: string[]) {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
-    const command = getDefinitionElement(this.definition, opts.location, this.options) as DefinitionElement;
+    const command = getDefinitionElement(this.definition, opts.location, this.options) as Command;
 
     // Evaluate auto-included help
     if (this.options.help.autoInclude && opts.options.help) {

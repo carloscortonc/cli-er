@@ -3,8 +3,11 @@ import fs from "fs";
 import readPackageUp from "read-pkg-up";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, Logger } from "./utils";
-import { Kind, ParsingOutput, Definition, Type, DefinitionElement, CliOptions, OptionValue } from "./types";
+import { Kind, ParsingOutput, Definition, Type, CliOptions, OptionValue, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
+
+/** Create a type containing all elements for better readability, as here is not necessary type-checking */
+type DefinitionElement = Namespace & Command & Option;
 
 /** Get the file location of the main cli application */
 function getEntryFile() {
@@ -70,7 +73,11 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
 }
 
 /** Process incoming args based on provided definition */
-export function parseArguments(args: string[], definition: Definition, cliOptions: CliOptions): ParsingOutput {
+export function parseArguments(
+  args: string[],
+  definition: Definition<DefinitionElement>,
+  cliOptions: CliOptions
+): ParsingOutput {
   const output: ParsingOutput = {
     location: [],
     options: {},
@@ -95,7 +102,7 @@ export function parseArguments(args: string[], definition: Definition, cliOption
   if (args.length === 0) {
     Object.entries(definition)
       .filter(([_, e]) => e.kind === Kind.OPTION)
-      .forEach(([key, element]) => {
+      .forEach(([key, element]: [string, DefinitionElement]) => {
         processElement(element);
         output.options[key] = element.default;
       });
@@ -105,7 +112,7 @@ export function parseArguments(args: string[], definition: Definition, cliOption
       // Sort definition to process options first
       const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
       for (let i = 0; i < entries.length; i++) {
-        const [key, element] = entries[i];
+        const [key, element]: [string, DefinitionElement] = entries[i];
         processElement(element);
         if (element.kind === Kind.OPTION) {
           output.options[key] = element.default;
@@ -120,7 +127,7 @@ export function parseArguments(args: string[], definition: Definition, cliOption
               output.location.push(cliOptions.commandsPath);
             }
             output.location.push(key);
-            Object.entries((definitionRef[key].options as Definition) || {}).forEach(([optionKey, optionDef]) => {
+            Object.entries(definitionRef[key].options || {}).forEach(([optionKey, optionDef]) => {
               processElement(optionDef);
               output.options[optionKey] = optionDef.default;
             });
@@ -130,7 +137,7 @@ export function parseArguments(args: string[], definition: Definition, cliOption
             argsToProcess = argsToProcess.slice(1);
           }
           output.location.push(key);
-          definitionRef = definitionRef[key].options as Definition;
+          definitionRef = (definitionRef[key] as Namespace).options || {};
           break;
         } else if (i === entries.length - 1) {
           // Options already processed, and no namespace/command found for current arg, so end
@@ -350,7 +357,7 @@ function generateHelp(definition: Definition = {}) {
 
 /** Get the scoped definition element for the given location */
 export function getDefinitionElement(
-  definition: Definition,
+  definition: Definition<DefinitionElement>,
   rawLocation: string[],
   cliOptions: CliOptions
 ): DefinitionElement | undefined {
