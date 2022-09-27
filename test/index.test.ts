@@ -29,7 +29,6 @@ describe("Cli.constructor", () => {
   it("CliOptions are default when instantiating with no options", () => {
     const c = new Cli({});
     expect(c.options).toStrictEqual({
-      extension: "js",
       baseLocation: "require.main.filename",
       baseScriptLocation: "require.main.filename",
       commandsPath: "commands",
@@ -43,7 +42,6 @@ describe("Cli.constructor", () => {
         autoInclude: true,
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
-        showOnFail: true,
       },
       version: {
         autoInclude: true,
@@ -62,7 +60,6 @@ describe("Cli.constructor", () => {
     };
     const c = new Cli({}, overrides);
     expect(c.options).toStrictEqual({
-      extension: "js",
       baseLocation: overrides.baseLocation,
       baseScriptLocation: overrides.baseScriptLocation,
       commandsPath: "commands",
@@ -76,7 +73,6 @@ describe("Cli.constructor", () => {
         autoInclude: overrides.help.autoInclude,
         aliases: ["--help"],
         description: "",
-        showOnFail: true,
       },
       version: {
         autoInclude: true,

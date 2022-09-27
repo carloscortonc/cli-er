@@ -34,7 +34,6 @@ describe("completeDefinition", () => {
     opt: {},
   };
   const cliOptions = {
-    extension: "js",
     baseLocation: "",
     baseScriptLocation: "",
     commandsPath: "",
@@ -48,7 +47,6 @@ describe("completeDefinition", () => {
       autoInclude: false,
       aliases: [],
       description: "",
-      showOnFail: true,
     },
     version: {
       autoInclude: false,

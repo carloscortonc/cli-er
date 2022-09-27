@@ -64,10 +64,6 @@ export type ParsingOutput = {
 };
 
 export type CliOptions = {
-  /** extension of the script files to be executed
-   * @deprecated since v0.5.0, will be removed in v0.6.0. Now is extracted from `path.extname(entryFile)`
-   */
-  extension: string;
   /** Location of the main cli application
    * @default path.dirname(require.main.filename)
    */
@@ -97,10 +93,6 @@ export type CliOptions = {
     aliases: string[];
     /** Description for the option */
     description: string;
-    /** Whether to print help when script run fails
-     * @deprecated since v0.5.0, will be removed in v0.6.0 - use `CliOptions.onFail.help` instead
-     */
-    showOnFail: boolean;
   };
   /** Version related configuration */
   version: {

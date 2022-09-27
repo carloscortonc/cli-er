@@ -200,7 +200,7 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   const validScriptPath = scriptPaths.find(fs.existsSync);
 
   if (!validScriptPath) {
-    if (cliOptions.help.showOnFail && cliOptions.onFail.help) {
+    if (cliOptions.onFail.help) {
       generateHelp(definition);
     }
     Logger.raw("There was a problem finding the script to run.");

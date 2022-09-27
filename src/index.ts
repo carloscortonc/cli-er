@@ -21,7 +21,6 @@ export default class Cli {
    */
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
     this.options = {
-      extension: "js",
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
       commandsPath: "commands",
@@ -35,7 +34,6 @@ export default class Cli {
         autoInclude: true,
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
-        showOnFail: true,
       },
       version: {
         autoInclude: true,
