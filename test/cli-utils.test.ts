@@ -12,6 +12,7 @@ import definition from "./data/definition.json";
 import readPackageUp from "read-pkg-up";
 //@ts-ignore
 import gcmd from "./data/gcmd";
+import { OptionValue, ParsingOutput } from "../src/types";
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -170,6 +171,24 @@ describe("parseArguments", () => {
     expect(parseArguments(["nms", "cmd", "cmdValue"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: "cmdValue", opt: undefined },
+    });
+  });
+  it("Option with value property", () => {
+    const d = new Cli({
+      test: {
+        default: "testvalue",
+      },
+      opt: {
+        value: (v: OptionValue, o: ParsingOutput["options"]) => {
+          // Attempt to modify options directly
+          delete o.test;
+          return (v as string).concat("-edited");
+        },
+      },
+    }).definition;
+    expect(parseArguments(["--opt", "optvalue"], d, cliOptions)).toStrictEqual({
+      options: { opt: "optvalue-edited", test: "testvalue", version: undefined, help: undefined },
+      location: expect.anything(),
     });
   });
   it("Returns error if wrong namespace/command provided", () => {

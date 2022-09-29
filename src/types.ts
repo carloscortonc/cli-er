@@ -33,9 +33,12 @@ type BasicElement = {
 };
 
 export type Option = BasicElement & {
+  /** Type of option */
   type?: ValueOf<Type>;
   /** Default value for the option */
   default?: OptionValue;
+  /** Method to modify an option value after parsing */
+  value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
 };
 
 export type Namespace = BasicElement & {

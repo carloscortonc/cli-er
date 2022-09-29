@@ -166,6 +166,15 @@ export function parseArguments(
       output.error = CliError.format(ErrorType.OPTION_NOT_FOUND, curr);
     }
   }
+
+  // Process value-transformations
+  Object.values(aliases)
+    .filter((v) => typeof v !== "string" && typeof v.value === "function")
+    .forEach((v) => {
+      const k = (v as Option).key!;
+      output.options[k] = (v as Option).value!(output.options[k], { ...output.options });
+    });
+
   return output;
 }
 
