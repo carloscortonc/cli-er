@@ -157,7 +157,13 @@ export function parseArguments(
     const optionDefinition = aliases[optionKey] as DefinitionElement;
     const outputKey = optionDefinition && (optionDefinition.key as string);
     if (aliases.hasOwnProperty(curr) && !aliases.hasOwnProperty(next) && next !== undefined) {
-      output.options[outputKey] = evaluateValue(next, output.options[outputKey], optionDefinition.type as Type);
+      try {
+        output.options[outputKey] = evaluateValue(next, output.options[outputKey], { ...optionDefinition, key: curr });
+      } catch (e: any) {
+        if (!output.error) {
+          output.error = e.message;
+        }
+      }
       i++; // skip next array value, already processed
     } else if (aliases.hasOwnProperty(optionKey) && (aliases[optionKey] as DefinitionElement).type === Type.BOOLEAN) {
       output.options[outputKey] = true;
@@ -179,22 +185,26 @@ export function parseArguments(
 }
 
 /** Evaluate the value of an option */
-function evaluateValue(value: string, current: OptionValue, type?: Type) {
+function evaluateValue(value: string, current: OptionValue, option: Option) {
+  const type = option.type;
   if (type === Type.BOOLEAN) {
     return [true, "true"].includes(value);
   } else if (type === Type.LIST) {
-    let newValue;
-    if (Array.isArray(value)) {
-      newValue = value;
-    }
-    newValue = typeof value === "string" ? value.split(",") : [];
-    return ((current as string[]) || []).concat(newValue);
+    return ((current as string[]) || []).concat(value.split(","));
   } else if (type === Type.NUMBER) {
-    return parseInt(value);
+    const v = parseInt(value);
+    if (!isNaN(v)) {
+      return v;
+    }
   } else if (type === Type.FLOAT) {
-    return parseFloat(value);
+    const v = parseFloat(value);
+    if (!isNaN(v)) {
+      return v;
+    }
+  } else {
+    return value;
   }
-  return value;
+  throw new Error(CliError.format(ErrorType.OPTION_WRONG_VALUE, option.key!, type, value));
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */

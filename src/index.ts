@@ -79,7 +79,8 @@ export default class Cli {
     const e = CliError.analize(opts.error);
     if (
       (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
-      (e === ErrorType.OPTION_NOT_FOUND && this.options.onFail.stopOnUnknownOption)
+      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE].includes(e as ErrorType) &&
+        this.options.onFail.stopOnUnknownOption)
     ) {
       return Logger.error(opts.error);
     }

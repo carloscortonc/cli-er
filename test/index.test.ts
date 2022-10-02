@@ -151,4 +151,12 @@ describe("Cli.run", () => {
     c.run([]);
     expect(errorlogger).toHaveBeenCalledWith("ERROR");
   });
+  it("Prints option-wrong-value error if configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_WRONG_VALUE);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
+    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const c = new Cli(definition);
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
+  });
 });

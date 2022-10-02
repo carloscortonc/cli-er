@@ -146,7 +146,11 @@ describe("parseArguments", () => {
       opt: { kind: "option", type: "number", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "1"], d, cliOptions).options.opt).toBe(1);
-    expect(parseArguments(["--opt", "not-a-number"], d, cliOptions).options.opt).toBe(NaN);
+    expect(parseArguments(["--opt", "not-a-number"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Wrong value for option "--opt". Expected <number> but found "not-a-number"',
+      location: expect.anything(),
+    });
     expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(undefined);
   });
   it("Parse FLOAT value", () => {
@@ -154,7 +158,11 @@ describe("parseArguments", () => {
       opt: { kind: "option", type: "float", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "1.5"], d, cliOptions).options.opt).toBe(1.5);
-    expect(parseArguments(["--opt", "not-a-number"], d, cliOptions).options.opt).toBe(NaN);
+    expect(parseArguments(["--opt", "not-a-number"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Wrong value for option "--opt". Expected <float> but found "not-a-number"',
+      location: expect.anything(),
+    });
     expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(undefined);
   });
   it("No arguments", () => {
@@ -210,7 +218,14 @@ describe("parseArguments", () => {
     expect(parseArguments(["nms", "cmd", "cmdvalue", "unknown-option"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
-      error: expect.stringContaining('Unknown option "unknown-option"'),
+      error: 'Unknown option "unknown-option"',
+    });
+  });
+  it("Returns error if option has incorrect value", () => {
+    expect(parseArguments(["nms", "cmd", "cmdvalue", "--opt", "true"], def, cliOptions)).toStrictEqual({
+      options: expect.anything(),
+      location: expect.anything(),
+      error: 'Wrong value for option "--opt". Expected <number> but found "true"',
     });
   });
 });
@@ -343,7 +358,7 @@ describe("getDefinitionElement", () => {
           type: "string",
           options: {
             opt: {
-              type: "boolean",
+              type: "number",
             },
           },
         },

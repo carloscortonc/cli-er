@@ -9,7 +9,7 @@
         "description": "Description for the command",
         "options": {
           "opt": {
-            "type": "boolean"
+            "type": "number"
           }
         }
       }
