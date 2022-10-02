@@ -302,6 +302,21 @@ Command with no options
 
 `);
   });
+  it("With location: resulting element is command with type", () => {
+    let output = "";
+    rawlogger.mockImplementation((m: any) => !!(output += m));
+    generateScopedHelp(
+      { cmd: { kind: "command", type: "string", description: "Command with type" } },
+      ["cmd"],
+      cliOptions
+    );
+    expect(output).toBe(`
+Usage:  cli-er cmd <string>
+
+Command with type
+
+`);
+  });
 });
 
 describe("getDefinitionElement", () => {

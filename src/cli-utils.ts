@@ -268,6 +268,7 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
       `\nUsage:  ${packagejson.name}`,
       location.length > 0 ? ` ${location.join(" ")}` : "",
       existingKinds.length > 0 ? formatKinds(existingKinds) : "",
+      element!.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
       hasOptions ? " [OPTIONS]" : "",
       "\n",
     ]
