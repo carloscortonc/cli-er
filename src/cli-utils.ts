@@ -191,6 +191,8 @@ function evaluateValue(value: string, current: OptionValue, type?: Type) {
     return ((current as string[]) || []).concat(newValue);
   } else if (type === Type.NUMBER) {
     return parseInt(value);
+  } else if (type === Type.FLOAT) {
+    return parseFloat(value);
   }
   return value;
 }

@@ -9,6 +9,7 @@ export enum Type {
   BOOLEAN = "boolean",
   LIST = "list",
   NUMBER = "number",
+  FLOAT = "float",
 }
 
 export type OptionValue = string | boolean | string[] | number | undefined;
