@@ -20,6 +20,7 @@ afterEach(() => {
 
 jest.mock("./data/gcmd", () => jest.fn());
 jest.mock("path", () => ({ ...jest.requireActual("path"), extname: () => ".js" }));
+jest.spyOn(process, "exit").mockImplementation();
 
 describe("completeDefinition", () => {
   const definition = {
@@ -233,7 +234,7 @@ describe("parseArguments", () => {
 describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
   it("Logs error if no baseScriptLocation configured", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" }, {});
     expect(errorlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
@@ -264,13 +265,13 @@ describe("executeScript", () => {
     (gcmd as any).mockImplementation(() => {
       throw new Error();
     });
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions, {});
     expect(errorlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem executing the script"));
   });
   it("Executes script if found", () => {
     (gcmd as any).mockImplementation();
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions, {});
     expect(gcmd).toHaveBeenCalledWith({ gcmd: "gcmdvalue" });
     expect(errorlogger).not.toHaveBeenCalled();
@@ -376,13 +377,13 @@ describe("getDefinitionElement", () => {
 describe("formatVersion", () => {
   const cliOptions = new Cli({}).options;
   it("No baseLocation: prints error", () => {
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     formatVersion({ ...cliOptions, baseLocation: undefined });
     expect(errorlogger).toHaveBeenCalledWith(expect.stringContaining("Unable to find base location"));
   });
   it("No package.json: prints error", () => {
     jest.spyOn(readPackageUp, "sync").mockImplementation(() => undefined);
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     formatVersion(cliOptions);
     expect(errorlogger).toHaveBeenCalledWith("Error reading package.json file");
   });

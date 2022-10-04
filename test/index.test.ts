@@ -138,7 +138,7 @@ describe("Cli.run", () => {
   it("Prints command-not-found error if configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition);
     c.run([]);
     expect(errorlogger).toHaveBeenCalledWith("ERROR");
@@ -146,7 +146,7 @@ describe("Cli.run", () => {
   it("Prints option-not-found error if configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_NOT_FOUND);
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition);
     c.run([]);
     expect(errorlogger).toHaveBeenCalledWith("ERROR");
@@ -154,7 +154,7 @@ describe("Cli.run", () => {
   it("Prints option-wrong-value error if configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_WRONG_VALUE);
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
-    const errorlogger = jest.spyOn(utils.Logger, "error").mockImplementation();
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition);
     c.run([]);
     expect(errorlogger).toHaveBeenCalledWith("ERROR");

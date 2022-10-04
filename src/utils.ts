@@ -26,6 +26,12 @@ export class Logger {
   static error = (...message: any[]) => this.log("ERROR", ...message);
 }
 
+/** Create a shortened method for logging an error an exiting */
+export const logErrorAndExit = (...message: any[]) => {
+  Logger.error(...message);
+  process.exit(1);
+};
+
 /** Merge two objects using lodash mergeWith, customizing array-merge */
 export function merge(objValue: object, srcValue: object) {
   function customizer(a: object, b: object) {

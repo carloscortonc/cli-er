@@ -12,4 +12,9 @@ new Cli({
       return p;
     },
   },
+  opt: {
+    aliases: ["-o", "--opt"],
+    type: "number",
+    description: "Generic option",
+  },
 }).run();

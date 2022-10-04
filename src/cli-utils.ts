@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import readPackageUp from "read-pkg-up";
 import { closest } from "fastest-levenshtein";
-import { ColumnFormatter, Logger } from "./utils";
+import { ColumnFormatter, logErrorAndExit, Logger } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, OptionValue, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
 
@@ -211,7 +211,7 @@ function evaluateValue(value: string, current: OptionValue, option: Option) {
 export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions, definition: Definition) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
-    return Logger.error("There was a problem finding base script location");
+    return logErrorAndExit("There was a problem finding base script location");
   }
 
   const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : undefined]
@@ -230,14 +230,14 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
       scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
     }
     Logger.raw("\n");
-    return;
+    process.exit(1);
   }
 
   try {
     const script = require(validScriptPath);
     (script.default || script)(options);
   } catch (e: any) {
-    Logger.error(`There was a problem executing the script (${validScriptPath})`);
+    logErrorAndExit(`There was a problem executing the script (${validScriptPath})`);
   }
 }
 
@@ -413,11 +413,11 @@ function findPackageJson(cliOptions: CliOptions) {
 /** Find and format the version of the application that is using this library */
 export function formatVersion(cliOptions: CliOptions) {
   if (!cliOptions.baseLocation) {
-    return Logger.error("Unable to find base location. You may configure this value via CliOptions.baseLocation");
+    return logErrorAndExit("Unable to find base location. You may configure this value via CliOptions.baseLocation");
   }
   const packagejson = findPackageJson(cliOptions);
   if (!packagejson) {
-    return Logger.error("Error reading package.json file");
+    return logErrorAndExit("Error reading package.json file");
   }
   Logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}`);
 }

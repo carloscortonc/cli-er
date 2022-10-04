@@ -8,7 +8,7 @@ import {
   getEntryPoint,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, Command } from "./types";
-import { clone, Logger, merge } from "./utils";
+import { clone, logErrorAndExit, merge } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 
 export default class Cli {
@@ -82,7 +82,7 @@ export default class Cli {
       ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE].includes(e as ErrorType) &&
         this.options.onFail.stopOnUnknownOption)
     ) {
-      return Logger.error(opts.error);
+      return logErrorAndExit(opts.error);
     }
     if (typeof command.action === "function") {
       return command.action(opts);

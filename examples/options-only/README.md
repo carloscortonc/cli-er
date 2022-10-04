@@ -14,4 +14,11 @@ node options-only.js
 
 # Provide "path" option with a relative value (Option.value since v0.6.0)
 node options-only.js --path ..
+
+# Provide wrong value for "opt" option
+node options-only.js --opt two
+# Check exit code on windows-cmd
+echo %ERRORLEVEL%
+# Check exit code on linux/windows-powershell
+echo $?
 ```
