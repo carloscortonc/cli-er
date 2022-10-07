@@ -12,7 +12,7 @@ import definition from "./data/definition.json";
 import readPackageUp from "read-pkg-up";
 //@ts-ignore
 import gcmd from "./data/gcmd";
-import { OptionValue, ParsingOutput } from "../src/types";
+import { LogType, OptionValue, ParsingOutput } from "../src/types";
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -233,58 +233,54 @@ describe("parseArguments", () => {
 
 describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
+  const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
+  const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
   it("Logs error if no baseScriptLocation configured", () => {
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" }, {});
-    expect(errorlogger).toHaveBeenCalledWith("There was a problem finding base script location");
+    expect(exitlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
   it("No valid script found: logs error (onFail.help=false, onFail.scriptPaths=false)", () => {
     const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, help: false, scriptPaths: false } };
-    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
     executeScript({ location: ["non-existent"], options: {} }, cliOptions_, {});
-    expect(rawlogger).not.toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(rawlogger).toHaveBeenCalledWith("There was a problem finding the script to run.");
-    expect(rawlogger).not.toHaveBeenCalledWith(" Considered paths were:\n");
+    expect(logger).not.toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
+    expect(exitlogger).not.toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
   });
   it("No valid script found: prints help + logs error (onFail.help=true, onFail.scriptPaths=false)", () => {
     const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, scriptPaths: false } };
-    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
     executeScript({ location: ["non-existent"], options: {} }, cliOptions_, { opt: { description: "description" } });
-    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(rawlogger).not.toHaveBeenCalledWith(" Considered paths were:\n");
+    expect(logger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
+    expect(exitlogger).not.toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
   });
   it("No valid script found: prints help + logs error + prints paths (onFail.help=true, onFail.scriptPaths=true)", () => {
-    const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
     executeScript({ location: ["non-existent"], options: {} }, cliOptions, { opt: { description: "description" } });
-    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(rawlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(rawlogger).toHaveBeenCalledWith(" Considered paths were:\n");
+    expect(logger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
+    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
+    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
   });
   it("Script execution fails: logs error", () => {
     (gcmd as any).mockImplementation(() => {
       throw new Error();
     });
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions, {});
-    expect(errorlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem executing the script"));
+    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem executing the script"));
   });
   it("Executes script if found", () => {
     (gcmd as any).mockImplementation();
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions, {});
     expect(gcmd).toHaveBeenCalledWith({ gcmd: "gcmdvalue" });
-    expect(errorlogger).not.toHaveBeenCalled();
+    expect(exitlogger).not.toHaveBeenCalled();
   });
 });
 
 describe("generateScopedHelp", () => {
   const cliOptions = new Cli({}).options;
-  const rawlogger = jest.spyOn(utils.Logger, "raw").mockImplementation(() => true);
+  const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
   const d = new Cli(definition).definition;
   it("With empty location (first level definition)", () => {
     let output = "";
-    rawlogger.mockImplementation((m: any) => !!(output += m));
+    logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(d, [], cliOptions);
     expect(output).toBe(`
 Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
@@ -303,7 +299,7 @@ Options:
   });
   it("With location", () => {
     let output = "";
-    rawlogger.mockImplementation((m: any) => !!(output += m));
+    logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(definition, ["nms"], cliOptions);
     expect(output).toBe(`
 Usage:  cli-er nms COMMAND
@@ -317,7 +313,7 @@ Commands:
   });
   it("With location: resulting element has no options", () => {
     let output = "";
-    rawlogger.mockImplementation((m: any) => !!(output += m));
+    logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp({ cmd: { kind: "command", description: "Command with no options" } }, ["cmd"], cliOptions);
     expect(output).toBe(`
 Usage:  cli-er cmd
@@ -328,7 +324,7 @@ Command with no options
   });
   it("With location: resulting element is command with type", () => {
     let output = "";
-    rawlogger.mockImplementation((m: any) => !!(output += m));
+    logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(
       { cmd: { kind: "command", type: "string", description: "Command with type" } },
       ["cmd"],
@@ -376,24 +372,23 @@ describe("getDefinitionElement", () => {
 
 describe("formatVersion", () => {
   const cliOptions = new Cli({}).options;
+  const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
   it("No baseLocation: prints error", () => {
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     formatVersion({ ...cliOptions, baseLocation: undefined });
-    expect(errorlogger).toHaveBeenCalledWith(expect.stringContaining("Unable to find base location"));
+    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("Unable to find base location"));
   });
   it("No package.json: prints error", () => {
     jest.spyOn(readPackageUp, "sync").mockImplementation(() => undefined);
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     formatVersion(cliOptions);
-    expect(errorlogger).toHaveBeenCalledWith("Error reading package.json file");
+    expect(exitlogger).toHaveBeenCalledWith("Error reading package.json file");
   });
   it("Finds package.json: prints formatted version", () => {
-    const logger = jest.spyOn(utils.Logger, "log").mockImplementation();
+    const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
     jest.spyOn(readPackageUp, "sync").mockImplementation(() => ({
       packageJson: { version: "1.0.0", name: "cli-app" },
       path: "",
     }));
     formatVersion(cliOptions);
-    expect(logger).toHaveBeenCalledWith("  cli-app version: 1.0.0");
+    expect(logger).toHaveBeenCalledWith("  cli-app version: 1.0.0\n");
   });
 });

@@ -2,9 +2,10 @@ import path from "path";
 import fs from "fs";
 import readPackageUp from "read-pkg-up";
 import { closest } from "fastest-levenshtein";
-import { ColumnFormatter, logErrorAndExit, Logger } from "./utils";
+import { ColumnFormatter, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, OptionValue, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
+import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking */
 type DefinitionElement = Namespace & Command & Option;
@@ -224,13 +225,12 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     if (cliOptions.onFail.help) {
       generateHelp(definition);
     }
-    Logger.raw("There was a problem finding the script to run.");
+    let errorMessage = "There was a problem finding the script to run.";
     if (cliOptions.onFail.scriptPaths) {
-      Logger.raw(" Considered paths were:\n");
-      scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
+      errorMessage += " Considered paths were:\n";
+      errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp, "\n"), errorMessage);
     }
-    Logger.raw("\n");
-    process.exit(1);
+    return logErrorAndExit(errorMessage);
   }
 
   try {
@@ -287,7 +287,7 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
       .join("")
       .concat(elementInfo);
   }
-  Logger.raw(elementInfo);
+  Cli.logger.log(elementInfo);
   generateHelp(definitionRef);
 }
 
@@ -374,7 +374,7 @@ function generateHelp(definition: Definition = {}) {
       return acc;
     }, formattedHelp);
 
-  Logger.raw(formattedHelp);
+  Cli.logger.log(formattedHelp);
 }
 
 /** Get the scoped definition element for the given location */
@@ -419,7 +419,7 @@ export function formatVersion(cliOptions: CliOptions) {
   if (!packagejson) {
     return logErrorAndExit("Error reading package.json file");
   }
-  Logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}`);
+  Cli.logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}\n`);
 }
 
 /** Find the closest namespace/command based on the given target and location */

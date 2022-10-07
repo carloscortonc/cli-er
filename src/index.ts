@@ -7,11 +7,13 @@ import {
   formatVersion,
   getEntryPoint,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, Command } from "./types";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger } from "./types";
 import { clone, logErrorAndExit, merge } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
+import CliLogger from "./cli-logger";
 
 export default class Cli {
+  static logger: ICliLogger = new CliLogger();
   definition: Definition;
   options: CliOptions;
   /** Creates a new Cli instance
@@ -41,6 +43,8 @@ export default class Cli {
         description: "Display version",
       },
     };
+    // Allow to override logger implementation
+    Object.assign(Cli.logger, options.logger || {});
     merge(this.options, options);
     this.definition = completeDefinition(clone(definition), this.options);
     return this;

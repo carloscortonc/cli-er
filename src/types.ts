@@ -67,6 +67,22 @@ export type ParsingOutput = {
   error?: string;
 };
 
+export enum LogType {
+  LOG = "log",
+  ERROR = "error",
+}
+
+export interface ICliLogger {
+  /** Method for general logs. Must not add a new line at the end.
+   * @default process.stdout.write("".concat(message.join(" ")));
+   */
+  log: (...message: any[]) => void;
+  /** Method for logging errors. Must not add a new line at the end.
+   * @default process.stderr.write("ERROR ".concat(message.join(" ")))
+   */
+  error: (...message: any[]) => void;
+}
+
 export type CliOptions = {
   /** Location of the main cli application
    * @default path.dirname(require.main.filename)
@@ -107,4 +123,5 @@ export type CliOptions = {
     /** Description for the option */
     description: string;
   };
+  logger?: Partial<ICliLogger>;
 };

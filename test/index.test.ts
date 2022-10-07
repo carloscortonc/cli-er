@@ -3,6 +3,7 @@ import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
+import { LogType } from "../src/types";
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
 
@@ -80,6 +81,16 @@ describe("Cli.constructor", () => {
         description: "",
       },
     });
+  });
+  it("Override default logger", () => {
+    const logger = jest.fn();
+    const log = (...message: any[]) => logger("CUSTOMLOG ".concat(message.join(" ")));
+    const error = (...message: any[]) => logger("CUSTOMERROR ".concat(message.join(" ")));
+    new Cli({}, { logger: { log, error } });
+    Cli.logger.log("some text");
+    expect(logger).toHaveBeenCalledWith("CUSTOMLOG some text");
+    Cli.logger.error("some text");
+    expect(logger).toHaveBeenCalledWith("CUSTOMERROR some text");
   });
 });
 

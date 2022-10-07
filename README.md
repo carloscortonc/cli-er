@@ -182,6 +182,10 @@ prints its name and version.
 > **Note**
 > version-generation option is auto-included by default. This can be configured via `CliOptions.version`
 
+## Custom logger
+
+You may change the default logger via `CliOptions.logger`. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L122).
+
 ## Typescript cli
 
 You can check [this example](./examples/ts-cli) on how to write a full typescript cli application.
