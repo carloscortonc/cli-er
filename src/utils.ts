@@ -1,5 +1,6 @@
 import mergeWith from "lodash.mergewith";
 import lodashclone from "lodash.clonedeep";
+import Cli from ".";
 
 export const clone = (o: any) => lodashclone(o);
 
@@ -19,12 +20,11 @@ export class ColumnFormatter {
   }
 }
 
-/** Utility class for generating consistent logs. Space for improvement and customization */
-export class Logger {
-  static raw = (message: string) => process.stdout.write(message);
-  static log = (...message: any[]) => console.log(...message);
-  static error = (...message: any[]) => this.log("ERROR", ...message);
-}
+/** Shortened method for logging an error an exiting */
+export const logErrorAndExit = (...message: any[]) => {
+  Cli.logger.error(...message, "\n");
+  process.exit(1);
+};
 
 /** Merge two objects using lodash mergeWith, customizing array-merge */
 export function merge(objValue: object, srcValue: object) {

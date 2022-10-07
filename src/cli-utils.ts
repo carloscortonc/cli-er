@@ -2,9 +2,10 @@ import path from "path";
 import fs from "fs";
 import readPackageUp from "read-pkg-up";
 import { closest } from "fastest-levenshtein";
-import { ColumnFormatter, Logger } from "./utils";
+import { ColumnFormatter, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, OptionValue, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
+import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking */
 type DefinitionElement = Namespace & Command & Option;
@@ -157,7 +158,13 @@ export function parseArguments(
     const optionDefinition = aliases[optionKey] as DefinitionElement;
     const outputKey = optionDefinition && (optionDefinition.key as string);
     if (aliases.hasOwnProperty(curr) && !aliases.hasOwnProperty(next) && next !== undefined) {
-      output.options[outputKey] = evaluateValue(next, output.options[outputKey], optionDefinition.type as Type);
+      try {
+        output.options[outputKey] = evaluateValue(next, output.options[outputKey], { ...optionDefinition, key: curr });
+      } catch (e: any) {
+        if (!output.error) {
+          output.error = e.message;
+        }
+      }
       i++; // skip next array value, already processed
     } else if (aliases.hasOwnProperty(optionKey) && (aliases[optionKey] as DefinitionElement).type === Type.BOOLEAN) {
       output.options[outputKey] = true;
@@ -166,31 +173,46 @@ export function parseArguments(
       output.error = CliError.format(ErrorType.OPTION_NOT_FOUND, curr);
     }
   }
+
+  // Process value-transformations
+  Object.values(aliases)
+    .filter((v) => typeof v !== "string" && typeof v.value === "function")
+    .forEach((v) => {
+      const k = (v as Option).key!;
+      output.options[k] = (v as Option).value!(output.options[k], { ...output.options });
+    });
+
   return output;
 }
 
 /** Evaluate the value of an option */
-function evaluateValue(value: string, current: OptionValue, type?: Type) {
+function evaluateValue(value: string, current: OptionValue, option: Option) {
+  const type = option.type;
   if (type === Type.BOOLEAN) {
     return [true, "true"].includes(value);
   } else if (type === Type.LIST) {
-    let newValue;
-    if (Array.isArray(value)) {
-      newValue = value;
-    }
-    newValue = typeof value === "string" ? value.split(",") : [];
-    return ((current as string[]) || []).concat(newValue);
+    return ((current as string[]) || []).concat(value.split(","));
   } else if (type === Type.NUMBER) {
-    return parseInt(value);
+    const v = parseInt(value);
+    if (!isNaN(v)) {
+      return v;
+    }
+  } else if (type === Type.FLOAT) {
+    const v = parseFloat(value);
+    if (!isNaN(v)) {
+      return v;
+    }
+  } else {
+    return value;
   }
-  return value;
+  throw new Error(CliError.format(ErrorType.OPTION_WRONG_VALUE, option.key!, type, value));
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
 export function executeScript({ location, options }: ParsingOutput, cliOptions: CliOptions, definition: Definition) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
-    return Logger.error("There was a problem finding base script location");
+    return logErrorAndExit("There was a problem finding base script location");
   }
 
   const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : undefined]
@@ -200,23 +222,22 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   const validScriptPath = scriptPaths.find(fs.existsSync);
 
   if (!validScriptPath) {
-    if (cliOptions.help.showOnFail && cliOptions.onFail.help) {
+    if (cliOptions.onFail.help) {
       generateHelp(definition);
     }
-    Logger.raw("There was a problem finding the script to run.");
+    let errorMessage = "There was a problem finding the script to run.";
     if (cliOptions.onFail.scriptPaths) {
-      Logger.raw(" Considered paths were:\n");
-      scriptPaths.forEach((sp) => Logger.log("  ".concat(sp)));
+      errorMessage += " Considered paths were:\n";
+      errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp, "\n"), errorMessage);
     }
-    Logger.raw("\n");
-    return;
+    return logErrorAndExit(errorMessage);
   }
 
   try {
     const script = require(validScriptPath);
     (script.default || script)(options);
   } catch (e: any) {
-    Logger.error(`There was a problem executing the script (${validScriptPath})`);
+    logErrorAndExit(`There was a problem executing the script (${validScriptPath})`);
   }
 }
 
@@ -259,13 +280,14 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
       `\nUsage:  ${packagejson.name}`,
       location.length > 0 ? ` ${location.join(" ")}` : "",
       existingKinds.length > 0 ? formatKinds(existingKinds) : "",
+      element!.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
       hasOptions ? " [OPTIONS]" : "",
       "\n",
     ]
       .join("")
       .concat(elementInfo);
   }
-  Logger.raw(elementInfo);
+  Cli.logger.log(elementInfo);
   generateHelp(definitionRef);
 }
 
@@ -352,7 +374,7 @@ function generateHelp(definition: Definition = {}) {
       return acc;
     }, formattedHelp);
 
-  Logger.raw(formattedHelp);
+  Cli.logger.log(formattedHelp);
 }
 
 /** Get the scoped definition element for the given location */
@@ -391,13 +413,13 @@ function findPackageJson(cliOptions: CliOptions) {
 /** Find and format the version of the application that is using this library */
 export function formatVersion(cliOptions: CliOptions) {
   if (!cliOptions.baseLocation) {
-    return Logger.error("Unable to find base location. You may configure this value via CliOptions.baseLocation");
+    return logErrorAndExit("Unable to find base location. You may configure this value via CliOptions.baseLocation");
   }
   const packagejson = findPackageJson(cliOptions);
   if (!packagejson) {
-    return Logger.error("Error reading package.json file");
+    return logErrorAndExit("Error reading package.json file");
   }
-  Logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}`);
+  Cli.logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}\n`);
 }
 
 /** Find the closest namespace/command based on the given target and location */

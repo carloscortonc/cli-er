@@ -9,6 +9,7 @@ export enum Type {
   BOOLEAN = "boolean",
   LIST = "list",
   NUMBER = "number",
+  FLOAT = "float",
 }
 
 export type OptionValue = string | boolean | string[] | number | undefined;
@@ -33,9 +34,12 @@ type BasicElement = {
 };
 
 export type Option = BasicElement & {
+  /** Type of option */
   type?: ValueOf<Type>;
   /** Default value for the option */
   default?: OptionValue;
+  /** Method to modify an option value after parsing */
+  value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
 };
 
 export type Namespace = BasicElement & {
@@ -63,11 +67,23 @@ export type ParsingOutput = {
   error?: string;
 };
 
-export type CliOptions = {
-  /** extension of the script files to be executed
-   * @deprecated since v0.5.0, will be removed in v0.6.0. Now is extracted from `path.extname(entryFile)`
+export enum LogType {
+  LOG = "log",
+  ERROR = "error",
+}
+
+export interface ICliLogger {
+  /** Method for general logs. Must not add a new line at the end.
+   * @default process.stdout.write("".concat(message.join(" ")));
    */
-  extension: string;
+  log: (...message: any[]) => void;
+  /** Method for logging errors. Must not add a new line at the end.
+   * @default process.stderr.write("ERROR ".concat(message.join(" ")))
+   */
+  error: (...message: any[]) => void;
+}
+
+export type CliOptions = {
   /** Location of the main cli application
    * @default path.dirname(require.main.filename)
    */
@@ -97,10 +113,6 @@ export type CliOptions = {
     aliases: string[];
     /** Description for the option */
     description: string;
-    /** Whether to print help when script run fails
-     * @deprecated since v0.5.0, will be removed in v0.6.0 - use `CliOptions.onFail.help` instead
-     */
-    showOnFail: boolean;
   };
   /** Version related configuration */
   version: {
@@ -111,4 +123,5 @@ export type CliOptions = {
     /** Description for the option */
     description: string;
   };
+  logger?: Partial<ICliLogger>;
 };

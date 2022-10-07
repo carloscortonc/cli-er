@@ -19,7 +19,10 @@ node docker.js builder builds
 # Execute "build" command (default options)
 node docker.js builder build
 
-# Execute "prune" command with options
+# Execute "prune" command with wrong value for keepStorage option
+node docker.js builder prune --all --filter until=24 -f true --keep-storage yes
+
+# Execute "prune" command with correct options
 node docker.js builder prune --all --filter until=24 -f true --keep-storage 100
 
 # Print error when unknown option is provided (since v0.5.0)

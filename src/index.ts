@@ -7,11 +7,13 @@ import {
   formatVersion,
   getEntryPoint,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, Command } from "./types";
-import { clone, Logger, merge } from "./utils";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger } from "./types";
+import { clone, logErrorAndExit, merge } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
+import CliLogger from "./cli-logger";
 
 export default class Cli {
+  static logger: ICliLogger = new CliLogger();
   definition: Definition;
   options: CliOptions;
   /** Creates a new Cli instance
@@ -21,7 +23,6 @@ export default class Cli {
    */
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
     this.options = {
-      extension: "js",
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
       commandsPath: "commands",
@@ -35,7 +36,6 @@ export default class Cli {
         autoInclude: true,
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
-        showOnFail: true,
       },
       version: {
         autoInclude: true,
@@ -43,6 +43,8 @@ export default class Cli {
         description: "Display version",
       },
     };
+    // Allow to override logger implementation
+    Object.assign(Cli.logger, options.logger || {});
     merge(this.options, options);
     this.definition = completeDefinition(clone(definition), this.options);
     return this;
@@ -81,9 +83,10 @@ export default class Cli {
     const e = CliError.analize(opts.error);
     if (
       (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
-      (e === ErrorType.OPTION_NOT_FOUND && this.options.onFail.stopOnUnknownOption)
+      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE].includes(e as ErrorType) &&
+        this.options.onFail.stopOnUnknownOption)
     ) {
-      return Logger.error(opts.error);
+      return logErrorAndExit(opts.error);
     }
     if (typeof command.action === "function") {
       return command.action(opts);
