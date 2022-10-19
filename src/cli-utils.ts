@@ -295,15 +295,10 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
 function generateHelp(definition: Definition = {}) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
-  enum Section {
-    namespaces,
-    commands,
-    options,
-  }
   let formattedHelp = "\n";
 
   type ExtendedDefinitionElement = DefinitionElement & { name: string };
-  type Sections = { [key in Section]: { title: string; content: ExtendedDefinitionElement[] } };
+  type Sections = { [key in Kind]: { title: string; content: ExtendedDefinitionElement[] } };
 
   // Generate the formatted versions of aliases
   const formatAliases = (aliases: string[] = []) => aliases.join(", ");
@@ -322,35 +317,27 @@ function generateHelp(definition: Definition = {}) {
 
   // Initialize sections
   const sectionsTemplate: Sections = {
-    [Section.namespaces]: {
+    [Kind.NAMESPACE]: {
       title: "Namespaces:",
       content: [],
     },
-    [Section.commands]: {
+    [Kind.COMMAND]: {
       title: "Commands:",
       content: [],
     },
-    [Section.options]: {
+    [Kind.OPTION]: {
       title: "Options:",
       content: [],
     },
   };
 
   // Caculate all sections and process section values
-  const { sections, formattedNames }: { sections: Sections; formattedNames: string[] } = Object.entries(definition)
-    .filter(([_, { hidden }]) => hidden !== true)
+  const { sections, formattedNames }: { sections: Sections; formattedNames: string[] } = Object.values(definition)
+    .filter(({ hidden }) => hidden !== true)
     .reduce(
-      (acc: any, [key, element]) => {
-        let section,
-          name = key;
-        if (element.kind === Kind.NAMESPACE) {
-          section = Section.namespaces;
-        } else if (element.kind === Kind.COMMAND) {
-          section = Section.commands;
-        } else {
-          section = Section.options;
+      (acc: any, element) => {
+        const section = element.kind as string,
           name = formatAliases(element.aliases);
-        }
         const completeElement = { ...element, name };
         acc.formattedNames.push(name);
         acc.sections[section].content.push(completeElement);
