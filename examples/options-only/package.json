@@ -1,7 +1,7 @@
 {
-  "name": "options-only",
+  "name": "index",
   "version": "1.0.0",
-  "main": "options-only.js",
+  "main": "index.js",
   "author": "carloscortonc",
   "dependencies": {
     "cli-er": "0.6.0"
