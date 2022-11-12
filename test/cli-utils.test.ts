@@ -262,10 +262,12 @@ describe("executeScript", () => {
   });
   it("Script execution fails: logs error", () => {
     (gcmd as any).mockImplementation(() => {
-      throw new Error();
+      throw new Error("errormessage");
     });
     executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions, d);
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem executing the script"));
+    expect(exitlogger).toHaveBeenCalledWith(
+      expect.stringMatching("There was a problem executing the script (.+: errormessage)")
+    );
   });
   it("Executes script if found", () => {
     (gcmd as any).mockImplementation();

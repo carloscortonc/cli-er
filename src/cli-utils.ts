@@ -237,7 +237,7 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     const script = require(validScriptPath);
     (script.default || script)(options);
   } catch (e: any) {
-    logErrorAndExit(`There was a problem executing the script (${validScriptPath})`);
+    logErrorAndExit(`There was a problem executing the script (${validScriptPath}: ${e.message})`);
   }
 }
 
