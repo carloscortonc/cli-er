@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 jest.mock("./data/gcmd", () => jest.fn());
-jest.mock("path", () => ({ ...jest.requireActual("path"), extname: () => ".js" }));
+jest.mock("path", () => ({ ...jest.requireActual("path"), parse: () => ({ name: "script", ext: ".js" }) }));
 jest.spyOn(process, "exit").mockImplementation();
 
 describe("completeDefinition", () => {

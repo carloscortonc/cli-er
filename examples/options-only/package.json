@@ -1,9 +1,9 @@
 {
-  "name": "index",
+  "name": "options-only",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "options-only.js",
   "author": "carloscortonc",
   "dependencies": {
-    "cli-er": "0.6.0"
+    "cli-er": "0.7.0"
   }
 }

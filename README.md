@@ -67,7 +67,7 @@ You can check the [docker-based example](./examples/docker) for a more in-depth 
 ### parse(args)
 
 Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If an error is generated during the process, it will be registered inside an `error` field.
-An option value may be modified after the parsing process is completed (check [this code](./examples/options-only/options-only.js#L8) for a use case): this can be achieved by defining `Option.value` with the following signature:
+An option value may be modified after the parsing process is completed (check [this code](./examples/options-only/options-only.js#L13) for a use case): this can be achieved by defining `Option.value` with the following signature:
 
 ```typescript
 type value = (v: OptionValue, o: ParsingOutput.options) => OptionValue;

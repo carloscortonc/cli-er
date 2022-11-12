@@ -214,10 +214,11 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   if (!base) {
     return logErrorAndExit("There was a problem finding base script location");
   }
+  const entryFile = path.parse(getEntryFile());
 
-  const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : undefined]
+  const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : entryFile.name]
     .filter((p) => p)
-    .map((p) => path.join(base, p!.concat(path.extname(getEntryFile()))));
+    .map((p) => path.join(base, p!.concat(entryFile.ext)));
 
   const validScriptPath = scriptPaths.find(fs.existsSync);
 
