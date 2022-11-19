@@ -9,10 +9,9 @@ import {
 import Cli from "../src";
 import * as utils from "../src/utils";
 import definition from "./data/definition.json";
-import readPackageUp from "read-pkg-up";
 //@ts-ignore
 import gcmd from "./data/gcmd";
-import { LogType, OptionValue, ParsingOutput } from "../src/types";
+import { OptionValue, ParsingOutput } from "../src/types";
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -55,6 +54,8 @@ describe("completeDefinition", () => {
       aliases: [],
       description: "",
     },
+    cliName: "",
+    cliVersion: "",
   };
   it("Completes missing fields in definition with nested content ", () => {
     const completedDefinition = completeDefinition(definition, cliOptions);
@@ -375,23 +376,9 @@ describe("getDefinitionElement", () => {
 
 describe("formatVersion", () => {
   const cliOptions = new Cli({}).options;
-  const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-  it("No baseLocation: prints error", () => {
-    formatVersion({ ...cliOptions, baseLocation: undefined });
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("Unable to find base location"));
-  });
-  it("No package.json: prints error", () => {
-    jest.spyOn(readPackageUp, "sync").mockImplementation(() => undefined);
-    formatVersion(cliOptions);
-    expect(exitlogger).toHaveBeenCalledWith("Error reading package.json file");
-  });
-  it("Finds package.json: prints formatted version", () => {
+  it("Prints formatted version", () => {
     const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
-    jest.spyOn(readPackageUp, "sync").mockImplementation(() => ({
-      packageJson: { version: "1.0.0", name: "cli-app" },
-      path: "",
-    }));
-    formatVersion(cliOptions);
+    formatVersion({ ...cliOptions, cliName: "cli-app", cliVersion: "1.0.0" });
     expect(logger).toHaveBeenCalledWith("  cli-app version: 1.0.0\n");
   });
 });

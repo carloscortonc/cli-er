@@ -123,5 +123,14 @@ export type CliOptions = {
     /** Description for the option */
     description: string;
   };
+  /** Logger to be used by the cli */
   logger?: Partial<ICliLogger>;
+  /** Cli name to be used instead of the one defined in package.json
+   * @default packageJson.name
+   */
+  cliName: string;
+  /** Cli version to be used instead of the one defined in package.json
+   * @default packageJson.version
+   */
+  cliVersion: string;
 };

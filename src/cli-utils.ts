@@ -11,7 +11,7 @@ import Cli from ".";
 type DefinitionElement = Namespace & Command & Option;
 
 /** Get the file location of the main cli application */
-function getEntryFile() {
+export function getEntryFile() {
   return require.main ? require.main.filename : process.cwd();
 }
 
@@ -243,7 +243,6 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
 }
 
 export function generateScopedHelp(definition: Definition, rawLocation: string[], cliOptions: CliOptions) {
-  const packagejson = findPackageJson(cliOptions);
   const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
@@ -258,36 +257,34 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
     }
   }
   // Add usage section
-  if (packagejson) {
-    const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
-      (acc, curr) => {
-        if (curr.kind === Kind.OPTION) {
-          acc.hasOptions = true;
-        } else if (acc.existingKinds.indexOf(curr.kind as string) < 0) {
-          acc.existingKinds.push(curr.kind as string);
-        }
-        return acc;
-      },
-      { existingKinds: [] as string[], hasOptions: false }
-    );
+  const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
+    (acc, curr) => {
+      if (curr.kind === Kind.OPTION) {
+        acc.hasOptions = true;
+      } else if (acc.existingKinds.indexOf(curr.kind as string) < 0) {
+        acc.existingKinds.push(curr.kind as string);
+      }
+      return acc;
+    },
+    { existingKinds: [] as string[], hasOptions: false }
+  );
 
-    const formatKinds = (kinds: string[]) =>
-      ` ${kinds
-        .sort((a) => (a === Kind.NAMESPACE ? -1 : 1))
-        .join("|")
-        .toUpperCase()}`;
+  const formatKinds = (kinds: string[]) =>
+    ` ${kinds
+      .sort((a) => (a === Kind.NAMESPACE ? -1 : 1))
+      .join("|")
+      .toUpperCase()}`;
 
-    elementInfo = [
-      `\nUsage:  ${packagejson.name}`,
-      location.length > 0 ? ` ${location.join(" ")}` : "",
-      existingKinds.length > 0 ? formatKinds(existingKinds) : "",
-      element!.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
-      hasOptions ? " [OPTIONS]" : "",
-      "\n",
-    ]
-      .join("")
-      .concat(elementInfo);
-  }
+  elementInfo = [
+    `\nUsage:  ${cliOptions.cliName}`,
+    location.length > 0 ? ` ${location.join(" ")}` : "",
+    existingKinds.length > 0 ? formatKinds(existingKinds) : "",
+    element!.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
+    hasOptions ? " [OPTIONS]" : "",
+    "\n",
+  ]
+    .join("")
+    .concat(elementInfo);
   Cli.logger.log(elementInfo);
   generateHelp(definitionRef);
 }
@@ -390,7 +387,7 @@ export function getDefinitionElement(
 }
 
 /** Find the package.json of the application that is using this library */
-function findPackageJson(cliOptions: CliOptions) {
+export function findPackageJson(cliOptions: CliOptions) {
   const packagejson = readPackageUp.sync({ cwd: cliOptions.baseLocation });
   if (!packagejson || !packagejson.packageJson) {
     return undefined;
@@ -400,14 +397,7 @@ function findPackageJson(cliOptions: CliOptions) {
 
 /** Find and format the version of the application that is using this library */
 export function formatVersion(cliOptions: CliOptions) {
-  if (!cliOptions.baseLocation) {
-    return logErrorAndExit("Unable to find base location. You may configure this value via CliOptions.baseLocation");
-  }
-  const packagejson = findPackageJson(cliOptions);
-  if (!packagejson) {
-    return logErrorAndExit("Error reading package.json file");
-  }
-  Cli.logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}\n`);
+  Cli.logger.log(`${" ".repeat(2)}${cliOptions.cliName} version: ${cliOptions.cliVersion}\n`);
 }
 
 /** Find the closest namespace/command based on the given target and location */

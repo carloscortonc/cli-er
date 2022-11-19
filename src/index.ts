@@ -6,11 +6,14 @@ import {
   getDefinitionElement,
   formatVersion,
   getEntryPoint,
+  getEntryFile,
+  findPackageJson,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger } from "./types";
 import { clone, logErrorAndExit, merge } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
+import path from "path";
 
 export default class Cli {
   static logger: ICliLogger = new CliLogger();
@@ -42,10 +45,20 @@ export default class Cli {
         aliases: ["-v", "--version"],
         description: "Display version",
       },
+      cliName: "",
+      cliVersion: "",
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
     merge(this.options, options);
+    // Read cliName and cliVersion from package.json, if not provided
+    const packagejson: any = findPackageJson(this.options) || {};
+    if (!this.options.cliName) {
+      this.options.cliName = packagejson.name || path.parse(getEntryFile()).name;
+    }
+    if (!this.options.cliVersion) {
+      this.options.cliVersion = packagejson.version || "-";
+    }
     this.definition = completeDefinition(clone(definition), this.options);
     return this;
   }
