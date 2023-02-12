@@ -1,10 +1,10 @@
-Currently, CLIs with only options can be built in two ways:
+CLIs with only options can be built with a single script file. Here we export the default function that contains the cli logic, and also invoke `Cli.run()`, only when the script is directly called by node. For this we can use:
 
-- Using a main cli file (`options-only.js` in this case) to define the options, and an `index.js` containing the default function export that will receive the parsed options.
-- Avoid `Cli.run`, using `Cli.parse` instead, which will return the parsed options.
-
-The benefit of the first is that it includes some common features (automanaged help and version options, error checking) that the second lacks, while
-the second might seem cleaner with a single code file.
+```js
+if (require.main === module) {
+  // invoke run method
+}
+```
 
 ## Example executions:
 
@@ -21,4 +21,7 @@ node options-only.js --opt two
 echo %ERRORLEVEL%
 # Check exit code on linux/windows-powershell
 echo $?
+
+# Print help from secondary cli-app: name is overriden (CliOptions.cliName since v0.7.0)
+node secondary-cli.js -h
 ```

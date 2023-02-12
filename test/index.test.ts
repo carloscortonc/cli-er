@@ -3,9 +3,15 @@ import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
-import { LogType } from "../src/types";
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
+jest.spyOn(cliutils, "findPackageJson").mockImplementation(
+  (_: any) =>
+    ({
+      version: "1.0.0",
+      name: "cli-app",
+    } as any)
+);
 
 describe("Cli.constructor", () => {
   it("Resulting definition contains only auto-included options when provided with empty definition", () => {
@@ -49,6 +55,8 @@ describe("Cli.constructor", () => {
         aliases: ["-v", "--version"],
         description: "Display version",
       },
+      cliName: "cli-app",
+      cliVersion: "1.0.0",
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
@@ -58,6 +66,8 @@ describe("Cli.constructor", () => {
       help: { autoInclude: false, aliases: ["--help"], description: "" },
       version: { aliases: ["--version"], description: "" },
       onFail: { suggestion: false },
+      cliName: "custom-name",
+      cliVersion: "2.0.0",
     };
     const c = new Cli({}, overrides);
     expect(c.options).toStrictEqual({
@@ -80,6 +90,8 @@ describe("Cli.constructor", () => {
         aliases: ["--version"],
         description: "",
       },
+      cliName: "custom-name",
+      cliVersion: "2.0.0",
     });
   });
   it("Override default logger", () => {
@@ -91,6 +103,22 @@ describe("Cli.constructor", () => {
     expect(logger).toHaveBeenCalledWith("CUSTOMLOG some text");
     Cli.logger.error("some text");
     expect(logger).toHaveBeenCalledWith("CUSTOMERROR some text");
+  });
+  it("Use name and version from package.json if not provided", () => {
+    const cli = new Cli({});
+    expect(cli.options).toMatchObject({
+      cliName: "cli-app",
+      cliVersion: "1.0.0",
+    });
+  });
+  it("Use name and version from fallback if not provided and no package.json found", () => {
+    jest.spyOn(cliutils, "findPackageJson").mockImplementation((_: any) => undefined);
+    jest.spyOn(cliutils, "getEntryFile").mockImplementation(() => "script-name");
+    const cli = new Cli({});
+    expect(cli.options).toMatchObject({
+      cliName: "script-name",
+      cliVersion: "-",
+    });
   });
 });
 
@@ -139,6 +167,18 @@ describe("Cli.run", () => {
     const c = new Cli(definition);
     c.run(["--help"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
+  });
+  it("Calling run with help option invokes help-generation - wrong location", () => {
+    const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
+    const logger: any = { error: jest.fn() };
+    const c = new Cli(definition, { logger });
+    c.run(["nms", "unknown", "--help"]);
+    // generateScopedHelped gets called with valid-location part
+    expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringMatching(/Command "\w+" not found. Did you mean "\w+" \?/),
+      "\n"
+    );
   });
   it("Calling run with version option invokes version-formatting", () => {
     const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();

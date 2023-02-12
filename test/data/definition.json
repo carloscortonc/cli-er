@@ -15,11 +15,32 @@
       }
     }
   },
+  "nmsi": {
+    "kind": "namespace",
+    "hidden": true,
+    "options": {
+      "nested-nms": {
+        "kind": "namespace",
+        "options": {
+          "cmd": {
+            "kind": "cmd"
+          },
+          "nested-nms-o": {
+            "kind": "option"
+          }
+        }
+      },
+      "nmsi-o": {
+        "kind": "option"
+      }
+    }
+  },
   "gcmd": {
     "kind": "command",
     "description": "Description for global command"
   },
   "globalOption": {
+    "kind": "option",
     "aliases": ["-g", "--global"],
     "default": "globalvalue",
     "description": "Option shared between all commands"

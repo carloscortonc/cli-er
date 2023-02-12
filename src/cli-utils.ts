@@ -11,7 +11,7 @@ import Cli from ".";
 type DefinitionElement = Namespace & Command & Option;
 
 /** Get the file location of the main cli application */
-function getEntryFile() {
+export function getEntryFile() {
   return require.main ? require.main.filename : process.cwd();
 }
 
@@ -214,10 +214,11 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   if (!base) {
     return logErrorAndExit("There was a problem finding base script location");
   }
+  const entryFile = path.parse(getEntryFile());
 
-  const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : undefined]
+  const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : entryFile.name]
     .filter((p) => p)
-    .map((p) => path.join(base, p!.concat(path.extname(getEntryFile()))));
+    .map((p) => path.join(base, p!.concat(entryFile.ext)));
 
   const validScriptPath = scriptPaths.find(fs.existsSync);
 
@@ -237,13 +238,12 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
     const script = require(validScriptPath);
     (script.default || script)(options);
   } catch (e: any) {
-    logErrorAndExit(`There was a problem executing the script (${validScriptPath})`);
+    logErrorAndExit(`There was a problem executing the script (${validScriptPath}: ${e.message})`);
   }
 }
 
 export function generateScopedHelp(definition: Definition, rawLocation: string[], cliOptions: CliOptions) {
-  const packagejson = findPackageJson(cliOptions);
-  const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
+  let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
   let elementInfo = "";
@@ -254,39 +254,38 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
     } else {
       // Some element in location was incorrect. Output the entire help
       elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
+      location = [];
     }
   }
   // Add usage section
-  if (packagejson) {
-    const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
-      (acc, curr) => {
-        if (curr.kind === Kind.OPTION) {
-          acc.hasOptions = true;
-        } else if (acc.existingKinds.indexOf(curr.kind as string) < 0) {
-          acc.existingKinds.push(curr.kind as string);
-        }
-        return acc;
-      },
-      { existingKinds: [] as string[], hasOptions: false }
-    );
+  const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
+    (acc, curr) => {
+      if (curr.kind === Kind.OPTION) {
+        acc.hasOptions = true;
+      } else if (acc.existingKinds.indexOf(curr.kind as string) < 0) {
+        acc.existingKinds.push(curr.kind as string);
+      }
+      return acc;
+    },
+    { existingKinds: [] as string[], hasOptions: false }
+  );
 
-    const formatKinds = (kinds: string[]) =>
-      ` ${kinds
-        .sort((a) => (a === Kind.NAMESPACE ? -1 : 1))
-        .join("|")
-        .toUpperCase()}`;
+  const formatKinds = (kinds: string[]) =>
+    ` ${kinds
+      .sort((a) => (a === Kind.NAMESPACE ? -1 : 1))
+      .join("|")
+      .toUpperCase()}`;
 
-    elementInfo = [
-      `\nUsage:  ${packagejson.name}`,
-      location.length > 0 ? ` ${location.join(" ")}` : "",
-      existingKinds.length > 0 ? formatKinds(existingKinds) : "",
-      element!.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
-      hasOptions ? " [OPTIONS]" : "",
-      "\n",
-    ]
-      .join("")
-      .concat(elementInfo);
-  }
+  elementInfo = [
+    `\nUsage:  ${cliOptions.cliName}`,
+    location.length > 0 ? ` ${location.join(" ")}` : "",
+    existingKinds.length > 0 ? formatKinds(existingKinds) : "",
+    element?.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
+    hasOptions ? " [OPTIONS]" : "",
+    "\n",
+  ]
+    .join("")
+    .concat(elementInfo);
   Cli.logger.log(elementInfo);
   generateHelp(definitionRef);
 }
@@ -295,15 +294,10 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
 function generateHelp(definition: Definition = {}) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
-  enum Section {
-    namespaces,
-    commands,
-    options,
-  }
   let formattedHelp = "\n";
 
   type ExtendedDefinitionElement = DefinitionElement & { name: string };
-  type Sections = { [key in Section]: { title: string; content: ExtendedDefinitionElement[] } };
+  type Sections = { [key in Kind]: { title: string; content: ExtendedDefinitionElement[] } };
 
   // Generate the formatted versions of aliases
   const formatAliases = (aliases: string[] = []) => aliases.join(", ");
@@ -322,35 +316,27 @@ function generateHelp(definition: Definition = {}) {
 
   // Initialize sections
   const sectionsTemplate: Sections = {
-    [Section.namespaces]: {
+    [Kind.NAMESPACE]: {
       title: "Namespaces:",
       content: [],
     },
-    [Section.commands]: {
+    [Kind.COMMAND]: {
       title: "Commands:",
       content: [],
     },
-    [Section.options]: {
+    [Kind.OPTION]: {
       title: "Options:",
       content: [],
     },
   };
 
   // Caculate all sections and process section values
-  const { sections, formattedNames }: { sections: Sections; formattedNames: string[] } = Object.entries(definition)
-    .filter(([_, { hidden }]) => hidden !== true)
+  const { sections, formattedNames }: { sections: Sections; formattedNames: string[] } = Object.values(definition)
+    .filter(({ hidden }) => hidden !== true)
     .reduce(
-      (acc: any, [key, element]) => {
-        let section,
-          name = key;
-        if (element.kind === Kind.NAMESPACE) {
-          section = Section.namespaces;
-        } else if (element.kind === Kind.COMMAND) {
-          section = Section.commands;
-        } else {
-          section = Section.options;
+      (acc: any, element) => {
+        const section = element.kind as string,
           name = formatAliases(element.aliases);
-        }
         const completeElement = { ...element, name };
         acc.formattedNames.push(name);
         acc.sections[section].content.push(completeElement);
@@ -384,11 +370,23 @@ export function getDefinitionElement(
   cliOptions: CliOptions
 ): DefinitionElement | undefined {
   let definitionRef = definition;
+  let inheritedOptions: Definition = {};
+  const getOptions = (d: Definition) =>
+    Object.entries(d)
+      .filter(([_, { kind }]) => kind === Kind.OPTION)
+      .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {});
+  // Previous inherited options will be placed last
+  const calculateGlobalOptions = (newOptions: Definition = {}) =>
+    Object.entries(inheritedOptions)
+      .filter(([k]) => !Object.keys(newOptions).includes(k))
+      .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), newOptions);
   const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   for (let i = 0; i < location.length; i++) {
     const key = location[i];
+    inheritedOptions = calculateGlobalOptions(getOptions(definitionRef));
     if (i === location.length - 1) {
-      return definitionRef[key];
+      definitionRef = definitionRef[key] as Definition;
+      break;
     } else if (
       definitionRef.hasOwnProperty(key) &&
       [Kind.NAMESPACE, Kind.COMMAND].includes(definitionRef[key].kind as Kind)
@@ -398,11 +396,14 @@ export function getDefinitionElement(
       return undefined;
     }
   }
+  if (location.length > 0 && definitionRef) {
+    definitionRef.options = calculateGlobalOptions(definitionRef.options as Definition);
+  }
   return definitionRef;
 }
 
 /** Find the package.json of the application that is using this library */
-function findPackageJson(cliOptions: CliOptions) {
+export function findPackageJson(cliOptions: CliOptions) {
   const packagejson = readPackageUp.sync({ cwd: cliOptions.baseLocation });
   if (!packagejson || !packagejson.packageJson) {
     return undefined;
@@ -412,14 +413,7 @@ function findPackageJson(cliOptions: CliOptions) {
 
 /** Find and format the version of the application that is using this library */
 export function formatVersion(cliOptions: CliOptions) {
-  if (!cliOptions.baseLocation) {
-    return logErrorAndExit("Unable to find base location. You may configure this value via CliOptions.baseLocation");
-  }
-  const packagejson = findPackageJson(cliOptions);
-  if (!packagejson) {
-    return logErrorAndExit("Error reading package.json file");
-  }
-  Cli.logger.log(`${" ".repeat(2)}${packagejson.name} version: ${packagejson.version}\n`);
+  Cli.logger.log(`${" ".repeat(2)}${cliOptions.cliName} version: ${cliOptions.cliVersion}\n`);
 }
 
 /** Find the closest namespace/command based on the given target and location */

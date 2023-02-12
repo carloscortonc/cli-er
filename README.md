@@ -67,11 +67,13 @@ You can check the [docker-based example](./examples/docker) for a more in-depth 
 ### parse(args)
 
 Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If an error is generated during the process, it will be registered inside an `error` field.
-An option value may be modified after the parsing process is completed (check [this code](./examples/options-only/options-only.js#L8) for a use case): this can be achieved by defining `Option.value` with the following signature:
+An option value may be modified after the parsing process is completed: this can be achieved by defining `Option.value` with the following signature:
 
 ```typescript
 type value = (v: OptionValue, o: ParsingOutput.options) => OptionValue;
 ```
+
+This allows to create custom parsers for any type of input (check the [custom-option-parser example](./examples/custom-option-parser) for a hint).
 
 The execution of the above [example](#example) would be:
 
@@ -167,6 +169,9 @@ Description for the namespace
 
 Commands:
   cmd  Description for the command
+
+Options:
+  -g, --global  Option shared between all commands (default: globalvalue)
 ```
 
 Any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition.

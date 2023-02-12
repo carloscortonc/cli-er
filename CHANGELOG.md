@@ -3,8 +3,8 @@
 
 ### Features
 
-* allow custom logger ([0a69731](https://github.com/carloscortonc/cli-er/commit/0a69731873d1b279065001fa0aa98dab1335f099)), closes [/github.com/lirantal/nodejs-cli-apps-best-practices#14](https://github.com//github.com/lirantal/nodejs-cli-apps-best-practices/issues/14)
-* correct use of exit codes when error occurs ([13e7562](https://github.com/carloscortonc/cli-er/commit/13e7562f2272c3670828a6d9523549116b421c66)), closes [/github.com/lirantal/nodejs-cli-apps-best-practices#64](https://github.com//github.com/lirantal/nodejs-cli-apps-best-practices/issues/64)
+* allow custom logger ([0a69731](https://github.com/carloscortonc/cli-er/commit/0a69731873d1b279065001fa0aa98dab1335f099)) [/github.com/lirantal/nodejs-cli-apps-best-practices#14](https://github.com//github.com/lirantal/nodejs-cli-apps-best-practices/issues/14)
+* correct use of exit codes when error occurs ([13e7562](https://github.com/carloscortonc/cli-er/commit/13e7562f2272c3670828a6d9523549116b421c66)) [/github.com/lirantal/nodejs-cli-apps-best-practices#64](https://github.com//github.com/lirantal/nodejs-cli-apps-best-practices/issues/64)
 * document command type in generated help ([b40c4d3](https://github.com/carloscortonc/cli-er/commit/b40c4d338dd8b0bfcadf3b8e47f47ad97578515e))
 * generate error for option with wrong value ([70a95c0](https://github.com/carloscortonc/cli-er/commit/70a95c01615422fc867c07a0d8d847f521cf7efd))
 * new option.value to modify parsed result ([41f8a35](https://github.com/carloscortonc/cli-er/commit/41f8a35c89d5ea4f6b7814607d7abbbf2b5c82d6))

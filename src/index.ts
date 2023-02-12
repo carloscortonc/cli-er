@@ -6,11 +6,14 @@ import {
   getDefinitionElement,
   formatVersion,
   getEntryPoint,
+  getEntryFile,
+  findPackageJson,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger } from "./types";
 import { clone, logErrorAndExit, merge } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
+import path from "path";
 
 export default class Cli {
   static logger: ICliLogger = new CliLogger();
@@ -42,10 +45,20 @@ export default class Cli {
         aliases: ["-v", "--version"],
         description: "Display version",
       },
+      cliName: "",
+      cliVersion: "",
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
     merge(this.options, options);
+    // Read cliName and cliVersion from package.json, if not provided
+    const packagejson: any = findPackageJson(this.options) || {};
+    if (!this.options.cliName) {
+      this.options.cliName = packagejson.name || path.parse(getEntryFile()).name;
+    }
+    if (!this.options.cliVersion) {
+      this.options.cliVersion = packagejson.version || "-";
+    }
     this.definition = completeDefinition(clone(definition), this.options);
     return this;
   }
@@ -66,9 +79,13 @@ export default class Cli {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
     const command = getDefinitionElement(this.definition, opts.location, this.options) as Command;
+    const e = CliError.analize(opts.error);
 
     // Evaluate auto-included help
     if (this.options.help.autoInclude && opts.options.help) {
+      if (opts.error) {
+        Cli.logger.error(opts.error, "\n");
+      }
       return generateScopedHelp(this.definition, opts.location, this.options);
     } else if (this.options.help.autoInclude) {
       delete opts.options.help;
@@ -80,7 +97,6 @@ export default class Cli {
       delete opts.options.version;
     }
     // Check if any error was generated
-    const e = CliError.analize(opts.error);
     if (
       (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
       ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE].includes(e as ErrorType) &&

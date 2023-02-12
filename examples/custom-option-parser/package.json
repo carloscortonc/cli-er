@@ -1,7 +1,7 @@
 {
-  "name": "options-only",
+  "name": "custom-options-parser",
   "version": "1.0.0",
-  "main": "options-only.js",
+  "main": "custom-options-parser.js",
   "author": "carloscortonc",
   "dependencies": {
     "cli-er": "0.7.0"
