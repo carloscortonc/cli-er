@@ -345,6 +345,19 @@ Command with type
 
 `);
   });
+  it("With location: part of the given location is wrong", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    generateScopedHelp(d, ["nms", "unknown"], cliOptions);
+    expect(output).toStrictEqual(
+      expect.stringContaining(`
+Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
+
+Unable to find the specified scope (nms > unknown)
+
+`)
+    );
+  });
 });
 
 describe("getDefinitionElement", () => {

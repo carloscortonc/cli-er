@@ -168,6 +168,18 @@ describe("Cli.run", () => {
     c.run(["--help"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
+  it("Calling run with help option invokes help-generation - wrong location", () => {
+    const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
+    const logger: any = { error: jest.fn() };
+    const c = new Cli(definition, { logger });
+    c.run(["nms", "unknown", "--help"]);
+    // generateScopedHelped gets called with valid-location part
+    expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringMatching(/Command "\w+" not found. Did you mean "\w+" \?/),
+      "\n"
+    );
+  });
   it("Calling run with version option invokes version-formatting", () => {
     const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();
     const c = new Cli(definition);

@@ -243,7 +243,7 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
 }
 
 export function generateScopedHelp(definition: Definition, rawLocation: string[], cliOptions: CliOptions) {
-  const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
+  let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
   let elementInfo = "";
@@ -254,6 +254,7 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
     } else {
       // Some element in location was incorrect. Output the entire help
       elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
+      location = [];
     }
   }
   // Add usage section
@@ -279,7 +280,7 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
     `\nUsage:  ${cliOptions.cliName}`,
     location.length > 0 ? ` ${location.join(" ")}` : "",
     existingKinds.length > 0 ? formatKinds(existingKinds) : "",
-    element!.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
+    element?.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
     hasOptions ? " [OPTIONS]" : "",
     "\n",
   ]
@@ -395,7 +396,7 @@ export function getDefinitionElement(
       return undefined;
     }
   }
-  if (location.length > 0) {
+  if (location.length > 0 && definitionRef) {
     definitionRef.options = calculateGlobalOptions(definitionRef.options as Definition);
   }
   return definitionRef;
