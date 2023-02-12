@@ -1,0 +1,9 @@
+{
+  "name": "custom-options-parser",
+  "version": "1.0.0",
+  "main": "custom-options-parser.js",
+  "author": "carloscortonc",
+  "dependencies": {
+    "cli-er": "0.7.0"
+  }
+}
