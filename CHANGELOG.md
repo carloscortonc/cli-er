@@ -1,3 +1,18 @@
+# [0.7.0](https://github.com/carloscortonc/cli-er/compare/v0.6.0...v0.7.0) (2023-02-12)
+
+
+### Bug Fixes
+
+* behaviour on scoped-help with wrong location ([83cd6d3](https://github.com/carloscortonc/cli-er/commit/83cd6d32cc1505d6ea92014a48ee90a692fd8849))
+* include inherited options in scoped help ([53a5b40](https://github.com/carloscortonc/cli-er/commit/53a5b4039fc0aade15bf8bdc5a3e142686830cca))
+
+
+### Features
+
+* allow to override cli-app version and name ([5ada4c6](https://github.com/carloscortonc/cli-er/commit/5ada4c67b81ef394002f8bd06bbc09811e483582))
+* consider entry-filename as script path ([25c6d47](https://github.com/carloscortonc/cli-er/commit/25c6d47d0737bd430eaa0c0901fd1f6e4b833fdc))
+* show error message when script execution fails ([c81f0d5](https://github.com/carloscortonc/cli-er/commit/c81f0d5d98dae1ccd9c4dc033d7bbce52b3ab938))
+
 # [0.6.0](https://github.com/carloscortonc/cli-er/compare/v0.5.0...v0.6.0) (2022-10-07)
 
 
