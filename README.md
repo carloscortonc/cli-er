@@ -167,6 +167,9 @@ Description for the namespace
 
 Commands:
   cmd  Description for the command
+
+Options:
+  -g, --global  Option shared between all commands (default: globalvalue)
 ```
 
 Any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition.
