@@ -369,11 +369,23 @@ export function getDefinitionElement(
   cliOptions: CliOptions
 ): DefinitionElement | undefined {
   let definitionRef = definition;
+  let inheritedOptions: Definition = {};
+  const getOptions = (d: Definition) =>
+    Object.entries(d)
+      .filter(([_, { kind }]) => kind === Kind.OPTION)
+      .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {});
+  // Previous inherited options will be placed last
+  const calculateGlobalOptions = (newOptions: Definition = {}) =>
+    Object.entries(inheritedOptions)
+      .filter(([k]) => !Object.keys(newOptions).includes(k))
+      .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), newOptions);
   const location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   for (let i = 0; i < location.length; i++) {
     const key = location[i];
+    inheritedOptions = calculateGlobalOptions(getOptions(definitionRef));
     if (i === location.length - 1) {
-      return definitionRef[key];
+      definitionRef = definitionRef[key] as Definition;
+      break;
     } else if (
       definitionRef.hasOwnProperty(key) &&
       [Kind.NAMESPACE, Kind.COMMAND].includes(definitionRef[key].kind as Kind)
@@ -382,6 +394,9 @@ export function getDefinitionElement(
     } else {
       return undefined;
     }
+  }
+  if (location.length > 0) {
+    definitionRef.options = calculateGlobalOptions(definitionRef.options as Definition);
   }
   return definitionRef;
 }

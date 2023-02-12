@@ -306,12 +306,16 @@ Options:
     logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(d, ["nms"], cliOptions);
     expect(output).toBe(`
-Usage:  cli-er nms COMMAND
+Usage:  cli-er nms COMMAND [OPTIONS]
 
 Description for the namespace
 
 Commands:
-  cmd  Description for the command
+  cmd           Description for the command
+
+Options:
+  -g, --global  Option shared between all commands (default: globalvalue)
+  -h, --help    Display global help, or scoped to a namespace/command
 
 `);
   });
@@ -344,11 +348,11 @@ Command with type
 });
 
 describe("getDefinitionElement", () => {
-  const cliOptions = new Cli({}).options;
+  const { options: cliOptions } = new Cli(definition);
   it("Returns the original definition when provided with empty location array", () => {
     expect(getDefinitionElement(definition, [], cliOptions)).toStrictEqual(definition);
   });
-  it("Returns the scoped definition", () => {
+  it("Returns the scoped definition, including inherited options", () => {
     expect(getDefinitionElement(definition, ["nms"], cliOptions)).toStrictEqual({
       description: "Description for the namespace",
       kind: "namespace",
@@ -363,6 +367,12 @@ describe("getDefinitionElement", () => {
             },
           },
         },
+        globalOption: {
+          aliases: ["-g", "--global"],
+          default: "globalvalue",
+          description: "Option shared between all commands",
+          kind: "option",
+        },
       },
     });
   });
@@ -370,7 +380,21 @@ describe("getDefinitionElement", () => {
     expect(getDefinitionElement(definition, ["commands", "gcmd"], cliOptions)).toStrictEqual({
       description: "Description for global command",
       kind: "command",
+      options: expect.anything(),
     });
+  });
+  it("Includes all inherited options", () => {
+    const de = getDefinitionElement(definition, ["nmsi", "nested-nms", "cmd"], cliOptions);
+    expect(de).toStrictEqual({
+      kind: "cmd",
+      options: {
+        "nested-nms-o": expect.anything(),
+        "nmsi-o": expect.anything(),
+        globalOption: expect.anything(),
+      },
+    });
+    // Assert the order of the options
+    expect(Object.keys(de!.options as object)).toStrictEqual(["nested-nms-o", "nmsi-o", "globalOption"]);
   });
 });
 
