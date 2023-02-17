@@ -83,7 +83,7 @@ export default class Cli {
 
     // Evaluate auto-included help
     if (this.options.help.autoInclude && opts.options.help) {
-      if (opts.error) {
+      if (opts.error && opts.location.length > 0) {
         Cli.logger.error(opts.error, "\n");
       }
       return generateScopedHelp(this.definition, opts.location, this.options);

@@ -140,6 +140,9 @@ export function parseArguments(
           output.location.push(key);
           definitionRef = (definitionRef[key] as Namespace).options || {};
           break;
+        } else if (aliases.hasOwnProperty(arg)) {
+          // Arg already present in aliases
+          break;
         } else if (i === entries.length - 1) {
           // Options already processed, and no namespace/command found for current arg, so end
           const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
