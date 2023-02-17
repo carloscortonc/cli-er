@@ -1,3 +1,10 @@
+## [0.7.1](https://github.com/carloscortonc/cli-er/compare/v0.7.0...v0.7.1) (2023-02-17)
+
+
+### Bug Fixes
+
+* error when executing "-h" with no other args ([384a7bf](https://github.com/carloscortonc/cli-er/commit/384a7bfc9258946379330ee5de2cf31cafc61a8b))
+
 # [0.7.0](https://github.com/carloscortonc/cli-er/compare/v0.6.0...v0.7.0) (2023-02-12)
 
 
