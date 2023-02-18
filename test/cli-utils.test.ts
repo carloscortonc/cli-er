@@ -54,6 +54,7 @@ describe("completeDefinition", () => {
       aliases: [],
       description: "",
     },
+    rootCommand: true,
     cliName: "",
     cliVersion: "",
   };

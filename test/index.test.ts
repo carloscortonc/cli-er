@@ -59,6 +59,7 @@ describe("Cli.constructor", () => {
         aliases: ["-v", "--version"],
         description: "Display version",
       },
+      rootCommand: true,
       cliName: "cli-app",
       cliVersion: "1.0.0",
     });
@@ -94,6 +95,7 @@ describe("Cli.constructor", () => {
         aliases: ["--version"],
         description: "",
       },
+      rootCommand: true,
       cliName: "custom-name",
       cliVersion: "2.0.0",
     });
@@ -148,7 +150,7 @@ describe("Cli.parse", () => {
 describe("Cli.run", () => {
   it("Calling run with arguments invokes the script in the computed location", () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
-    const c = new Cli(definition);
+    const c = new Cli(definition, { rootCommand: false });
     c.run(["nms", "cmd"]);
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: ["nms", "cmd"],
@@ -163,6 +165,15 @@ describe("Cli.run", () => {
       location: [],
       options: { globalOption: "overridden" },
     });
+  });
+  it("Calling run with no namespace/command: CliOptions.rootCommand=false", () => {
+    const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
+    const c = new Cli(definition, { rootCommand: false });
+    c.run([]);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
+    spy.mockClear();
+    c.run(["--global", "overridden"]);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
   it("Calling run on element with action invokes such action", () => {
     const action = jest.fn();

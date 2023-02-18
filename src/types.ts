@@ -123,6 +123,10 @@ export type CliOptions = {
     /** Description for the option */
     description: string;
   };
+  /** Whether the cli implements a root command (invocation with no additional namespaces/commands)
+   * @default true
+   */
+  rootCommand: boolean;
   /** Logger to be used by the cli */
   logger?: Partial<ICliLogger>;
   /** Cli name to be used instead of the one defined in package.json

@@ -45,6 +45,7 @@ export default class Cli {
         aliases: ["-v", "--version"],
         description: "Display version",
       },
+      rootCommand: true,
       cliName: "",
       cliVersion: "",
     };
@@ -82,7 +83,10 @@ export default class Cli {
     const e = CliError.analize(opts.error);
 
     // Evaluate auto-included help
-    if (this.options.help.autoInclude && opts.options.help) {
+    if (
+      this.options.help.autoInclude &&
+      (opts.options.help || (!this.options.rootCommand && opts.location.length === 0))
+    ) {
       if (opts.error) {
         Cli.logger.error(opts.error, "\n");
       }

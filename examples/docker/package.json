@@ -4,6 +4,6 @@
   "main": "docker.js",
   "author": "carloscortonc",
   "dependencies": {
-    "cli-er": "0.5.0"
+    "cli-er": "0.7.0"
   }
 }

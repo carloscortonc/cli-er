@@ -4,6 +4,9 @@
 # Show available options and namespaces (since 0.2.0)
 node docker.js -h
 
+# Show full help (since 0.8.0)
+node docker.js
+
 # Print application version (since 0.4.0)
 node docker.js -v
 

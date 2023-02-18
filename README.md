@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/cli-er.svg)](https://www.npmjs.com/package/cli-er)
 [![build](https://github.com/carloscortonc/cli-er/actions/workflows/build.yml/badge.svg)](https://github.com/carloscortonc/cli-er/actions/workflows/build.yml)
 
-Tool for building advance CLI applications using a definition object. It implements a folder structure strategy that helps organize all the logic, also including help-generation  
+Tool for building advanced CLI applications using a definition object. It implements a folder structure strategy that helps organize all the logic, also including help-generation  
 </br>
 
 _cli.js_:
@@ -108,6 +108,8 @@ If no command is found in the parsing process, an error and suggestion (the clos
 
 If an unknown option if found, the default behaviour is to print the error and exit. This can be configured via `CliOptions.onFail.stopOnUnknownOption`.
 
+If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with `CliOptions.rootCommand: false`. By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](./examples/docker/docker.js#L121)).
+
 ### help(location?)
 
 Generates and outputs help message based on the provided definition. Given the following code (test.js):
@@ -189,7 +191,7 @@ prints its name and version.
 
 ## Custom logger
 
-You may change the default logger via `CliOptions.logger`. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L122).
+You may change the default logger via `CliOptions.logger`. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L123).
 
 ## Typescript cli
 
