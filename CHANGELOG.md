@@ -1,3 +1,10 @@
+## [0.7.2](https://github.com/carloscortonc/cli-er/compare/v0.7.1...v0.7.2) (2023-02-18)
+
+
+### Bug Fixes
+
+* register and log errors in scoped-help ([1ec5ff2](https://github.com/carloscortonc/cli-er/commit/1ec5ff20c4dfbf4a85f994057e4d0ec18070612a))
+
 ## [0.7.1](https://github.com/carloscortonc/cli-er/compare/v0.7.0...v0.7.1) (2023-02-17)
 
 
