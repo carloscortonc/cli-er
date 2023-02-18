@@ -208,7 +208,6 @@ describe("parseArguments", () => {
       },
     }).definition;
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions)).toStrictEqual({
-      error: 'Command "optvalue" not found. Did you mean "cmd" ?',
       options: { opt: "optvalue-edited", test: "testvalue", version: undefined, help: undefined },
       location: expect.anything(),
     });

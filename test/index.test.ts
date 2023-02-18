@@ -13,6 +13,10 @@ jest.spyOn(cliutils, "findPackageJson").mockImplementation(
     } as any)
 );
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 describe("Cli.constructor", () => {
   it("Resulting definition contains only auto-included options when provided with empty definition", () => {
     const c = new Cli({});
@@ -151,6 +155,15 @@ describe("Cli.run", () => {
       options: { cmd: undefined, globalOption: "globalvalue", opt: undefined },
     });
   });
+  it("Calling run with arguments invokes the script in the computed location - options only", () => {
+    const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
+    const c = new Cli(definition);
+    c.run(["--global", "overridden"]);
+    expect(spy.mock.calls[0][0]).toStrictEqual({
+      location: [],
+      options: { globalOption: "overridden" },
+    });
+  });
   it("Calling run on element with action invokes such action", () => {
     const action = jest.fn();
     const c = new Cli({
@@ -166,6 +179,9 @@ describe("Cli.run", () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
     const c = new Cli(definition);
     c.run(["--help"]);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
+    spy.mockClear();
+    c.run(["--global", "overridden", "--help"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
   it("Calling run with help option invokes help-generation - wrong location", () => {
