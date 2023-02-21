@@ -182,6 +182,16 @@ Options:
 
 Any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition.
 
+#### Templating help-sections
+
+There are five distinct sections in the generated help: **usage**, **description**, **namespaces**, **commands** and **options**. The default structure is:
+
+```js
+"\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n";
+```
+
+This can be modified via `CliOptions.help.template`, to include a header/footer, change the order of the sections, or remove a section altogether. If a section has no content, it will be removed along with any line-breaks that follow. You can see a use-case for this in the [docker example](./examples/docker/docker.js#L123).
+
 > **Note**
 > help-generation option is auto-included by default. This can be configured via `CliOptions.help`
 
@@ -195,7 +205,7 @@ prints its name and version.
 
 ## Custom logger
 
-You may change the default logger via `CliOptions.logger`. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L123).
+You may change the default logger via `CliOptions.logger`. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L127).
 
 ## Typescript cli
 

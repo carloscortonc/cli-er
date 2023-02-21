@@ -48,6 +48,7 @@ describe("completeDefinition", () => {
       autoInclude: false,
       aliases: [],
       description: "",
+      template: "",
     },
     version: {
       autoInclude: false,
@@ -67,7 +68,6 @@ describe("completeDefinition", () => {
         key: "nms",
         options: {
           cmd: {
-            description: "-",
             aliases: ["cmd"],
             key: "cmd",
           },
@@ -358,12 +358,33 @@ Command with type
     generateScopedHelp(d, ["nms", "unknown"], cliOptions);
     expect(output).toStrictEqual(
       expect.stringContaining(`
-Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]
-
 Unable to find the specified scope (nms > unknown)
 
-`)
+Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`)
     );
+  });
+  it("With custom footer via CliOptions.help.template", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const def = {
+      nms: { kind: "namespace", aliases: ["nms"] },
+      opt: { aliases: ["--opt"], kind: "option", type: "boolean", hidden: true },
+    };
+    generateScopedHelp(def, [], {
+      ...cliOptions,
+      help: {
+        ...cliOptions.help,
+        template: "\n{usage}\n{namespaces}\n{commands}\n{options}\nThis is a custom footer\n",
+      },
+    });
+    expect(output).toStrictEqual(`
+Usage:  cli-name NAMESPACE [OPTIONS]
+
+Namespaces:
+  nms  -
+
+This is a custom footer
+`);
   });
 });
 

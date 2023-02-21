@@ -58,8 +58,6 @@ export function completeDefinition(definition: Definition, cliOptions: CliOption
 function completeElementDefinition(name: string, element: DefinitionElement) {
   // Complete aliases
   element.aliases = getAliases(name, element);
-  // Include default description if missing
-  element.description = element.description ?? "-";
   // Set kind to Option if missing
   element.kind = element.kind ?? Kind.OPTION;
   // Set option type to string if missing
@@ -226,7 +224,7 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
 
   if (!validScriptPath) {
     if (cliOptions.onFail.help) {
-      generateHelp(definition);
+      generateHelp(definition, cliOptions);
     }
     let errorMessage = "There was a problem finding the script to run.";
     if (cliOptions.onFail.scriptPaths) {
@@ -244,22 +242,33 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   }
 }
 
+enum HELP_SECTIONS {
+  USAGE = "usage",
+  DESCRIPTION = "description",
+  NAMESPACES = "namespaces",
+  COMMANDS = "commands",
+  OPTIONS = "options",
+}
+
 export function generateScopedHelp(definition: Definition, rawLocation: string[], cliOptions: CliOptions) {
   let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
-  let elementInfo = "";
+  const sections: { [key in HELP_SECTIONS]?: string } = Object.values(HELP_SECTIONS).reduce(
+    (acc, curr) => ({ ...acc, [curr]: undefined }),
+    {}
+  );
   if (location.length > 0) {
     if (element && [Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
-      elementInfo += `\n${element.description}\n`;
+      sections[HELP_SECTIONS.DESCRIPTION] = element.description?.concat("\n");
       definitionRef = element.options as Definition;
     } else {
       // Some element in location was incorrect. Output the entire help
-      elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
+      Cli.logger.log(`\nUnable to find the specified scope (${location.join(" > ")})\n`);
       location = [];
     }
   } else if (cliOptions.cliDescription) {
-    elementInfo += `\n${cliOptions.cliDescription}\n`;
+    sections[HELP_SECTIONS.DESCRIPTION] = cliOptions.cliDescription.concat("\n");
   }
   // Add usage section
   const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
@@ -280,28 +289,28 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
       .join("|")
       .toUpperCase()}`;
 
-  elementInfo = [
-    `\nUsage:  ${cliOptions.cliName}`,
+  sections[HELP_SECTIONS.USAGE] = [
+    `Usage:  ${cliOptions.cliName}`,
     location.length > 0 ? ` ${location.join(" ")}` : "",
     existingKinds.length > 0 ? formatKinds(existingKinds) : "",
     element?.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
     hasOptions ? " [OPTIONS]" : "",
     "\n",
-  ]
-    .join("")
-    .concat(elementInfo);
-  Cli.logger.log(elementInfo);
-  generateHelp(definitionRef);
+  ].join("");
+  generateHelp(definitionRef, cliOptions, sections);
 }
 
 /** Print the resulting documentation of formatting the given definition */
-function generateHelp(definition: Definition = {}) {
+function generateHelp(
+  definition: Definition = {},
+  cliOptions: CliOptions,
+  sections: { [key in HELP_SECTIONS]?: string } = {}
+) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
-  let formattedHelp = "\n";
 
   type ExtendedDefinitionElement = DefinitionElement & { name: string };
-  type Sections = { [key in Kind]: { title: string; content: ExtendedDefinitionElement[] } };
+  type ElementSections = { [key in HELP_SECTIONS]?: { title: string; content: ExtendedDefinitionElement[] } };
 
   // Generate the formatted versions of aliases
   const formatAliases = (aliases: string[] = []) => aliases.join(", ");
@@ -313,57 +322,66 @@ function generateHelp(definition: Definition = {}) {
     [
       " ".repeat(indentation),
       formatter.format("name", element.name, 2),
-      element.description,
+      element.description || "-",
       defaultHint(element),
       "\n",
     ].join("");
 
-  // Initialize sections
-  const sectionsTemplate: Sections = {
-    [Kind.NAMESPACE]: {
+  // Initialize element-sections
+  const elementSectionsTemplate: ElementSections = {
+    [HELP_SECTIONS.NAMESPACES]: {
       title: "Namespaces:",
       content: [],
     },
-    [Kind.COMMAND]: {
+    [HELP_SECTIONS.COMMANDS]: {
       title: "Commands:",
       content: [],
     },
-    [Kind.OPTION]: {
+    [HELP_SECTIONS.OPTIONS]: {
       title: "Options:",
       content: [],
     },
   };
 
-  // Caculate all sections and process section values
-  const { sections, formattedNames }: { sections: Sections; formattedNames: string[] } = Object.values(definition)
-    .filter(({ hidden }) => hidden !== true)
-    .reduce(
-      (acc: any, element) => {
-        const section = element.kind as string,
-          name = formatAliases(element.aliases);
-        const completeElement = { ...element, name };
-        acc.formattedNames.push(name);
-        acc.sections[section].content.push(completeElement);
-        return acc;
-      },
-      { sections: sectionsTemplate, formattedNames: [] }
-    );
+  // Caculate all element-sections and process section values
+  const { elementSections, formattedNames }: { elementSections: ElementSections; formattedNames: string[] } =
+    Object.values(definition)
+      .filter(({ hidden }) => hidden !== true)
+      .reduce(
+        (acc: any, element) => {
+          const sectionAdapter: { [key in Kind]: HELP_SECTIONS } = {
+            [Kind.NAMESPACE]: HELP_SECTIONS.NAMESPACES,
+            [Kind.COMMAND]: HELP_SECTIONS.COMMANDS,
+            [Kind.OPTION]: HELP_SECTIONS.OPTIONS,
+          };
+          const sectionKey = sectionAdapter[element.kind as Kind],
+            name = formatAliases(element.aliases);
+          const completeElement = { ...element, name };
+          acc.formattedNames.push(name);
+          acc.elementSections[sectionKey].content.push(completeElement);
+          return acc;
+        },
+        { elementSections: elementSectionsTemplate, formattedNames: [] }
+      );
 
   // Process all names from namespaces, commands and options into formatter
   formatter.process("name", formattedNames);
 
-  // Format all sections
-  formattedHelp = Object.values(sections)
-    .filter((section) => section.content.length > 0)
-    .reduce((acc, { title, content }) => {
-      acc += `${title}\n`;
+  // Format all element-sections
+  Object.entries(elementSections)
+    .filter(([_, section]) => section.content.length > 0)
+    .forEach(([sectionKey, { title, content }]) => {
+      let sectionContent = `${title}\n`;
       content.forEach((item: ExtendedDefinitionElement) => {
-        acc += formatElement(item, formatter, sectionIndentation);
+        sectionContent += formatElement(item, formatter, sectionIndentation);
       });
-      acc += "\n";
-      return acc;
-    }, formattedHelp);
-
+      sections[sectionKey as HELP_SECTIONS] = sectionContent;
+    });
+  const templateKey = (key: string) => `{${key}}`;
+  const formattedHelp = Object.entries(sections).reduce((acc, [sectionKey, sectionContent]) => {
+    const regexp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
+    return acc.replace(regexp, sectionContent || "");
+  }, cliOptions.help.template);
   Cli.logger.log(formattedHelp);
 }
 

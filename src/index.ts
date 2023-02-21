@@ -39,6 +39,7 @@ export default class Cli {
         autoInclude: true,
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
+        template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,

@@ -113,6 +113,8 @@ export type CliOptions = {
     aliases: string[];
     /** Description for the option */
     description: string;
+    /* Template to be used when generating help */
+    template: string;
   };
   /** Version related configuration */
   version: {

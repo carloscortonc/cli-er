@@ -54,6 +54,7 @@ describe("Cli.constructor", () => {
         autoInclude: true,
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
+        template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
@@ -70,7 +71,7 @@ describe("Cli.constructor", () => {
     const overrides = {
       baseLocation: "..",
       baseScriptLocation: "./",
-      help: { autoInclude: false, aliases: ["--help"], description: "" },
+      help: { autoInclude: false, aliases: ["--help"], description: "", template: "template" },
       version: { aliases: ["--version"], description: "" },
       onFail: { suggestion: false },
       cliName: "custom-name",
@@ -92,6 +93,7 @@ describe("Cli.constructor", () => {
         autoInclude: overrides.help.autoInclude,
         aliases: ["--help"],
         description: "",
+        template: "template",
       },
       version: {
         autoInclude: true,
