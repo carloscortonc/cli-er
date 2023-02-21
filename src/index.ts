@@ -9,7 +9,7 @@ import {
   getEntryFile,
   findPackageJson,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger } from "./types";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger, Kind } from "./types";
 import { clone, logErrorAndExit, merge } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
@@ -90,7 +90,9 @@ export default class Cli {
     // Evaluate auto-included help
     if (
       this.options.help.autoInclude &&
-      (opts.options.help || (!this.options.rootCommand && opts.location.length === 0))
+      (opts.options.help ||
+        (!this.options.rootCommand && opts.location.length === 0) ||
+        command.kind === Kind.NAMESPACE)
     ) {
       if (opts.error) {
         Cli.logger.error(opts.error, "\n");

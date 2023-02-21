@@ -215,6 +215,12 @@ describe("Cli.run", () => {
       "\n"
     );
   });
+  it("Calling run on namespaces invokes help-generation", () => {
+    const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
+    const c = new Cli(definition);
+    c.run(["nms"]);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
+  });
   it("Calling run with version option invokes version-formatting", () => {
     const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();
     const c = new Cli(definition);
