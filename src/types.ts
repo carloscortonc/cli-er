@@ -137,4 +137,8 @@ export type CliOptions = {
    * @default packageJson.version
    */
   cliVersion: string;
+  /** Cli description to be used instead of the one defined in package.json
+   * @default packageJson.description
+   */
+  cliDescription: string;
 };

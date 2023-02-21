@@ -57,6 +57,7 @@ describe("completeDefinition", () => {
     rootCommand: true,
     cliName: "",
     cliVersion: "",
+    cliDescription: "",
   };
   it("Completes missing fields in definition with nested content ", () => {
     const completedDefinition = completeDefinition(definition, cliOptions);
@@ -283,7 +284,7 @@ describe("executeScript", () => {
 });
 
 describe("generateScopedHelp", () => {
-  const cliOptions = new Cli({}).options;
+  const cliOptions = new Cli({}, { cliName: "cli-name", cliDescription: "cli-description" }).options;
   const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
   const d = new Cli(definition).definition;
   it("With empty location (first level definition)", () => {
@@ -291,7 +292,9 @@ describe("generateScopedHelp", () => {
     logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(d, [], cliOptions);
     expect(output).toBe(`
-Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
+Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]
+
+cli-description
 
 Namespaces:
   nms           Description for the namespace
@@ -310,7 +313,7 @@ Options:
     logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(d, ["nms"], cliOptions);
     expect(output).toBe(`
-Usage:  cli-er nms COMMAND [OPTIONS]
+Usage:  cli-name nms COMMAND [OPTIONS]
 
 Description for the namespace
 
@@ -328,7 +331,7 @@ Options:
     logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp({ cmd: { kind: "command", description: "Command with no options" } }, ["cmd"], cliOptions);
     expect(output).toBe(`
-Usage:  cli-er cmd
+Usage:  cli-name cmd
 
 Command with no options
 
@@ -343,7 +346,7 @@ Command with no options
       cliOptions
     );
     expect(output).toBe(`
-Usage:  cli-er cmd <string>
+Usage:  cli-name cmd <string>
 
 Command with type
 
@@ -355,7 +358,7 @@ Command with type
     generateScopedHelp(d, ["nms", "unknown"], cliOptions);
     expect(output).toStrictEqual(
       expect.stringContaining(`
-Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
+Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]
 
 Unable to find the specified scope (nms > unknown)
 

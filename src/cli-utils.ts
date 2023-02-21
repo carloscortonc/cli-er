@@ -258,6 +258,8 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
       elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
       location = [];
     }
+  } else if (cliOptions.cliDescription) {
+    elementInfo += `\n${cliOptions.cliDescription}\n`;
   }
   // Add usage section
   const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(

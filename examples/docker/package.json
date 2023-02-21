@@ -1,6 +1,7 @@
 {
   "name": "docker",
   "version": "1.0.0",
+  "description": "A self-sufficient runtime for containers",
   "main": "docker.js",
   "author": "carloscortonc",
   "dependencies": {

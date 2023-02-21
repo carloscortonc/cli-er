@@ -138,13 +138,15 @@ const definition = {
   },
 };
 
-new Cli(definition).help();
+new Cli(definition, { cliDescription: "Cli for testing purposes" }).help();
 ```
 
 will output:
 
 ```
 Usage:  test NAMESPACE|COMMAND [OPTIONS]
+
+Cli for testing purposes
 
 Namespaces:
   nms           Description for the namespace
@@ -154,6 +156,7 @@ Commands:
 
 Options:
   -g, --global  Option shared between all commands (default: globalvalue)
+  -h, --help    Display global help, or scoped to a namespace/command
 ```
 
 The optional argument _location_ enables the generation of scoped help. For the above definition, the following code:
@@ -165,7 +168,7 @@ new Cli(definition).help(["nms"]);
 will output:
 
 ```
-Usage:  test nms
+Usage:  test nms COMMAND [OPTIONS]
 
 Description for the namespace
 
@@ -174,6 +177,7 @@ Commands:
 
 Options:
   -g, --global  Option shared between all commands (default: globalvalue)
+  -h, --help    Display global help, or scoped to a namespace/command
 ```
 
 Any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition.

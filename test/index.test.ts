@@ -10,6 +10,7 @@ jest.spyOn(cliutils, "findPackageJson").mockImplementation(
     ({
       version: "1.0.0",
       name: "cli-app",
+      description: "cli-description",
     } as any)
 );
 
@@ -62,6 +63,7 @@ describe("Cli.constructor", () => {
       rootCommand: true,
       cliName: "cli-app",
       cliVersion: "1.0.0",
+      cliDescription: "cli-description",
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
@@ -73,6 +75,7 @@ describe("Cli.constructor", () => {
       onFail: { suggestion: false },
       cliName: "custom-name",
       cliVersion: "2.0.0",
+      cliDescription: "custom-description",
     };
     const c = new Cli({}, overrides);
     expect(c.options).toStrictEqual({
@@ -98,6 +101,7 @@ describe("Cli.constructor", () => {
       rootCommand: true,
       cliName: "custom-name",
       cliVersion: "2.0.0",
+      cliDescription: "custom-description",
     });
   });
   it("Override default logger", () => {
@@ -110,20 +114,22 @@ describe("Cli.constructor", () => {
     Cli.logger.error("some text");
     expect(logger).toHaveBeenCalledWith("CUSTOMERROR some text");
   });
-  it("Use name and version from package.json if not provided", () => {
+  it("Use name, version and description from package.json if not provided", () => {
     const cli = new Cli({});
     expect(cli.options).toMatchObject({
       cliName: "cli-app",
       cliVersion: "1.0.0",
+      cliDescription: "cli-description",
     });
   });
-  it("Use name and version from fallback if not provided and no package.json found", () => {
+  it("Use name, version and description from fallback if not provided and no package.json found", () => {
     jest.spyOn(cliutils, "findPackageJson").mockImplementation((_: any) => undefined);
     jest.spyOn(cliutils, "getEntryFile").mockImplementation(() => "script-name");
     const cli = new Cli({});
     expect(cli.options).toMatchObject({
       cliName: "script-name",
       cliVersion: "-",
+      cliDescription: "",
     });
   });
 });

@@ -48,6 +48,7 @@ export default class Cli {
       rootCommand: true,
       cliName: "",
       cliVersion: "",
+      cliDescription: "",
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
@@ -59,6 +60,9 @@ export default class Cli {
     }
     if (!this.options.cliVersion) {
       this.options.cliVersion = packagejson.version || "-";
+    }
+    if (!this.options.cliDescription) {
+      this.options.cliDescription = packagejson.description || "";
     }
     this.definition = completeDefinition(clone(definition), this.options);
     return this;
