@@ -223,10 +223,12 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   const validScriptPath = scriptPaths.find(fs.existsSync);
 
   if (!validScriptPath) {
+    let errorMessage = "";
     if (cliOptions.onFail.help) {
-      generateHelp(definition, cliOptions);
+      generateScopedHelp(definition, [], cliOptions);
+      errorMessage = "\n";
     }
-    let errorMessage = "There was a problem finding the script to run.";
+    errorMessage += "There was a problem finding the script to run.";
     if (cliOptions.onFail.scriptPaths) {
       errorMessage += " Considered paths were:\n";
       errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp, "\n"), errorMessage);
@@ -254,10 +256,7 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
   let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
-  const sections: { [key in HELP_SECTIONS]?: string } = Object.values(HELP_SECTIONS).reduce(
-    (acc, curr) => ({ ...acc, [curr]: undefined }),
-    {}
-  );
+  const sections: { [key in HELP_SECTIONS]?: string } = {};
   if (location.length > 0) {
     if (element && [Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
       sections[HELP_SECTIONS.DESCRIPTION] = element.description?.concat("\n");
@@ -377,6 +376,12 @@ function generateHelp(
       });
       sections[sectionKey as HELP_SECTIONS] = sectionContent;
     });
+  // Assert all sections are initialized
+  Object.values(HELP_SECTIONS).forEach((sectionKey) => {
+    if (!sections[sectionKey]) {
+      sections[sectionKey] = undefined;
+    }
+  });
   const templateKey = (key: string) => `{${key}}`;
   const formattedHelp = Object.entries(sections).reduce((acc, [sectionKey, sectionContent]) => {
     const regexp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
