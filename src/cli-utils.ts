@@ -157,7 +157,7 @@ export function parseArguments(
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const optionDefinition = aliases[optionKey] as DefinitionElement;
     const outputKey = optionDefinition && (optionDefinition.key as string);
-    if (aliases.hasOwnProperty(curr) && !aliases.hasOwnProperty(next) && next !== undefined) {
+    if (aliases.hasOwnProperty(optionKey) && !aliases.hasOwnProperty(next) && next !== undefined) {
       try {
         output.options[outputKey] = evaluateValue(next, output.options[outputKey], { ...optionDefinition, key: curr });
       } catch (e: any) {
@@ -166,9 +166,12 @@ export function parseArguments(
         }
       }
       i++; // skip next array value, already processed
-    } else if (aliases.hasOwnProperty(optionKey) && (aliases[optionKey] as DefinitionElement).type === Type.BOOLEAN) {
+    } else if (aliases.hasOwnProperty(optionKey) && optionDefinition.type === Type.BOOLEAN) {
       output.options[outputKey] = true;
-    } else if (!aliases.hasOwnProperty(curr) && !output.error) {
+    } else if (aliases.hasOwnProperty(optionKey) && optionDefinition.kind !== Kind.COMMAND && !output.error) {
+      // Missing value for option
+      output.error = CliError.format(ErrorType.OPTION_MISSING_VALUE, optionDefinition.type as string, curr);
+    } else if (!aliases.hasOwnProperty(optionKey) && !output.error) {
       // Unknown option
       output.error = CliError.format(ErrorType.OPTION_NOT_FOUND, curr);
     }

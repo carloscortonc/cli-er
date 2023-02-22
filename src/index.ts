@@ -110,7 +110,9 @@ export default class Cli {
     // Check if any error was generated
     if (
       (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
-      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE].includes(e as ErrorType) &&
+      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE, ErrorType.OPTION_MISSING_VALUE].includes(
+        e as ErrorType
+      ) &&
         this.options.onFail.stopOnUnknownOption)
     ) {
       return logErrorAndExit(opts.error);

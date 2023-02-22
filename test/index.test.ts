@@ -159,10 +159,10 @@ describe("Cli.run", () => {
   it("Calling run with arguments invokes the script in the computed location", () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
     const c = new Cli(definition, { rootCommand: false });
-    c.run(["nms", "cmd"]);
+    c.run(["nms", "cmd", "cmdvalue"]);
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: ["nms", "cmd"],
-      options: { cmd: undefined, globalOption: "globalvalue", opt: undefined },
+      options: { cmd: "cmdvalue", globalOption: "globalvalue", opt: undefined },
     });
   });
   it("Calling run with arguments invokes the script in the computed location - options only", () => {
@@ -245,6 +245,14 @@ describe("Cli.run", () => {
   });
   it("Prints option-wrong-value error if configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_WRONG_VALUE);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
+    const c = new Cli(definition);
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
+  });
+  it("Prints missing-option-value error of configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_MISSING_VALUE);
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition);

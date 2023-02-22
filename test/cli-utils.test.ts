@@ -121,6 +121,17 @@ describe("parseArguments", () => {
     help: { autoInclude: false },
     version: { autoInclude: false },
   });
+  it("Parse STRING value", () => {
+    const d = {
+      opt: { kind: "option", type: "string", aliases: ["--opt"], key: "opt" },
+    };
+    expect(parseArguments(["--opt", "optvalue"], d, cliOptions).options.opt).toBe("optvalue");
+    expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Missing value of type <string> for option "--opt"',
+      location: expect.anything(),
+    });
+  });
   it("Parse BOOLEAN value", () => {
     const d = {
       opt: { kind: "option", type: "boolean", aliases: ["--opt"], key: "opt" },
@@ -134,6 +145,11 @@ describe("parseArguments", () => {
       opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "one,two"], d, cliOptions).options.opt).toStrictEqual(["one", "two"]);
+    expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Missing value of type <list> for option "--opt"',
+      location: expect.anything(),
+    });
   });
   it("Parse LIST value by repeated appearances", () => {
     const d = {
@@ -155,7 +171,11 @@ describe("parseArguments", () => {
       error: 'Wrong value for option "--opt". Expected <number> but found "not-a-number"',
       location: expect.anything(),
     });
-    expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(undefined);
+    expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Missing value of type <number> for option "--opt"',
+      location: expect.anything(),
+    });
   });
   it("Parse FLOAT value", () => {
     const d = {
@@ -167,7 +187,11 @@ describe("parseArguments", () => {
       error: 'Wrong value for option "--opt". Expected <float> but found "not-a-number"',
       location: expect.anything(),
     });
-    expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(undefined);
+    expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Missing value of type <float> for option "--opt"',
+      location: expect.anything(),
+    });
   });
   it("No arguments", () => {
     //Get completed definition from Cli
