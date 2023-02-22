@@ -3,8 +3,9 @@ import fs from "fs";
 import readPackageUp from "read-pkg-up";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, logErrorAndExit } from "./utils";
-import { Kind, ParsingOutput, Definition, Type, CliOptions, OptionValue, Option, Namespace, Command } from "./types";
+import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
+import parseOptionValue from "./cli-option-parser";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking */
@@ -157,20 +158,18 @@ export function parseArguments(
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const optionDefinition = aliases[optionKey] as DefinitionElement;
     const outputKey = optionDefinition && (optionDefinition.key as string);
-    if (aliases.hasOwnProperty(optionKey) && !aliases.hasOwnProperty(next) && next !== undefined) {
-      try {
-        output.options[outputKey] = evaluateValue(next, output.options[outputKey], { ...optionDefinition, key: curr });
-      } catch (e: any) {
-        if (!output.error) {
-          output.error = e.message;
-        }
+    if (aliases.hasOwnProperty(optionKey)) {
+      const evaluatedValue = aliases.hasOwnProperty(next) ? undefined : next;
+      const parserOutput = parseOptionValue(evaluatedValue, output.options[outputKey], {
+        ...optionDefinition,
+        key: curr,
+      });
+      if (parserOutput.error && !output.error) {
+        output.error = parserOutput.error;
+      } else if (!parserOutput.error) {
+        output.options[outputKey] = parserOutput.value;
       }
-      i++; // skip next array value, already processed
-    } else if (aliases.hasOwnProperty(optionKey) && optionDefinition.type === Type.BOOLEAN) {
-      output.options[outputKey] = true;
-    } else if (aliases.hasOwnProperty(optionKey) && optionDefinition.kind !== Kind.COMMAND && !output.error) {
-      // Missing value for option
-      output.error = CliError.format(ErrorType.OPTION_MISSING_VALUE, optionDefinition.type as string, curr);
+      i += parserOutput.next;
     } else if (!aliases.hasOwnProperty(optionKey) && !output.error) {
       // Unknown option
       output.error = CliError.format(ErrorType.OPTION_NOT_FOUND, curr);
@@ -186,29 +185,6 @@ export function parseArguments(
     });
 
   return output;
-}
-
-/** Evaluate the value of an option */
-function evaluateValue(value: string, current: OptionValue, option: Option) {
-  const type = option.type;
-  if (type === Type.BOOLEAN) {
-    return [true, "true"].includes(value);
-  } else if (type === Type.LIST) {
-    return ((current as string[]) || []).concat(value.split(","));
-  } else if (type === Type.NUMBER) {
-    const v = parseInt(value);
-    if (!isNaN(v)) {
-      return v;
-    }
-  } else if (type === Type.FLOAT) {
-    const v = parseFloat(value);
-    if (!isNaN(v)) {
-      return v;
-    }
-  } else {
-    return value;
-  }
-  throw new Error(CliError.format(ErrorType.OPTION_WRONG_VALUE, option.key!, type, value));
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
