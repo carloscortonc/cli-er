@@ -227,6 +227,12 @@ describe("Cli.run", () => {
     c.run(["--version"]);
     expect(spy).toHaveBeenCalledWith(expect.anything());
   });
+  it("Calling run with version option invokes version-formatting - rootCommand:false", () => {
+    const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();
+    const c = new Cli(definition, { rootCommand: false });
+    c.run(["--version"]);
+    expect(spy).toHaveBeenCalledWith(expect.anything());
+  });
   it("Prints command-not-found error if configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));

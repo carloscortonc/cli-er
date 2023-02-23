@@ -87,6 +87,12 @@ export default class Cli {
     const command = getDefinitionElement(this.definition, opts.location, this.options) as Command;
     const e = CliError.analize(opts.error);
 
+    // Evaluate auto-included version
+    if (this.options.version.autoInclude && opts.options.version) {
+      return formatVersion(this.options);
+    } else if (this.options.version.autoInclude) {
+      delete opts.options.version;
+    }
     // Evaluate auto-included help
     if (
       this.options.help.autoInclude &&
@@ -101,12 +107,7 @@ export default class Cli {
     } else if (this.options.help.autoInclude) {
       delete opts.options.help;
     }
-    // Evaluate auto-included version
-    if (this.options.version.autoInclude && opts.options.version) {
-      return formatVersion(this.options);
-    } else if (this.options.version.autoInclude) {
-      delete opts.options.version;
-    }
+
     // Check if any error was generated
     if (
       (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
