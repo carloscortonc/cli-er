@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs";
-import readPackageUp from "read-pkg-up";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
@@ -406,15 +405,6 @@ export function getDefinitionElement(
     definitionRef.options = calculateGlobalOptions(definitionRef.options as Definition);
   }
   return definitionRef;
-}
-
-/** Find the package.json of the application that is using this library */
-export function findPackageJson(cliOptions: CliOptions) {
-  const packagejson = readPackageUp.sync({ cwd: cliOptions.baseLocation });
-  if (!packagejson || !packagejson.packageJson) {
-    return undefined;
-  }
-  return packagejson.packageJson;
 }
 
 /** Find and format the version of the application that is using this library */

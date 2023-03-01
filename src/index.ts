@@ -7,10 +7,9 @@ import {
   formatVersion,
   getEntryPoint,
   getEntryFile,
-  findPackageJson,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger, Kind } from "./types";
-import { clone, logErrorAndExit, merge } from "./utils";
+import { clone, logErrorAndExit, merge, findPackageJson } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import path from "path";

@@ -1,6 +1,9 @@
 import mergeWith from "lodash.mergewith";
 import lodashclone from "lodash.clonedeep";
 import Cli from ".";
+import { CliOptions } from "./types";
+import path from "path";
+import fs from "fs";
 
 export const clone = (o: any) => lodashclone(o);
 
@@ -34,4 +37,24 @@ export function merge(objValue: object, srcValue: object) {
     }
   }
   mergeWith(objValue, srcValue, customizer);
+}
+
+/** Find the package.json of the application that is using this library
+ * Returns the content of the nearest package.json. The search goes from `CliOptions.baseLocation` up */
+export function findPackageJson(options: CliOptions) {
+  // Split baseLocation into the composing directories
+  const parts = options.baseLocation?.split(path.sep) || [];
+  for (let len = parts.length; len > 0; len--) {
+    const candidate = path.join(...parts.slice(0, len), "package.json");
+    if (!fs.existsSync(candidate)) {
+      continue;
+    }
+    try {
+      return JSON.parse(fs.readFileSync(candidate, "utf-8"));
+    } catch {
+      // Error parsing package.json, return undefined
+      break;
+    }
+  }
+  return undefined;
 }

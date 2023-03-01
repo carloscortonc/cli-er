@@ -5,7 +5,7 @@ import definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
-jest.spyOn(cliutils, "findPackageJson").mockImplementation(
+jest.spyOn(utils, "findPackageJson").mockImplementation(
   (_: any) =>
     ({
       version: "1.0.0",
@@ -125,7 +125,7 @@ describe("Cli.constructor", () => {
     });
   });
   it("Use name, version and description from fallback if not provided and no package.json found", () => {
-    jest.spyOn(cliutils, "findPackageJson").mockImplementation((_: any) => undefined);
+    jest.spyOn(utils, "findPackageJson").mockImplementation((_: any) => undefined);
     jest.spyOn(cliutils, "getEntryFile").mockImplementation(() => "script-name");
     const cli = new Cli({});
     expect(cli.options).toMatchObject({
