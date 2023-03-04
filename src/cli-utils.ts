@@ -95,60 +95,56 @@ export function parseArguments(
     otherAliases.forEach((alias: string) => {
       aliases[alias] = mainAlias;
     });
+    //Process default
+    if (element.kind !== Kind.COMMAND || element.type !== undefined) {
+      output.options[element.key!] = element.default;
+    }
   };
 
-  // Only process global options if no args are provided
-  if (args.length === 0) {
-    Object.entries(definition)
-      .filter(([_, e]) => e.kind === Kind.OPTION)
-      .forEach(([key, element]: [string, DefinitionElement]) => {
-        processElement(element);
-        output.options[key] = element.default;
-      });
-  } else {
-    let definitionRef = definition;
-    argsLoop: for (const arg of args) {
-      // Sort definition to process options first
-      const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
-      for (let i = 0; i < entries.length; i++) {
-        const [key, element]: [string, DefinitionElement] = entries[i];
-        processElement(element);
-        if (element.kind === Kind.OPTION) {
-          output.options[key] = element.default;
-        } else if (element.aliases!.includes(arg)) {
-          if (element.kind === Kind.COMMAND) {
-            if (element.type !== undefined) {
-              output.options[key] = element.default;
-            } else {
-              argsToProcess = argsToProcess.slice(1);
-            }
-            if (output.location.length === 0) {
-              output.location.push(cliOptions.commandsPath);
-            }
-            output.location.push(key);
-            Object.entries(definitionRef[key].options || {}).forEach(([optionKey, optionDef]) => {
-              processElement(optionDef);
-              output.options[optionKey] = optionDef.default;
-            });
-            // No more namespaces/commands are allowed to follow, so end
-            break argsLoop;
-          } else {
-            argsToProcess = argsToProcess.slice(1);
-          }
-          output.location.push(key);
-          definitionRef = (definitionRef[key] as Namespace).options || {};
-          break;
-        } else if (i === entries.length - 1) {
-          if (!aliases.hasOwnProperty(arg)) {
-            // Options already processed, and no namespace/command found for current arg, so end
-            const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-            output.error = CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion);
-          }
-          break argsLoop;
-        }
+  let definitionRef = definition;
+  const optsAliases = [];
+  argsLoop: for (const arg of args) {
+    // Sort definition to process options first
+    const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
+    for (let i = 0; i < entries.length; i++) {
+      const [key, element]: [string, DefinitionElement] = entries[i];
+      if (element.kind === Kind.OPTION) {
+        optsAliases.push(...element.aliases!);
+        continue;
       }
+      if (!element.aliases?.includes(arg)) {
+        if (i < entries.length - 1) {
+          continue;
+        }
+        if (!optsAliases.includes(arg)) {
+          const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
+          output.error = CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion);
+        }
+        break argsLoop;
+      }
+      if (element.kind === Kind.COMMAND) {
+        if (element.type === undefined) {
+          argsToProcess = argsToProcess.slice(1);
+        }
+        if (output.location.length === 0) {
+          output.location.push(cliOptions.commandsPath);
+        }
+        output.location.push(key);
+        // No more namespaces/commands are allowed to follow, so end
+        break argsLoop;
+      }
+      // Namespaces will follow here
+      argsToProcess = argsToProcess.slice(1);
+      output.location.push(key);
+      definitionRef = (definitionRef[key] as Namespace).options || {};
+      break;
     }
   }
+
+  const defElement = getDefinitionElement(definition, output.location, cliOptions)!;
+  // Process all element aliases and defaults
+  const defToProcess = output.location.length > 0 ? { "": defElement, ...defElement.options } : definition;
+  Object.values(defToProcess).forEach(processElement);
 
   // Process args
   for (let i = 0; i < argsToProcess.length; i++) {
