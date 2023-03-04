@@ -116,6 +116,12 @@ new Cli(
         },
       },
     },
+    debug: {
+      description: "Enable debug mode",
+      aliases: ["-D", "--debug"],
+      type: "boolean",
+      default: false,
+    },
   },
   {
     rootCommand: false,
