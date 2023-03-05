@@ -8,7 +8,7 @@ import {
   getEntryPoint,
   getEntryFile,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger, Kind } from "./types";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
 import { clone, logErrorAndExit, merge, findPackageJson } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
@@ -64,7 +64,7 @@ export default class Cli {
     if (!this.options.cliDescription) {
       this.options.cliDescription = packagejson.description || "";
     }
-    this.definition = completeDefinition(clone(definition), this.options);
+    this.definition = completeDefinition(clone(definition), this.options) as Definition;
     return this;
   }
   /**
@@ -83,7 +83,7 @@ export default class Cli {
   run(args?: string[]) {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
-    const command = getDefinitionElement(this.definition, opts.location, this.options) as Command;
+    const command = getDefinitionElement(this.definition, opts.location, this.options)!;
     const e = CliError.analize(opts.error);
 
     // Evaluate auto-included version

@@ -1,8 +1,10 @@
 import Cli from "../src/index";
 import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
-import definition from "./data/definition.json";
+import _definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
+import { Definition } from "../src/types";
+const definition = _definition as Definition;
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
 jest.spyOn(utils, "findPackageJson").mockImplementation(
