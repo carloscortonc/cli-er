@@ -9,6 +9,7 @@ new Cli(
         build: {
           kind: "command",
           description: "Build an image from a Dockerfile",
+          type: "string",
           options: {
             addHost: {
               aliases: ["--add-host"],

@@ -33,6 +33,7 @@ const definition = {
     options: {
       build: {
         kind: "command",
+        type: "string",
         description: "Build an image from a Dockerfile",
       },
     },
@@ -57,7 +58,7 @@ it will allow us to structure the code as follows:
 so we can then execute:
 
 ```
-node docker.js builder build
+node docker.js builder build .
 ```
 
 which will try to invoke `/builder/build.js` and `/builder/build/index.js` with the parsed options.
@@ -83,7 +84,7 @@ This allows to create custom parsers for any type of input (check the [custom-op
 The execution of the above [example](#example) would be:
 
 ```json
-{ "options": { "debug": false }, "location": ["builder", "build"] }
+{ "options": { "build": ".", "debug": false }, "location": ["builder", "build"] }
 ```
 
 ### run(args?)

@@ -259,6 +259,12 @@ describe("parseArguments", () => {
       error: 'Wrong value for option "--opt". Expected <number> but found "true"',
     });
   });
+  it("Option alias should have preference over other option values", () => {
+    expect(parseArguments(["nms", "cmd", "--opt", "1"], def, cliOptions)).toStrictEqual({
+      options: { cmd: undefined, opt: 1, globalOption: "globalvalue" },
+      location: expect.anything(),
+    });
+  });
 });
 
 describe("executeScript", () => {

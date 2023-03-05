@@ -14,7 +14,7 @@ export default function parseOptionValue(
     /* Calculated value */
     value: undefined,
     /* Where to continue after processing current option-value */
-    next: 1,
+    next: value !== undefined ? 1 : 0,
     /* Error found, if any */
     error:
       value === undefined && option.kind === Kind.OPTION
