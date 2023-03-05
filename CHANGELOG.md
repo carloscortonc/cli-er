@@ -1,3 +1,26 @@
+# [0.8.0](https://github.com/carloscortonc/cli-er/compare/v0.7.2...v0.8.0) (2023-03-05)
+
+
+### Bug Fixes
+
+* help-sections not replaced on execution error ([6baa1c5](https://github.com/carloscortonc/cli-er/commit/6baa1c55216f6e512c556c7f97935b492b3c3a7e))
+* preference for option-alias over option value ([68157af](https://github.com/carloscortonc/cli-er/commit/68157afa7321de9dae09c4c99c114474884e743b))
+* version option not detected ([4495be2](https://github.com/carloscortonc/cli-er/commit/4495be2a61fd93af338e3dfd9ef401bdf401efbd))
+
+
+### Performance Improvements
+
+* **dependencies:** remove read-pkg-up ([51b11f5](https://github.com/carloscortonc/cli-er/commit/51b11f5952d44be11d4ed8bfe2025a386bf31015))
+
+
+### Features
+
+* allow templating generated help ([8b6c8fc](https://github.com/carloscortonc/cli-er/commit/8b6c8fcc0f78818fb9dc1cd33eb6c05021a1a8ed))
+* generate error for options without value ([8d0c8a2](https://github.com/carloscortonc/cli-er/commit/8d0c8a2bb84bc04500e1b9609fff55d959551c3d))
+* show cli-description when printing root help ([bac2886](https://github.com/carloscortonc/cli-er/commit/bac2886e9033dc231d3a7def8e03f675e825a8ba))
+* show full help when no root-command is registered and target location is empty ([89008ff](https://github.com/carloscortonc/cli-er/commit/89008ff88b8aad24641a4cbd29ab8621735b374f))
+* show scoped-help when a namespace is invoked ([2e5a06f](https://github.com/carloscortonc/cli-er/commit/2e5a06fc7c6d36e64d7c096ba439085435563d96))
+
 ## [0.7.2](https://github.com/carloscortonc/cli-er/compare/v0.7.1...v0.7.2) (2023-02-18)
 
 
