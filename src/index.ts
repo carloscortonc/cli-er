@@ -7,10 +7,9 @@ import {
   formatVersion,
   getEntryPoint,
   getEntryFile,
-  findPackageJson,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger } from "./types";
-import { clone, logErrorAndExit, merge } from "./utils";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger, Kind } from "./types";
+import { clone, logErrorAndExit, merge, findPackageJson } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import path from "path";
@@ -39,14 +38,17 @@ export default class Cli {
         autoInclude: true,
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
+        template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
         aliases: ["-v", "--version"],
         description: "Display version",
       },
+      rootCommand: true,
       cliName: "",
       cliVersion: "",
+      cliDescription: "",
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
@@ -58,6 +60,9 @@ export default class Cli {
     }
     if (!this.options.cliVersion) {
       this.options.cliVersion = packagejson.version || "-";
+    }
+    if (!this.options.cliDescription) {
+      this.options.cliDescription = packagejson.description || "";
     }
     this.definition = completeDefinition(clone(definition), this.options);
     return this;
@@ -81,8 +86,19 @@ export default class Cli {
     const command = getDefinitionElement(this.definition, opts.location, this.options) as Command;
     const e = CliError.analize(opts.error);
 
+    // Evaluate auto-included version
+    if (this.options.version.autoInclude && opts.options.version) {
+      return formatVersion(this.options);
+    } else if (this.options.version.autoInclude) {
+      delete opts.options.version;
+    }
     // Evaluate auto-included help
-    if (this.options.help.autoInclude && opts.options.help) {
+    if (
+      this.options.help.autoInclude &&
+      (opts.options.help ||
+        (!this.options.rootCommand && opts.location.length === 0) ||
+        command.kind === Kind.NAMESPACE)
+    ) {
       if (opts.error) {
         Cli.logger.error(opts.error, "\n");
       }
@@ -90,16 +106,13 @@ export default class Cli {
     } else if (this.options.help.autoInclude) {
       delete opts.options.help;
     }
-    // Evaluate auto-included version
-    if (this.options.version.autoInclude && opts.options.version) {
-      return formatVersion(this.options);
-    } else if (this.options.version.autoInclude) {
-      delete opts.options.version;
-    }
+
     // Check if any error was generated
     if (
       (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
-      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE].includes(e as ErrorType) &&
+      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE, ErrorType.OPTION_MISSING_VALUE].includes(
+        e as ErrorType
+      ) &&
         this.options.onFail.stopOnUnknownOption)
     ) {
       return logErrorAndExit(opts.error);

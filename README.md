@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/cli-er.svg)](https://www.npmjs.com/package/cli-er)
 [![build](https://github.com/carloscortonc/cli-er/actions/workflows/build.yml/badge.svg)](https://github.com/carloscortonc/cli-er/actions/workflows/build.yml)
 
-Tool for building advance CLI applications using a definition object. It implements a folder structure strategy that helps organize all the logic, also including help-generation  
+Tool for building advanced CLI applications using a definition object. It implements a folder structure strategy that helps organize all the logic, also including help-generation  
 </br>
 
 _cli.js_:
@@ -24,18 +24,24 @@ node cli.js [namespace(s)|command] [OPTIONS]
 
 #### Example
 
-Given the following definition (entrypoint.js):
+Given the following definition (docker.js):
 
 ```js
 const definition = {
-  nms: {
+  builder: {
     kind: "namespace",
     options: {
-      cmd: {
+      build: {
         kind: "command",
         type: "string",
+        description: "Build an image from a Dockerfile",
       },
     },
+  },
+  debug: {
+    type: "boolean",
+    aliases: ["-D", "--debug"],
+    default: false,
   },
 };
 ```
@@ -44,21 +50,21 @@ it will allow us to structure the code as follows:
 
 ```sh
 .
-├─ entrypoint.js
-└─ nms
-   └── cmd.js
+├─ docker.js
+└─ builder
+   └── build.js
 ```
 
 so we can then execute:
 
 ```
-node entrypoint.js nms cmd commandvalue
+node docker.js builder build .
 ```
 
-which will try to invoke `/nms/cmd.js` and `/nms/cmd/index.js` with the parsed options.
+which will try to invoke `/builder/build.js` and `/builder/build/index.js` with the parsed options.
 This allows us to organize and structure the logic nicely.
 
-You can check the [docker-based example](./examples/docker) for a more in-depth demo.
+You can check the full [docker-based example](./examples/docker) for a more in-depth demo.
 
 ## Usage
 
@@ -78,7 +84,7 @@ This allows to create custom parsers for any type of input (check the [custom-op
 The execution of the above [example](#example) would be:
 
 ```json
-{ "options": { "cmd": "commandValue" }, "location": ["nms", "cmd"] }
+{ "options": { "build": ".", "debug": false }, "location": ["builder", "build"] }
 ```
 
 ### run(args?)
@@ -108,6 +114,8 @@ If no command is found in the parsing process, an error and suggestion (the clos
 
 If an unknown option if found, the default behaviour is to print the error and exit. This can be configured via `CliOptions.onFail.stopOnUnknownOption`.
 
+If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with `CliOptions.rootCommand: false`. By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](./examples/docker/docker.js#L127)).
+
 ### help(location?)
 
 Generates and outputs help message based on the provided definition. Given the following code (test.js):
@@ -136,13 +144,15 @@ const definition = {
   },
 };
 
-new Cli(definition).help();
+new Cli(definition, { cliDescription: "Cli for testing purposes" }).help();
 ```
 
 will output:
 
 ```
 Usage:  test NAMESPACE|COMMAND [OPTIONS]
+
+Cli for testing purposes
 
 Namespaces:
   nms           Description for the namespace
@@ -152,6 +162,7 @@ Commands:
 
 Options:
   -g, --global  Option shared between all commands (default: globalvalue)
+  -h, --help    Display global help, or scoped to a namespace/command
 ```
 
 The optional argument _location_ enables the generation of scoped help. For the above definition, the following code:
@@ -163,7 +174,7 @@ new Cli(definition).help(["nms"]);
 will output:
 
 ```
-Usage:  test nms
+Usage:  test nms COMMAND [OPTIONS]
 
 Description for the namespace
 
@@ -172,9 +183,20 @@ Commands:
 
 Options:
   -g, --global  Option shared between all commands (default: globalvalue)
+  -h, --help    Display global help, or scoped to a namespace/command
 ```
 
 Any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition.
+
+#### Templating help-sections
+
+There are five distinct sections in the generated help: **usage**, **description**, **namespaces**, **commands** and **options**. The default structure is:
+
+```js
+"\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n";
+```
+
+This can be modified via `CliOptions.help.template`, to include a header/footer, change the order of the sections, or remove a section altogether. If a section has no content, it will be removed along with any line-breaks that follow. You can see a use-case for this in the [docker example](./examples/docker/docker.js#L129).
 
 > **Note**
 > help-generation option is auto-included by default. This can be configured via `CliOptions.help`
@@ -189,7 +211,7 @@ prints its name and version.
 
 ## Custom logger
 
-You may change the default logger via `CliOptions.logger`. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L122).
+You may change the default logger via `CliOptions.logger`. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L133).
 
 ## Typescript cli
 

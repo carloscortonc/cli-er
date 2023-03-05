@@ -5,11 +5,12 @@ import definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
-jest.spyOn(cliutils, "findPackageJson").mockImplementation(
+jest.spyOn(utils, "findPackageJson").mockImplementation(
   (_: any) =>
     ({
       version: "1.0.0",
       name: "cli-app",
+      description: "cli-description",
     } as any)
 );
 
@@ -53,25 +54,29 @@ describe("Cli.constructor", () => {
         autoInclude: true,
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
+        template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
         aliases: ["-v", "--version"],
         description: "Display version",
       },
+      rootCommand: true,
       cliName: "cli-app",
       cliVersion: "1.0.0",
+      cliDescription: "cli-description",
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
     const overrides = {
       baseLocation: "..",
       baseScriptLocation: "./",
-      help: { autoInclude: false, aliases: ["--help"], description: "" },
+      help: { autoInclude: false, aliases: ["--help"], description: "", template: "template" },
       version: { aliases: ["--version"], description: "" },
       onFail: { suggestion: false },
       cliName: "custom-name",
       cliVersion: "2.0.0",
+      cliDescription: "custom-description",
     };
     const c = new Cli({}, overrides);
     expect(c.options).toStrictEqual({
@@ -88,14 +93,17 @@ describe("Cli.constructor", () => {
         autoInclude: overrides.help.autoInclude,
         aliases: ["--help"],
         description: "",
+        template: "template",
       },
       version: {
         autoInclude: true,
         aliases: ["--version"],
         description: "",
       },
+      rootCommand: true,
       cliName: "custom-name",
       cliVersion: "2.0.0",
+      cliDescription: "custom-description",
     });
   });
   it("Override default logger", () => {
@@ -108,20 +116,22 @@ describe("Cli.constructor", () => {
     Cli.logger.error("some text");
     expect(logger).toHaveBeenCalledWith("CUSTOMERROR some text");
   });
-  it("Use name and version from package.json if not provided", () => {
+  it("Use name, version and description from package.json if not provided", () => {
     const cli = new Cli({});
     expect(cli.options).toMatchObject({
       cliName: "cli-app",
       cliVersion: "1.0.0",
+      cliDescription: "cli-description",
     });
   });
-  it("Use name and version from fallback if not provided and no package.json found", () => {
-    jest.spyOn(cliutils, "findPackageJson").mockImplementation((_: any) => undefined);
+  it("Use name, version and description from fallback if not provided and no package.json found", () => {
+    jest.spyOn(utils, "findPackageJson").mockImplementation((_: any) => undefined);
     jest.spyOn(cliutils, "getEntryFile").mockImplementation(() => "script-name");
     const cli = new Cli({});
     expect(cli.options).toMatchObject({
       cliName: "script-name",
       cliVersion: "-",
+      cliDescription: "",
     });
   });
 });
@@ -148,11 +158,11 @@ describe("Cli.parse", () => {
 describe("Cli.run", () => {
   it("Calling run with arguments invokes the script in the computed location", () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
-    const c = new Cli(definition);
-    c.run(["nms", "cmd"]);
+    const c = new Cli(definition, { rootCommand: false });
+    c.run(["nms", "cmd", "cmdvalue"]);
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: ["nms", "cmd"],
-      options: { cmd: undefined, globalOption: "globalvalue", opt: undefined },
+      options: { cmd: "cmdvalue", globalOption: "globalvalue", opt: undefined },
     });
   });
   it("Calling run with arguments invokes the script in the computed location - options only", () => {
@@ -163,6 +173,15 @@ describe("Cli.run", () => {
       location: [],
       options: { globalOption: "overridden" },
     });
+  });
+  it("Calling run with no namespace/command: CliOptions.rootCommand=false", () => {
+    const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
+    const c = new Cli(definition, { rootCommand: false });
+    c.run([]);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
+    spy.mockClear();
+    c.run(["--global", "overridden"]);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
   it("Calling run on element with action invokes such action", () => {
     const action = jest.fn();
@@ -196,9 +215,21 @@ describe("Cli.run", () => {
       "\n"
     );
   });
+  it("Calling run on namespaces invokes help-generation", () => {
+    const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
+    const c = new Cli(definition);
+    c.run(["nms"]);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
+  });
   it("Calling run with version option invokes version-formatting", () => {
     const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();
     const c = new Cli(definition);
+    c.run(["--version"]);
+    expect(spy).toHaveBeenCalledWith(expect.anything());
+  });
+  it("Calling run with version option invokes version-formatting - rootCommand:false", () => {
+    const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();
+    const c = new Cli(definition, { rootCommand: false });
     c.run(["--version"]);
     expect(spy).toHaveBeenCalledWith(expect.anything());
   });
@@ -220,6 +251,14 @@ describe("Cli.run", () => {
   });
   it("Prints option-wrong-value error if configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_WRONG_VALUE);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
+    const c = new Cli(definition);
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
+  });
+  it("Prints missing-option-value error of configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_MISSING_VALUE);
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition);

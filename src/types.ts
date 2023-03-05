@@ -113,6 +113,8 @@ export type CliOptions = {
     aliases: string[];
     /** Description for the option */
     description: string;
+    /* Template to be used when generating help */
+    template: string;
   };
   /** Version related configuration */
   version: {
@@ -123,6 +125,10 @@ export type CliOptions = {
     /** Description for the option */
     description: string;
   };
+  /** Whether the cli implements a root command (invocation with no additional namespaces/commands)
+   * @default true
+   */
+  rootCommand: boolean;
   /** Logger to be used by the cli */
   logger?: Partial<ICliLogger>;
   /** Cli name to be used instead of the one defined in package.json
@@ -133,4 +139,8 @@ export type CliOptions = {
    * @default packageJson.version
    */
   cliVersion: string;
+  /** Cli description to be used instead of the one defined in package.json
+   * @default packageJson.description
+   */
+  cliDescription: string;
 };

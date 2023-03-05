@@ -9,6 +9,7 @@ new Cli(
         build: {
           kind: "command",
           description: "Build an image from a Dockerfile",
+          type: "string",
           options: {
             addHost: {
               aliases: ["--add-host"],
@@ -116,8 +117,19 @@ new Cli(
         },
       },
     },
+    debug: {
+      description: "Enable debug mode",
+      aliases: ["-D", "--debug"],
+      type: "boolean",
+      default: false,
+    },
   },
   {
+    rootCommand: false,
+    help: {
+      template:
+        "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\nRun 'docker COMMAND --help' for more information on a command.\n\nTo get more help with docker, check out our guides at https://docs.docker.com/go/guides/\n",
+    },
     logger: {
       error: (...message) => process.stderr.write("\x1b[31mERROR ".concat(message.join(" "), "\x1b[0m")),
     },

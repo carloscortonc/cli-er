@@ -3,6 +3,7 @@ export enum ErrorType {
   COMMAND_NOT_FOUND = 'Command "{0}" not found. Did you mean "{1}" ?',
   OPTION_NOT_FOUND = 'Unknown option "{0}"',
   OPTION_WRONG_VALUE = 'Wrong value for option "{0}". Expected <{1}> but found "{2}"',
+  OPTION_MISSING_VALUE = 'Missing value of type <{0}> for option "{1}"',
 }
 
 /** Utility class to format and identify error messages */

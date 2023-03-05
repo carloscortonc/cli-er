@@ -1,10 +1,10 @@
 import path from "path";
 import fs from "fs";
-import readPackageUp from "read-pkg-up";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, logErrorAndExit } from "./utils";
-import { Kind, ParsingOutput, Definition, Type, CliOptions, OptionValue, Option, Namespace, Command } from "./types";
+import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
+import parseOptionValue from "./cli-option-parser";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking */
@@ -58,8 +58,6 @@ export function completeDefinition(definition: Definition, cliOptions: CliOption
 function completeElementDefinition(name: string, element: DefinitionElement) {
   // Complete aliases
   element.aliases = getAliases(name, element);
-  // Include default description if missing
-  element.description = element.description ?? "-";
   // Set kind to Option if missing
   element.kind = element.kind ?? Kind.OPTION;
   // Set option type to string if missing
@@ -97,60 +95,56 @@ export function parseArguments(
     otherAliases.forEach((alias: string) => {
       aliases[alias] = mainAlias;
     });
+    //Process default
+    if (element.kind !== Kind.COMMAND || element.type !== undefined) {
+      output.options[element.key!] = element.default;
+    }
   };
 
-  // Only process global options if no args are provided
-  if (args.length === 0) {
-    Object.entries(definition)
-      .filter(([_, e]) => e.kind === Kind.OPTION)
-      .forEach(([key, element]: [string, DefinitionElement]) => {
-        processElement(element);
-        output.options[key] = element.default;
-      });
-  } else {
-    let definitionRef = definition;
-    argsLoop: for (const arg of args) {
-      // Sort definition to process options first
-      const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
-      for (let i = 0; i < entries.length; i++) {
-        const [key, element]: [string, DefinitionElement] = entries[i];
-        processElement(element);
-        if (element.kind === Kind.OPTION) {
-          output.options[key] = element.default;
-        } else if (element.aliases!.includes(arg)) {
-          if (element.kind === Kind.COMMAND) {
-            if (element.type !== undefined) {
-              output.options[key] = element.default;
-            } else {
-              argsToProcess = argsToProcess.slice(1);
-            }
-            if (output.location.length === 0) {
-              output.location.push(cliOptions.commandsPath);
-            }
-            output.location.push(key);
-            Object.entries(definitionRef[key].options || {}).forEach(([optionKey, optionDef]) => {
-              processElement(optionDef);
-              output.options[optionKey] = optionDef.default;
-            });
-            // No more namespaces/commands are allowed to follow, so end
-            break argsLoop;
-          } else {
-            argsToProcess = argsToProcess.slice(1);
-          }
-          output.location.push(key);
-          definitionRef = (definitionRef[key] as Namespace).options || {};
-          break;
-        } else if (i === entries.length - 1) {
-          if (!aliases.hasOwnProperty(arg)) {
-            // Options already processed, and no namespace/command found for current arg, so end
-            const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-            output.error = CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion);
-          }
-          break argsLoop;
-        }
+  let definitionRef = definition;
+  const optsAliases = [];
+  argsLoop: for (const arg of args) {
+    // Sort definition to process options first
+    const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
+    for (let i = 0; i < entries.length; i++) {
+      const [key, element]: [string, DefinitionElement] = entries[i];
+      if (element.kind === Kind.OPTION) {
+        optsAliases.push(...element.aliases!);
+        continue;
       }
+      if (!element.aliases?.includes(arg)) {
+        if (i < entries.length - 1) {
+          continue;
+        }
+        if (!optsAliases.includes(arg)) {
+          const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
+          output.error = CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion);
+        }
+        break argsLoop;
+      }
+      if (element.kind === Kind.COMMAND) {
+        if (element.type === undefined) {
+          argsToProcess = argsToProcess.slice(1);
+        }
+        if (output.location.length === 0) {
+          output.location.push(cliOptions.commandsPath);
+        }
+        output.location.push(key);
+        // No more namespaces/commands are allowed to follow, so end
+        break argsLoop;
+      }
+      // Namespaces will follow here
+      argsToProcess = argsToProcess.slice(1);
+      output.location.push(key);
+      definitionRef = (definitionRef[key] as Namespace).options || {};
+      break;
     }
   }
+
+  const defElement = getDefinitionElement(definition, output.location, cliOptions)!;
+  // Process all element aliases and defaults
+  const defToProcess = output.location.length > 0 ? { "": defElement, ...defElement.options } : definition;
+  Object.values(defToProcess).forEach(processElement);
 
   // Process args
   for (let i = 0; i < argsToProcess.length; i++) {
@@ -159,18 +153,19 @@ export function parseArguments(
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const optionDefinition = aliases[optionKey] as DefinitionElement;
     const outputKey = optionDefinition && (optionDefinition.key as string);
-    if (aliases.hasOwnProperty(curr) && !aliases.hasOwnProperty(next) && next !== undefined) {
-      try {
-        output.options[outputKey] = evaluateValue(next, output.options[outputKey], { ...optionDefinition, key: curr });
-      } catch (e: any) {
-        if (!output.error) {
-          output.error = e.message;
-        }
+    if (aliases.hasOwnProperty(optionKey)) {
+      const evaluatedValue = aliases.hasOwnProperty(next) ? undefined : next;
+      const parserOutput = parseOptionValue(evaluatedValue, output.options[outputKey], {
+        ...optionDefinition,
+        key: curr,
+      });
+      if (parserOutput.error && !output.error) {
+        output.error = parserOutput.error;
+      } else if (!parserOutput.error) {
+        output.options[outputKey] = parserOutput.value;
       }
-      i++; // skip next array value, already processed
-    } else if (aliases.hasOwnProperty(optionKey) && (aliases[optionKey] as DefinitionElement).type === Type.BOOLEAN) {
-      output.options[outputKey] = true;
-    } else if (!aliases.hasOwnProperty(curr) && !output.error) {
+      i += parserOutput.next;
+    } else if (!aliases.hasOwnProperty(optionKey) && !output.error) {
       // Unknown option
       output.error = CliError.format(ErrorType.OPTION_NOT_FOUND, curr);
     }
@@ -185,29 +180,6 @@ export function parseArguments(
     });
 
   return output;
-}
-
-/** Evaluate the value of an option */
-function evaluateValue(value: string, current: OptionValue, option: Option) {
-  const type = option.type;
-  if (type === Type.BOOLEAN) {
-    return [true, "true"].includes(value);
-  } else if (type === Type.LIST) {
-    return ((current as string[]) || []).concat(value.split(","));
-  } else if (type === Type.NUMBER) {
-    const v = parseInt(value);
-    if (!isNaN(v)) {
-      return v;
-    }
-  } else if (type === Type.FLOAT) {
-    const v = parseFloat(value);
-    if (!isNaN(v)) {
-      return v;
-    }
-  } else {
-    return value;
-  }
-  throw new Error(CliError.format(ErrorType.OPTION_WRONG_VALUE, option.key!, type, value));
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
@@ -225,10 +197,12 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   const validScriptPath = scriptPaths.find(fs.existsSync);
 
   if (!validScriptPath) {
+    let errorMessage = "";
     if (cliOptions.onFail.help) {
-      generateHelp(definition);
+      generateScopedHelp(definition, [], cliOptions);
+      errorMessage = "\n";
     }
-    let errorMessage = "There was a problem finding the script to run.";
+    errorMessage += "There was a problem finding the script to run.";
     if (cliOptions.onFail.scriptPaths) {
       errorMessage += " Considered paths were:\n";
       errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp, "\n"), errorMessage);
@@ -244,20 +218,30 @@ export function executeScript({ location, options }: ParsingOutput, cliOptions: 
   }
 }
 
+enum HELP_SECTIONS {
+  USAGE = "usage",
+  DESCRIPTION = "description",
+  NAMESPACES = "namespaces",
+  COMMANDS = "commands",
+  OPTIONS = "options",
+}
+
 export function generateScopedHelp(definition: Definition, rawLocation: string[], cliOptions: CliOptions) {
   let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
-  let elementInfo = "";
+  const sections: { [key in HELP_SECTIONS]?: string } = {};
   if (location.length > 0) {
     if (element && [Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
-      elementInfo += `\n${element.description}\n`;
+      sections[HELP_SECTIONS.DESCRIPTION] = element.description?.concat("\n");
       definitionRef = element.options as Definition;
     } else {
       // Some element in location was incorrect. Output the entire help
-      elementInfo = `\nUnable to find the specified scope (${location.join(" > ")})\n`;
+      Cli.logger.log(`\nUnable to find the specified scope (${location.join(" > ")})\n`);
       location = [];
     }
+  } else if (cliOptions.cliDescription) {
+    sections[HELP_SECTIONS.DESCRIPTION] = cliOptions.cliDescription.concat("\n");
   }
   // Add usage section
   const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
@@ -278,28 +262,28 @@ export function generateScopedHelp(definition: Definition, rawLocation: string[]
       .join("|")
       .toUpperCase()}`;
 
-  elementInfo = [
-    `\nUsage:  ${cliOptions.cliName}`,
+  sections[HELP_SECTIONS.USAGE] = [
+    `Usage:  ${cliOptions.cliName}`,
     location.length > 0 ? ` ${location.join(" ")}` : "",
     existingKinds.length > 0 ? formatKinds(existingKinds) : "",
     element?.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
     hasOptions ? " [OPTIONS]" : "",
     "\n",
-  ]
-    .join("")
-    .concat(elementInfo);
-  Cli.logger.log(elementInfo);
-  generateHelp(definitionRef);
+  ].join("");
+  generateHelp(definitionRef, cliOptions, sections);
 }
 
 /** Print the resulting documentation of formatting the given definition */
-function generateHelp(definition: Definition = {}) {
+function generateHelp(
+  definition: Definition = {},
+  cliOptions: CliOptions,
+  sections: { [key in HELP_SECTIONS]?: string } = {}
+) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
-  let formattedHelp = "\n";
 
   type ExtendedDefinitionElement = DefinitionElement & { name: string };
-  type Sections = { [key in Kind]: { title: string; content: ExtendedDefinitionElement[] } };
+  type ElementSections = { [key in HELP_SECTIONS]?: { title: string; content: ExtendedDefinitionElement[] } };
 
   // Generate the formatted versions of aliases
   const formatAliases = (aliases: string[] = []) => aliases.join(", ");
@@ -311,57 +295,72 @@ function generateHelp(definition: Definition = {}) {
     [
       " ".repeat(indentation),
       formatter.format("name", element.name, 2),
-      element.description,
+      element.description || "-",
       defaultHint(element),
       "\n",
     ].join("");
 
-  // Initialize sections
-  const sectionsTemplate: Sections = {
-    [Kind.NAMESPACE]: {
+  // Initialize element-sections
+  const elementSectionsTemplate: ElementSections = {
+    [HELP_SECTIONS.NAMESPACES]: {
       title: "Namespaces:",
       content: [],
     },
-    [Kind.COMMAND]: {
+    [HELP_SECTIONS.COMMANDS]: {
       title: "Commands:",
       content: [],
     },
-    [Kind.OPTION]: {
+    [HELP_SECTIONS.OPTIONS]: {
       title: "Options:",
       content: [],
     },
   };
 
-  // Caculate all sections and process section values
-  const { sections, formattedNames }: { sections: Sections; formattedNames: string[] } = Object.values(definition)
-    .filter(({ hidden }) => hidden !== true)
-    .reduce(
-      (acc: any, element) => {
-        const section = element.kind as string,
-          name = formatAliases(element.aliases);
-        const completeElement = { ...element, name };
-        acc.formattedNames.push(name);
-        acc.sections[section].content.push(completeElement);
-        return acc;
-      },
-      { sections: sectionsTemplate, formattedNames: [] }
-    );
+  // Caculate all element-sections and process section values
+  const { elementSections, formattedNames }: { elementSections: ElementSections; formattedNames: string[] } =
+    Object.values(definition)
+      .filter(({ hidden }) => hidden !== true)
+      .reduce(
+        (acc: any, element) => {
+          const sectionAdapter: { [key in Kind]: HELP_SECTIONS } = {
+            [Kind.NAMESPACE]: HELP_SECTIONS.NAMESPACES,
+            [Kind.COMMAND]: HELP_SECTIONS.COMMANDS,
+            [Kind.OPTION]: HELP_SECTIONS.OPTIONS,
+          };
+          const sectionKey = sectionAdapter[element.kind as Kind],
+            name = formatAliases(element.aliases);
+          const completeElement = { ...element, name };
+          acc.formattedNames.push(name);
+          acc.elementSections[sectionKey].content.push(completeElement);
+          return acc;
+        },
+        { elementSections: elementSectionsTemplate, formattedNames: [] }
+      );
 
   // Process all names from namespaces, commands and options into formatter
   formatter.process("name", formattedNames);
 
-  // Format all sections
-  formattedHelp = Object.values(sections)
-    .filter((section) => section.content.length > 0)
-    .reduce((acc, { title, content }) => {
-      acc += `${title}\n`;
+  // Format all element-sections
+  Object.entries(elementSections)
+    .filter(([_, section]) => section.content.length > 0)
+    .forEach(([sectionKey, { title, content }]) => {
+      let sectionContent = `${title}\n`;
       content.forEach((item: ExtendedDefinitionElement) => {
-        acc += formatElement(item, formatter, sectionIndentation);
+        sectionContent += formatElement(item, formatter, sectionIndentation);
       });
-      acc += "\n";
-      return acc;
-    }, formattedHelp);
-
+      sections[sectionKey as HELP_SECTIONS] = sectionContent;
+    });
+  // Assert all sections are initialized
+  Object.values(HELP_SECTIONS).forEach((sectionKey) => {
+    if (!sections[sectionKey]) {
+      sections[sectionKey] = undefined;
+    }
+  });
+  const templateKey = (key: string) => `{${key}}`;
+  const formattedHelp = Object.entries(sections).reduce((acc, [sectionKey, sectionContent]) => {
+    const regexp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
+    return acc.replace(regexp, sectionContent || "");
+  }, cliOptions.help.template);
   Cli.logger.log(formattedHelp);
 }
 
@@ -402,15 +401,6 @@ export function getDefinitionElement(
     definitionRef.options = calculateGlobalOptions(definitionRef.options as Definition);
   }
   return definitionRef;
-}
-
-/** Find the package.json of the application that is using this library */
-export function findPackageJson(cliOptions: CliOptions) {
-  const packagejson = readPackageUp.sync({ cwd: cliOptions.baseLocation });
-  if (!packagejson || !packagejson.packageJson) {
-    return undefined;
-  }
-  return packagejson.packageJson;
 }
 
 /** Find and format the version of the application that is using this library */

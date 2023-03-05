@@ -48,14 +48,17 @@ describe("completeDefinition", () => {
       autoInclude: false,
       aliases: [],
       description: "",
+      template: "",
     },
     version: {
       autoInclude: false,
       aliases: [],
       description: "",
     },
+    rootCommand: true,
     cliName: "",
     cliVersion: "",
+    cliDescription: "",
   };
   it("Completes missing fields in definition with nested content ", () => {
     const completedDefinition = completeDefinition(definition, cliOptions);
@@ -65,7 +68,6 @@ describe("completeDefinition", () => {
         key: "nms",
         options: {
           cmd: {
-            description: "-",
             aliases: ["cmd"],
             key: "cmd",
           },
@@ -119,6 +121,17 @@ describe("parseArguments", () => {
     help: { autoInclude: false },
     version: { autoInclude: false },
   });
+  it("Parse STRING value", () => {
+    const d = {
+      opt: { kind: "option", type: "string", aliases: ["--opt"], key: "opt" },
+    };
+    expect(parseArguments(["--opt", "optvalue"], d, cliOptions).options.opt).toBe("optvalue");
+    expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Missing value of type <string> for option "--opt"',
+      location: expect.anything(),
+    });
+  });
   it("Parse BOOLEAN value", () => {
     const d = {
       opt: { kind: "option", type: "boolean", aliases: ["--opt"], key: "opt" },
@@ -132,6 +145,11 @@ describe("parseArguments", () => {
       opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "one,two"], d, cliOptions).options.opt).toStrictEqual(["one", "two"]);
+    expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Missing value of type <list> for option "--opt"',
+      location: expect.anything(),
+    });
   });
   it("Parse LIST value by repeated appearances", () => {
     const d = {
@@ -153,7 +171,11 @@ describe("parseArguments", () => {
       error: 'Wrong value for option "--opt". Expected <number> but found "not-a-number"',
       location: expect.anything(),
     });
-    expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(undefined);
+    expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Missing value of type <number> for option "--opt"',
+      location: expect.anything(),
+    });
   });
   it("Parse FLOAT value", () => {
     const d = {
@@ -165,7 +187,11 @@ describe("parseArguments", () => {
       error: 'Wrong value for option "--opt". Expected <float> but found "not-a-number"',
       location: expect.anything(),
     });
-    expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(undefined);
+    expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined },
+      error: 'Missing value of type <float> for option "--opt"',
+      location: expect.anything(),
+    });
   });
   it("No arguments", () => {
     //Get completed definition from Cli
@@ -233,6 +259,12 @@ describe("parseArguments", () => {
       error: 'Wrong value for option "--opt". Expected <number> but found "true"',
     });
   });
+  it("Option alias should have preference over other option values", () => {
+    expect(parseArguments(["nms", "cmd", "--opt", "1"], def, cliOptions)).toStrictEqual({
+      options: { cmd: undefined, opt: 1, globalOption: "globalvalue" },
+      location: expect.anything(),
+    });
+  });
 });
 
 describe("executeScript", () => {
@@ -282,7 +314,7 @@ describe("executeScript", () => {
 });
 
 describe("generateScopedHelp", () => {
-  const cliOptions = new Cli({}).options;
+  const cliOptions = new Cli({}, { cliName: "cli-name", cliDescription: "cli-description" }).options;
   const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
   const d = new Cli(definition).definition;
   it("With empty location (first level definition)", () => {
@@ -290,7 +322,9 @@ describe("generateScopedHelp", () => {
     logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(d, [], cliOptions);
     expect(output).toBe(`
-Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
+Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]
+
+cli-description
 
 Namespaces:
   nms           Description for the namespace
@@ -309,7 +343,7 @@ Options:
     logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(d, ["nms"], cliOptions);
     expect(output).toBe(`
-Usage:  cli-er nms COMMAND [OPTIONS]
+Usage:  cli-name nms COMMAND [OPTIONS]
 
 Description for the namespace
 
@@ -327,7 +361,7 @@ Options:
     logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp({ cmd: { kind: "command", description: "Command with no options" } }, ["cmd"], cliOptions);
     expect(output).toBe(`
-Usage:  cli-er cmd
+Usage:  cli-name cmd
 
 Command with no options
 
@@ -342,7 +376,7 @@ Command with no options
       cliOptions
     );
     expect(output).toBe(`
-Usage:  cli-er cmd <string>
+Usage:  cli-name cmd <string>
 
 Command with type
 
@@ -354,12 +388,33 @@ Command with type
     generateScopedHelp(d, ["nms", "unknown"], cliOptions);
     expect(output).toStrictEqual(
       expect.stringContaining(`
-Usage:  cli-er NAMESPACE|COMMAND [OPTIONS]
-
 Unable to find the specified scope (nms > unknown)
 
-`)
+Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`)
     );
+  });
+  it("With custom footer via CliOptions.help.template", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const def = {
+      nms: { kind: "namespace", aliases: ["nms"] },
+      opt: { aliases: ["--opt"], kind: "option", type: "boolean", hidden: true },
+    };
+    generateScopedHelp(def, [], {
+      ...cliOptions,
+      help: {
+        ...cliOptions.help,
+        template: "\n{usage}\n{namespaces}\n{commands}\n{options}\nThis is a custom footer\n",
+      },
+    });
+    expect(output).toStrictEqual(`
+Usage:  cli-name NAMESPACE [OPTIONS]
+
+Namespaces:
+  nms  -
+
+This is a custom footer
+`);
   });
 });
 
