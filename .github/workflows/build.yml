@@ -3,20 +3,56 @@ name: build
 on: [push, pull_request]
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Setup Node
+      - name: Setup Node for build
         uses: actions/setup-node@v3
+          with:
+            node-version: 16
+
+      - name: Setup cache for dist
+        uses: actions/cache@v3 
         with:
-          node-version: 16
+          path: dist
+          key: dist-${{ github.run_id }}
+
       - name: Install dependencies
         run: yarn --frozen-lockfile --ignore-engines
-      - name: Test
-        run: yarn test
+
       - name: Build
         run: yarn build
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12, 14, 16]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Restore dist cache
+        uses: actions/cache@v3
+        with:
+          path: dist
+          key: dist-${{ github.run_id }}
+
+      - name: Setup Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --ignore-engines
+
+      - name: Test
+        run: yarn test
+

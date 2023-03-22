@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import url from "url";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
@@ -18,7 +19,7 @@ export type DefinitionElement = F<Namespace> &
 
 /** Get the file location of the main cli application */
 export function getEntryFile() {
-  return require.main ? require.main.filename : process.cwd();
+  return path.resolve(require.main?.filename || process.argv[1]);
 }
 
 /** Get the directory of the main cli application */
@@ -189,7 +190,7 @@ export function parseArguments(
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
-export function executeScript(
+export async function executeScript(
   { location, options }: ParsingOutput,
   cliOptions: CliOptions,
   definition: Definition<DefinitionElement>
@@ -221,8 +222,12 @@ export function executeScript(
   }
 
   try {
-    const script = require(validScriptPath);
-    (script.default || script)(options);
+    // Use "require" for cjs
+    if (require.main) {
+      const m = require(validScriptPath);
+      return (m.default || m)(options);
+    }
+    return await import(url.pathToFileURL(validScriptPath).href).then(m => (m.default || m)(options))
   } catch (e: any) {
     logErrorAndExit(`There was a problem executing the script (${validScriptPath}: ${e.message})`);
   }

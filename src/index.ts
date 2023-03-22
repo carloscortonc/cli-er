@@ -80,7 +80,7 @@ export default class Cli {
    *
    * @param {string[]} args list of arguments to be processed
    */
-  run(args?: string[]) {
+  run(args?: string[]): void | Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
     const command = getDefinitionElement(this.definition, opts.location, this.options)!;
@@ -120,7 +120,7 @@ export default class Cli {
     if (typeof command.action === "function") {
       return command.action(opts);
     }
-    executeScript(opts, this.options, this.definition);
+    return executeScript(opts, this.options, this.definition);
   }
   /**
    * Generate and output help documentation
