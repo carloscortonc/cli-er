@@ -1,3 +1,4 @@
+import fs from "fs";
 import {
   completeDefinition,
   parseArguments,
@@ -13,9 +14,9 @@ import _definition from "./data/definition.json";
 //@ts-ignore
 import gcmd from "./data/gcmd";
 import { Definition, OptionValue, ParsingOutput } from "../src/types";
-const definition = _definition as Definition<DefinitionElement>;
+const definition = _definition as Definition;
 
-afterEach(() => {
+beforeEach(() => {
   jest.clearAllMocks();
 });
 
@@ -119,11 +120,10 @@ describe("completeDefinition", () => {
 
 describe("parseArguments", () => {
   //Get default options from Cli
-  const { definition: _def, options: cliOptions } = new Cli(definition as Definition, {
+  const { definition: def, options: cliOptions } = new Cli(definition, {
     help: { autoInclude: false },
     version: { autoInclude: false },
   });
-  const def = _def as Definition<DefinitionElement>;
   it("Parse STRING value", () => {
     const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "string", aliases: ["--opt"], key: "opt" },
@@ -299,6 +299,20 @@ describe("executeScript", () => {
     expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
     expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
   });
+  it("Generates all valid paths with the corresponding named/default import", () => {
+    const c = new Cli(definition, { baseScriptLocation: "/" });
+    const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
+    executeScript({ location: ["nms", "cmd"], options: {} }, c.options, c.definition);
+    expect(pathListSpy.mock.calls).toEqual([
+      ["/nms/cmd/index.js"],
+      ["/nms/cmd.js"],
+      ["/nms/index.js"],
+      ["/nms.js"],
+      ["/index.js"],
+      ["/script.js"]
+    ]);
+    pathListSpy.mockRestore()
+  })
   it("Script execution fails: logs error", () => {
     (gcmd as any).mockImplementation(() => {
       throw new Error("errormessage");
@@ -319,7 +333,7 @@ describe("executeScript", () => {
 describe("generateScopedHelp", () => {
   const cliOptions = new Cli({}, { cliName: "cli-name", cliDescription: "cli-description" }).options;
   const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
-  const d = new Cli(definition as Definition).definition as Definition<DefinitionElement>;
+  const d = new Cli(definition).definition;
   it("With empty location (first level definition)", () => {
     let output = "";
     logger.mockImplementation((m: any) => !!(output += m));
@@ -422,7 +436,7 @@ This is a custom footer
 });
 
 describe("getDefinitionElement", () => {
-  const { options: cliOptions } = new Cli(definition as Definition);
+  const { options: cliOptions } = new Cli(definition);
   it("Returns the original definition when provided with empty location array", () => {
     expect(getDefinitionElement(definition, [], cliOptions)).toStrictEqual(definition);
   });

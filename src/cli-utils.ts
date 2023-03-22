@@ -201,11 +201,27 @@ export async function executeScript(
   }
   const entryFile = path.parse(getEntryFile());
 
-  const scriptPaths = [path.join(...location, "index"), location.length > 0 ? path.join(...location) : entryFile.name]
-    .filter((p) => p)
-    .map((p) => path.join(base, p!.concat(entryFile.ext)));
+  const scriptPaths = [".", ...location].reduce((acc: { path: string, default: boolean }[], _, i: number, list) => {
+    // Reverse index to consider the most specific paths first
+    const index = list.length - 1 - i;
+    const isDefaultImport = index === list.length - 1;
+    const locationPaths = [];
+    // Include index import
+    locationPaths.push(path.join(...location.slice(0, index), "index"));
+    if (index > 0) {
+      // Include location-name import
+      locationPaths.push(path.join(...location.slice(0, index)));
+    } else {
+      // Include entryfile-name import
+      locationPaths.push(entryFile.name);
+    }
+    locationPaths.forEach(lp => {
+      acc.push({ path: lp, default: isDefaultImport })
+    })
+    return acc;
+  }, []).map(p => ({ ...p, path: path.join(base, p.path.concat(entryFile.ext)) }))
 
-  const validScriptPath = scriptPaths.find(fs.existsSync);
+  const validScriptPath = scriptPaths.find(p => fs.existsSync(p.path));
 
   if (!validScriptPath) {
     let errorMessage = "";
@@ -216,20 +232,26 @@ export async function executeScript(
     errorMessage += "There was a problem finding the script to run.";
     if (cliOptions.onFail.scriptPaths) {
       errorMessage += " Considered paths were:\n";
-      errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp, "\n"), errorMessage);
+      errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp.path, "\n"), errorMessage);
     }
     return logErrorAndExit(errorMessage);
   }
 
   try {
+    let m;
     // Use "require" for cjs
     if (require.main) {
-      const m = require(validScriptPath);
-      return (m.default || m)(options);
+      m = require(validScriptPath.path);
+    } else {
+      m = await import(url.pathToFileURL(validScriptPath.path).href).then(_m => validScriptPath.default ? _m.default : _m)
     }
-    return await import(url.pathToFileURL(validScriptPath).href).then(m => (m.default || m)(options))
+    const fn = validScriptPath.default ? m : m[location[location.length - 1]];
+    if (typeof fn !== "function") {
+      logErrorAndExit("Could not find handler for command");
+    }
+    return fn(options);
   } catch (e: any) {
-    logErrorAndExit(`There was a problem executing the script (${validScriptPath}: ${e.message})`);
+    logErrorAndExit(`There was a problem executing the script (${validScriptPath.path}: ${e.message})`);
   }
 }
 
