@@ -61,7 +61,15 @@ so we can then execute:
 node docker.js builder build .
 ```
 
-which will try to invoke `/builder/build.js` and `/builder/build/index.js` with the parsed options.
+which will try to invoke, in order:
+1. `/builder/build/index.js`
+2. `/builder/build.js`
+3. `/builder/index.js`
+4. `/builder.js`
+5. `/index.js`
+6. `/docker.js`
+
+with the parsed options (only the first two are default imports, the rest are named imports using the command name, in this case `build`).
 This allows us to organize and structure the logic nicely.
 
 You can check the full [docker-based example](./examples/docker) for a more in-depth demo.
