@@ -37,6 +37,10 @@ export type Option = BasicElement & {
   type?: `${Type}`;
   /** Default value for the option */
   default?: OptionValue;
+  /** Whether is required or not
+   * @default false
+   */
+  required?: boolean;
   /** Method to modify an option value after parsing */
   value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
 };

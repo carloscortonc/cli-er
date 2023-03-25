@@ -268,6 +268,14 @@ describe("parseArguments", () => {
       location: expect.anything(),
     });
   });
+  it("Return error if required option not provided", () => {
+    const definition = new Cli({ opt: { required: true } }).definition;
+    expect(parseArguments([], definition as Definition, cliOptions)).toStrictEqual({
+      options: expect.anything(),
+      location: [],
+      error: "Missing required option \"opt\""
+    })
+  })
 });
 
 describe("executeScript", () => {

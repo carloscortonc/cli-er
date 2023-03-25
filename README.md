@@ -120,6 +120,8 @@ invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the co
 
 If no command is found in the parsing process, an error and suggestion (the closest to the one suplied) will be shown. This can be configured via `CliOptions.onFail.suggestion`.
 
+You can define an option as required (`required: true`), which will verify that such option is present in the provided arguments, setting an error otherwise.
+
 If an unknown option if found, the default behaviour is to print the error and exit. This can be configured via `CliOptions.onFail.stopOnUnknownOption`.
 
 If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with `CliOptions.rootCommand: false`. By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](./examples/docker/docker.js#L127)).
