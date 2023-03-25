@@ -178,6 +178,16 @@ export function parseArguments(
     }
   }
 
+  // Verify required options
+  if (!output.error) {
+    Object.values(defToProcess).some(opt => {
+      if (opt.required && output.options[opt.key!] === undefined) {
+        output.error = CliError.format(ErrorType.OPTION_REQUIRED, opt.key!);
+        return true;
+      }
+    })
+  }
+
   // Process value-transformations
   Object.values(aliases)
     .filter((v) => typeof v !== "string" && typeof v.value === "function")

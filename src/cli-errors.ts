@@ -4,6 +4,7 @@ export enum ErrorType {
   OPTION_NOT_FOUND = 'Unknown option "{0}"',
   OPTION_WRONG_VALUE = 'Wrong value for option "{0}". Expected <{1}> but found "{2}"',
   OPTION_MISSING_VALUE = 'Missing value of type <{0}> for option "{1}"',
+  OPTION_REQUIRED = 'Missing required option "{0}"'
 }
 
 /** Utility class to format and identify error messages */
