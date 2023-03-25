@@ -14,15 +14,13 @@ export enum Type {
 
 export type OptionValue = string | boolean | string[] | number | undefined;
 
-type ValueOf<T> = T[keyof T];
-
 export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
 
 type BasicElement = {
   /** Kind of element */
-  kind?: ValueOf<Kind>;
+  kind?: `${Kind}`;
   /** Description of the element */
   description?: string;
   /** Aliases for an option */
@@ -34,20 +32,27 @@ type BasicElement = {
 };
 
 export type Option = BasicElement & {
+  kind?: `${Kind.OPTION}`;
   /** Type of option */
-  type?: ValueOf<Type>;
+  type?: `${Type}`;
   /** Default value for the option */
   default?: OptionValue;
+  /** Whether is required or not
+   * @default false
+   */
+  required?: boolean;
   /** Method to modify an option value after parsing */
   value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
 };
 
 export type Namespace = BasicElement & {
+  kind?: `${Kind.NAMESPACE}`;
   /** Nested options definition */
   options?: Definition;
 };
 
-export type Command = Option & {
+export type Command = Omit<Option, "kind"> & {
+  kind: `${Kind.COMMAND}`;
   /** Nested options definition */
   options?: Definition<Option>;
   /** Action to be executed when matched */

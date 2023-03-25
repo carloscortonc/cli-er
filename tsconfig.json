@@ -7,8 +7,8 @@
     "module": "commonjs",
     "strict": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
+    "noEmit": true
   },
-  "include": ["./**/*"],
-  "exclude": ["test"]
+  "include": ["src/**/*", "test/**/*"]
 }

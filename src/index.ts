@@ -8,7 +8,7 @@ import {
   getEntryPoint,
   getEntryFile,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, Command, ICliLogger, Kind } from "./types";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
 import { clone, logErrorAndExit, merge, findPackageJson } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
@@ -64,7 +64,7 @@ export default class Cli {
     if (!this.options.cliDescription) {
       this.options.cliDescription = packagejson.description || "";
     }
-    this.definition = completeDefinition(clone(definition), this.options);
+    this.definition = completeDefinition(clone(definition), this.options) as Definition;
     return this;
   }
   /**
@@ -80,10 +80,10 @@ export default class Cli {
    *
    * @param {string[]} args list of arguments to be processed
    */
-  run(args?: string[]) {
+  run(args?: string[]): void | Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
-    const command = getDefinitionElement(this.definition, opts.location, this.options) as Command;
+    const command = getDefinitionElement(this.definition, opts.location, this.options)!;
     const e = CliError.analize(opts.error);
 
     // Evaluate auto-included version
@@ -110,7 +110,7 @@ export default class Cli {
     // Check if any error was generated
     if (
       (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
-      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE, ErrorType.OPTION_MISSING_VALUE].includes(
+      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE, ErrorType.OPTION_MISSING_VALUE, ErrorType.OPTION_REQUIRED].includes(
         e as ErrorType
       ) &&
         this.options.onFail.stopOnUnknownOption)
@@ -120,7 +120,7 @@ export default class Cli {
     if (typeof command.action === "function") {
       return command.action(opts);
     }
-    executeScript(opts, this.options, this.definition);
+    return executeScript(opts, this.options, this.definition);
   }
   /**
    * Generate and output help documentation

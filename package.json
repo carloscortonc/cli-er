@@ -22,7 +22,8 @@
   },
   "scripts": {
     "build": "rimraf dist && yarn tsup && node ./scripts/fix-types.js",
-    "test": "jest --silent"
+    "smoke-test": "cd test/smoke && node index.cjs && node index.mjs && ts-node-transpile-only index.ts",
+    "test": "yarn tsc && jest --silent && yarn smoke-test"
   },
   "dependencies": {
     "fastest-levenshtein": "^1.0.16",
@@ -41,6 +42,7 @@
     "jest": "^27.0.0",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.0",
+    "ts-node": "^10.9.1",
     "tsup": "^6.2.0",
     "typescript": "^4.7.4"
   }

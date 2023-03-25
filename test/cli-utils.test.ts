@@ -1,3 +1,4 @@
+import fs from "fs";
 import {
   completeDefinition,
   parseArguments,
@@ -5,15 +6,17 @@ import {
   generateScopedHelp,
   getDefinitionElement,
   formatVersion,
+  DefinitionElement,
 } from "../src/cli-utils";
 import Cli from "../src";
 import * as utils from "../src/utils";
-import definition from "./data/definition.json";
+import _definition from "./data/definition.json";
 //@ts-ignore
 import gcmd from "./data/gcmd";
-import { OptionValue, ParsingOutput } from "../src/types";
+import { Definition, OptionValue, ParsingOutput } from "../src/types";
+const definition = _definition as Definition;
 
-afterEach(() => {
+beforeEach(() => {
   jest.clearAllMocks();
 });
 
@@ -22,7 +25,7 @@ jest.mock("path", () => ({ ...jest.requireActual("path"), parse: () => ({ name: 
 jest.spyOn(process, "exit").mockImplementation();
 
 describe("completeDefinition", () => {
-  const definition = {
+  const d: Definition<DefinitionElement> = {
     nms: {
       kind: "namespace",
       description: "description for nms",
@@ -61,7 +64,7 @@ describe("completeDefinition", () => {
     cliDescription: "",
   };
   it("Completes missing fields in definition with nested content ", () => {
-    const completedDefinition = completeDefinition(definition, cliOptions);
+    const completedDefinition = completeDefinition(d, cliOptions);
     expect(completedDefinition).toMatchObject({
       nms: {
         aliases: ["nms"],
@@ -85,7 +88,7 @@ describe("completeDefinition", () => {
         aliases: ["-h"],
       },
     };
-    const completedDefinition = completeDefinition(definition, cliOptions_);
+    const completedDefinition = completeDefinition(d, cliOptions_);
     expect(completedDefinition).toMatchObject({
       help: {
         type: "boolean",
@@ -104,7 +107,7 @@ describe("completeDefinition", () => {
         description: "",
       },
     };
-    const completedDefinition = completeDefinition(definition, cliOptions_);
+    const completedDefinition = completeDefinition(d, cliOptions_);
     expect(completedDefinition).toMatchObject({
       version: {
         type: "boolean",
@@ -122,7 +125,7 @@ describe("parseArguments", () => {
     version: { autoInclude: false },
   });
   it("Parse STRING value", () => {
-    const d = {
+    const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "string", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions).options.opt).toBe("optvalue");
@@ -133,7 +136,7 @@ describe("parseArguments", () => {
     });
   });
   it("Parse BOOLEAN value", () => {
-    const d = {
+    const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "boolean", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "true"], d, cliOptions).options.opt).toBe(true);
@@ -141,7 +144,7 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "false"], d, cliOptions).options.opt).toBe(false);
   });
   it("Parse LIST value", () => {
-    const d = {
+    const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "one,two"], d, cliOptions).options.opt).toStrictEqual(["one", "two"]);
@@ -152,7 +155,7 @@ describe("parseArguments", () => {
     });
   });
   it("Parse LIST value by repeated appearances", () => {
-    const d = {
+    const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "one,two", "--opt", "three"], d, cliOptions).options.opt).toStrictEqual([
@@ -162,7 +165,7 @@ describe("parseArguments", () => {
     ]);
   });
   it("Parse NUMBER value", () => {
-    const d = {
+    const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "number", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "1"], d, cliOptions).options.opt).toBe(1);
@@ -178,7 +181,7 @@ describe("parseArguments", () => {
     });
   });
   it("Parse FLOAT value", () => {
-    const d = {
+    const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "float", aliases: ["--opt"], key: "opt" },
     };
     expect(parseArguments(["--opt", "1.5"], d, cliOptions).options.opt).toBe(1.5);
@@ -232,7 +235,7 @@ describe("parseArguments", () => {
           return (v as string).concat("-edited");
         },
       },
-    }).definition;
+    }).definition as Definition<DefinitionElement>;
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions)).toStrictEqual({
       options: { opt: "optvalue-edited", test: "testvalue", version: undefined, help: undefined },
       location: expect.anything(),
@@ -265,13 +268,21 @@ describe("parseArguments", () => {
       location: expect.anything(),
     });
   });
+  it("Return error if required option not provided", () => {
+    const definition = new Cli({ opt: { required: true } }).definition;
+    expect(parseArguments([], definition as Definition, cliOptions)).toStrictEqual({
+      options: expect.anything(),
+      location: [],
+      error: "Missing required option \"opt\""
+    })
+  })
 });
 
 describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
   const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
   const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-  const d = new Cli({ opt: { description: "description" } }).definition;
+  const d = new Cli({ opt: { description: "description" } }).definition as Definition<DefinitionElement>;
   it("Logs error if no baseScriptLocation configured", () => {
     executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" }, d);
     expect(exitlogger).toHaveBeenCalledWith("There was a problem finding base script location");
@@ -296,6 +307,20 @@ describe("executeScript", () => {
     expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
     expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
   });
+  it("Generates all valid paths with the corresponding named/default import", () => {
+    const c = new Cli(definition, { baseScriptLocation: "/" });
+    const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
+    executeScript({ location: ["nms", "cmd"], options: {} }, c.options, c.definition);
+    expect(pathListSpy.mock.calls).toEqual([
+      ["/nms/cmd/index.js"],
+      ["/nms/cmd.js"],
+      ["/nms/index.js"],
+      ["/nms.js"],
+      ["/index.js"],
+      ["/script.js"]
+    ]);
+    pathListSpy.mockRestore()
+  })
   it("Script execution fails: logs error", () => {
     (gcmd as any).mockImplementation(() => {
       throw new Error("errormessage");
@@ -396,7 +421,7 @@ Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`)
   it("With custom footer via CliOptions.help.template", () => {
     let output = "";
     logger.mockImplementation((m: any) => !!(output += m));
-    const def = {
+    const def: Definition<DefinitionElement> = {
       nms: { kind: "namespace", aliases: ["nms"] },
       opt: { aliases: ["--opt"], kind: "option", type: "boolean", hidden: true },
     };

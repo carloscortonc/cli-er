@@ -61,7 +61,15 @@ so we can then execute:
 node docker.js builder build .
 ```
 
-which will try to invoke `/builder/build.js` and `/builder/build/index.js` with the parsed options.
+which will try to invoke, in order:
+1. `/builder/build/index.js`
+2. `/builder/build.js`
+3. `/builder/index.js`
+4. `/builder.js`
+5. `/index.js`
+6. `/docker.js`
+
+with the parsed options (only the first two are default imports, the rest are named imports using the command name, in this case `build`).
 This allows us to organize and structure the logic nicely.
 
 You can check the full [docker-based example](./examples/docker) for a more in-depth demo.
@@ -111,6 +119,8 @@ new Cli({
 invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
 
 If no command is found in the parsing process, an error and suggestion (the closest to the one suplied) will be shown. This can be configured via `CliOptions.onFail.suggestion`.
+
+You can define an option as required (`required: true`), which will verify that such option is present in the provided arguments, setting an error otherwise.
 
 If an unknown option if found, the default behaviour is to print the error and exit. This can be configured via `CliOptions.onFail.stopOnUnknownOption`.
 
