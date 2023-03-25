@@ -1,3 +1,17 @@
+# [0.9.0](https://github.com/carloscortonc/cli-er/compare/v0.8.0...v0.9.0) (2023-03-25)
+
+
+### Features
+
+* generate all possible paths from location ([#18](https://github.com/carloscortonc/cli-er/issues/18)) ([5794c1d](https://github.com/carloscortonc/cli-er/commit/5794c1d1d4083c383ef6ce4bcb775ff41b32c0d1))
+* improve types and type checking ([2482f22](https://github.com/carloscortonc/cli-er/commit/2482f2264d75616d33be6cbeb0c913890ecf3296))
+* support required options ([#19](https://github.com/carloscortonc/cli-er/issues/19)) ([c3c47d0](https://github.com/carloscortonc/cli-er/commit/c3c47d09ccc9eef16cae2bba5fd5e302a81e5863))
+
+
+### Bug Fixes
+
+* support esm for executing scripts ([#17](https://github.com/carloscortonc/cli-er/issues/17)) ([0e19f75](https://github.com/carloscortonc/cli-er/commit/0e19f755178f55c01703d4eeee9cb40a1f525b9d))
+
 # [0.8.0](https://github.com/carloscortonc/cli-er/compare/v0.7.2...v0.8.0) (2023-03-05)
 
 
