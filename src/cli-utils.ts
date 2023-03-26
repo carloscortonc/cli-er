@@ -17,9 +17,12 @@ export type DefinitionElement = F<Namespace> &
     options?: Definition<DefinitionElement>;
   };
 
+/** Check whether the program using this library is running in cjs */
+const isCjs = () => require.main !== undefined;
+
 /** Get the file location of the main cli application */
 export function getEntryFile() {
-  return path.resolve(require.main?.filename || process.argv[1]);
+  return fs.realpathSync(isCjs() ? require.main!.filename : process.argv[1]);
 }
 
 /** Get the directory of the main cli application */
@@ -250,7 +253,7 @@ export async function executeScript(
   try {
     let m;
     // Use "require" for cjs
-    if (require.main) {
+    if (isCjs()) {
       m = require(validScriptPath.path);
     } else {
       m = await import(url.pathToFileURL(validScriptPath.path).href).then(_m => validScriptPath.default ? _m.default : _m)
