@@ -1,3 +1,12 @@
+## [0.9.1](https://github.com/carloscortonc/cli-er/compare/v0.9.0...v0.9.1) (2023-03-26)
+
+
+### Bug Fixes
+
+* differentiate windows vs unix paths ([#22](https://github.com/carloscortonc/cli-er/issues/22)) ([6464e1e](https://github.com/carloscortonc/cli-er/commit/6464e1e4a2e1d2d0a254a3120658d3423c82e3ea))
+* entrypoint file may be symlink ([#21](https://github.com/carloscortonc/cli-er/issues/21)) ([a2adb6a](https://github.com/carloscortonc/cli-er/commit/a2adb6a2d6f8592cec6d4e3d57b445aeb15b5c15))
+* hide required option error when help requested ([#23](https://github.com/carloscortonc/cli-er/issues/23)) ([50f7acb](https://github.com/carloscortonc/cli-er/commit/50f7acb466a188028314fd0395374f9172f8d6a6))
+
 # [0.9.0](https://github.com/carloscortonc/cli-er/compare/v0.8.0...v0.9.0) (2023-03-25)
 
 
