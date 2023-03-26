@@ -99,7 +99,7 @@ export default class Cli {
         (!this.options.rootCommand && opts.location.length === 0) ||
         command.kind === Kind.NAMESPACE)
     ) {
-      if (opts.error) {
+      if (opts.error && e !== ErrorType.OPTION_REQUIRED) {
         Cli.logger.error(opts.error, "\n");
       }
       return generateScopedHelp(this.definition, opts.location, this.options);

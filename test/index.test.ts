@@ -9,11 +9,11 @@ const definition = _definition as Definition;
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
 jest.spyOn(utils, "findPackageJson").mockImplementation(
   (_: any) =>
-    ({
-      version: "1.0.0",
-      name: "cli-app",
-      description: "cli-description",
-    } as any)
+  ({
+    version: "1.0.0",
+    name: "cli-app",
+    description: "cli-description",
+  } as any)
 );
 
 beforeEach(() => {
@@ -259,7 +259,7 @@ describe("Cli.run", () => {
     c.run([]);
     expect(errorlogger).toHaveBeenCalledWith("ERROR");
   });
-  it("Prints missing-option-value error of configured", () => {
+  it("Prints missing-option-value error if configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_MISSING_VALUE);
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
@@ -267,4 +267,20 @@ describe("Cli.run", () => {
     c.run([]);
     expect(errorlogger).toHaveBeenCalledWith("ERROR");
   });
+  it("Prints required-option error if no help requested", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_REQUIRED);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: { help: undefined }, error: "ERROR" }));
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
+    const c = new Cli(definition);
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
+  })
+  it("Does not log error if required-option error but help requested", () => {
+    const logger: any = { error: jest.fn() };
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_REQUIRED);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: { help: true }, error: "ERROR" }));
+    const c = new Cli(definition, { logger });
+    c.run([]);
+    expect(logger.error).not.toHaveBeenCalled();
+  })
 });
