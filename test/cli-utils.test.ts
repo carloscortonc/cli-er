@@ -126,11 +126,11 @@ describe("parseArguments", () => {
   });
   it("Parse STRING value", () => {
     const d: Definition<DefinitionElement> = {
-      opt: { kind: "option", type: "string", aliases: ["--opt"], key: "opt" },
+      opt: { kind: "option", type: "string", aliases: ["--opt"], key: "opt", default: "defaultvalue" },
     };
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions).options.opt).toBe("optvalue");
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
-      options: { opt: undefined },
+      options: { opt: "defaultvalue" },
       error: 'Missing value of type <string> for option "--opt"',
       location: expect.anything(),
     });
@@ -142,6 +142,12 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "true"], d, cliOptions).options.opt).toBe(true);
     expect(parseArguments(["--opt"], d, cliOptions).options.opt).toBe(true);
     expect(parseArguments(["--opt", "false"], d, cliOptions).options.opt).toBe(false);
+
+    const d2: Definition<DefinitionElement> = {
+      opt: { kind: "option", type: "boolean", aliases: ["--opt"], key: "opt", default: true },
+    };
+    expect(parseArguments(["--opt", "false"], d2, cliOptions).options.opt).toBe(false);
+    expect(parseArguments([], d2, cliOptions).options.opt).toBe(true);
   });
   it("Parse LIST value", () => {
     const d: Definition<DefinitionElement> = {
