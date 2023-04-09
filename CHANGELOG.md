@@ -1,3 +1,10 @@
+## [0.9.2](https://github.com/carloscortonc/cli-er/compare/v0.9.1...v0.9.2) (2023-04-09)
+
+
+### Bug Fixes
+
+* evaluate only appropriate parser ([#25](https://github.com/carloscortonc/cli-er/issues/25)) ([aa6eb72](https://github.com/carloscortonc/cli-er/commit/aa6eb727d19bb7534257d35d3147141fc190eba2))
+
 ## [0.9.1](https://github.com/carloscortonc/cli-er/compare/v0.9.0...v0.9.1) (2023-03-26)
 
 
