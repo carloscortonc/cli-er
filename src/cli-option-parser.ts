@@ -28,14 +28,14 @@ export default function parseOptionValue(
     [Type.STRING]: {
       value,
     },
-    [Type.BOOLEAN]: {
+    [Type.BOOLEAN]: () => ({
       value: ["true", undefined].includes(value),
       next: ["true", "false"].includes(value as string) ? 1 : 0,
       error: undefined,
-    },
-    [Type.LIST]: {
+    }),
+    [Type.LIST]: () => ({
       value: ((current as string[]) || []).concat(value?.split(",") as string[]),
-    },
+    }),
     [Type.NUMBER]: () => {
       const v = parseInt(value as string);
       return {
