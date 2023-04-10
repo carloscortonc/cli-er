@@ -47,6 +47,10 @@ describe("completeDefinition", () => {
       scriptPaths: true,
       stopOnUnknownOption: true,
     },
+    errors: {
+      onGenerateHelp: [],
+      onExecuteCommand: []
+    },
     help: {
       autoInclude: false,
       aliases: [],
@@ -131,7 +135,7 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions).options.opt).toBe("optvalue");
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { opt: "defaultvalue" },
-      error: 'Missing value of type <string> for option "--opt"',
+      errors: ['Missing value of type <string> for option "--opt"'],
       location: expect.anything(),
     });
   });
@@ -156,7 +160,7 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "one,two"], d, cliOptions).options.opt).toStrictEqual(["one", "two"]);
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Missing value of type <list> for option "--opt"',
+      errors: ['Missing value of type <list> for option "--opt"'],
       location: expect.anything(),
     });
   });
@@ -177,12 +181,12 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "1"], d, cliOptions).options.opt).toBe(1);
     expect(parseArguments(["--opt", "not-a-number"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Wrong value for option "--opt". Expected <number> but found "not-a-number"',
+      errors: ['Wrong value for option "--opt". Expected <number> but found "not-a-number"'],
       location: expect.anything(),
     });
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Missing value of type <number> for option "--opt"',
+      errors: ['Missing value of type <number> for option "--opt"'],
       location: expect.anything(),
     });
   });
@@ -193,12 +197,12 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "1.5"], d, cliOptions).options.opt).toBe(1.5);
     expect(parseArguments(["--opt", "not-a-number"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Wrong value for option "--opt". Expected <float> but found "not-a-number"',
+      errors: ['Wrong value for option "--opt". Expected <float> but found "not-a-number"'],
       location: expect.anything(),
     });
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Missing value of type <float> for option "--opt"',
+      errors: ['Missing value of type <float> for option "--opt"'],
       location: expect.anything(),
     });
   });
@@ -207,12 +211,14 @@ describe("parseArguments", () => {
     expect(parseArguments([], def, cliOptions)).toStrictEqual({
       location: [],
       options: { globalOption: "globalvalue" },
+      errors: []
     });
   });
   it("Command with no type", () => {
     expect(parseArguments(["gcmd"], def, cliOptions)).toStrictEqual({
       location: [cliOptions.commandsPath, "gcmd"],
       options: { globalOption: "globalvalue" },
+      errors: []
     });
   });
   it("Namespace + command", () => {
@@ -220,10 +226,12 @@ describe("parseArguments", () => {
     expect(parseArguments(["nms", "cmd"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: undefined, opt: undefined },
+      errors: []
     });
     expect(parseArguments(["nms", "cmd", "cmdValue"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: "cmdValue", opt: undefined },
+      errors: []
     });
   });
   it("Option with value property", () => {
@@ -245,33 +253,35 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions)).toStrictEqual({
       options: { opt: "optvalue-edited", test: "testvalue", version: undefined, help: undefined },
       location: expect.anything(),
+      errors: []
     });
   });
   it("Returns error if wrong namespace/command provided", () => {
     expect(parseArguments(["nms", "non-existent"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
-      error: expect.stringContaining('Command "non-existent" not found. Did you mean "cmd" ?'),
+      errors: ['Command "non-existent" not found. Did you mean "cmd" ?', 'Unknown option \"non-existent\"'],
     });
   });
   it("Returns error if unknown options are found", () => {
     expect(parseArguments(["nms", "cmd", "cmdvalue", "unknown-option"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
-      error: 'Unknown option "unknown-option"',
+      errors: ['Unknown option "unknown-option"'],
     });
   });
   it("Returns error if option has incorrect value", () => {
     expect(parseArguments(["nms", "cmd", "cmdvalue", "--opt", "true"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
-      error: 'Wrong value for option "--opt". Expected <number> but found "true"',
+      errors: ['Wrong value for option "--opt". Expected <number> but found "true"'],
     });
   });
   it("Option alias should have preference over other option values", () => {
     expect(parseArguments(["nms", "cmd", "--opt", "1"], def, cliOptions)).toStrictEqual({
       options: { cmd: undefined, opt: 1, globalOption: "globalvalue" },
       location: expect.anything(),
+      errors: []
     });
   });
   it("Return error if required option not provided", () => {
@@ -279,7 +289,7 @@ describe("parseArguments", () => {
     expect(parseArguments([], definition as Definition, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: [],
-      error: "Missing required option \"opt\""
+      errors: ["Missing required option \"opt\""]
     })
   })
 });

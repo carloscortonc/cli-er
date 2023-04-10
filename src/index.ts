@@ -34,6 +34,18 @@ export default class Cli {
         scriptPaths: true,
         stopOnUnknownOption: true,
       },
+      errors: {
+        onGenerateHelp: [
+          ErrorType.COMMAND_NOT_FOUND,
+        ],
+        onExecuteCommand: [
+          ErrorType.COMMAND_NOT_FOUND,
+          ErrorType.OPTION_WRONG_VALUE,
+          ErrorType.OPTION_REQUIRED,
+          ErrorType.OPTION_MISSING_VALUE,
+          ErrorType.OPTION_NOT_FOUND,
+        ]
+      },
       help: {
         autoInclude: true,
         aliases: ["-h", "--help"],
@@ -84,7 +96,7 @@ export default class Cli {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
     const command = getDefinitionElement(this.definition, opts.location, this.options)!;
-    const e = CliError.analize(opts.error);
+    const errors = opts.errors.map((e) => ({ type: CliError.analize(e)!, e })).filter(({ e }) => e);
 
     // Evaluate auto-included version
     if (this.options.version.autoInclude && opts.options.version) {
@@ -99,8 +111,12 @@ export default class Cli {
         (!this.options.rootCommand && opts.location.length === 0) ||
         command.kind === Kind.NAMESPACE)
     ) {
-      if (opts.error && e !== ErrorType.OPTION_REQUIRED) {
-        Cli.logger.error(opts.error, "\n");
+      const onGenHelp = this.options.errors.onGenerateHelp;
+      const onGenerateHelpErrors = errors
+        .filter(e => onGenHelp.includes(e.type))
+        .sort((a, b) => onGenHelp.indexOf(a.type) - onGenHelp.indexOf(b.type))
+      if (onGenerateHelpErrors.length > 0) {
+        Cli.logger.error(onGenerateHelpErrors[0].e, "\n");
       }
       return generateScopedHelp(this.definition, opts.location, this.options);
     } else if (this.options.help.autoInclude) {
@@ -108,14 +124,12 @@ export default class Cli {
     }
 
     // Check if any error was generated
-    if (
-      (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
-      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE, ErrorType.OPTION_MISSING_VALUE, ErrorType.OPTION_REQUIRED].includes(
-        e as ErrorType
-      ) &&
-        this.options.onFail.stopOnUnknownOption)
-    ) {
-      return logErrorAndExit(opts.error);
+    const onExecCmd = this.options.errors.onExecuteCommand;
+    const onExecuteCommandErrors = errors
+      .filter(e => onExecCmd.includes(e.type))
+      .sort((a, b) => onExecCmd.indexOf(a.type) - onExecCmd.indexOf(b.type))
+    if (onExecuteCommandErrors.length > 0) {
+      return logErrorAndExit(onExecuteCommandErrors[0].e);
     }
     if (typeof command.action === "function") {
       return command.action(opts);
