@@ -1,3 +1,5 @@
+import { ErrorType } from "./cli-errors";
+
 export enum Kind {
   NAMESPACE = "namespace",
   COMMAND = "command",
@@ -68,8 +70,8 @@ export type ParsingOutput = {
   location: string[];
   /** Calculated options */
   options: { [key: string]: OptionValue | undefined };
-  /** Error originated while parsing */
-  error?: string;
+  /** Errors originated while parsing */
+  errors: string[];
 };
 
 export enum LogType {
@@ -97,19 +99,34 @@ export type CliOptions = {
    * @default path.dirname(require.main.filename)
    */
   baseScriptLocation: string | undefined;
-  /** Path where the single-command scripts (not contained in any namespace) are stored */
+  /** Path where the single-command scripts (not contained in any namespace) are stored
+   * @default "commands" 
+  */
   commandsPath: string;
-  /** Flags to describe the behaviour on fail conditions */
+  /** Flags used to describe the behaviour on fail conditions */
   onFail: {
     /** Print scoped-help */
     help: boolean;
-    /** Show suggestion when command not found */
+    /** Show suggestion when command not found
+     * @deprecated Has no effect since 0.10.0. Will be removed in 0.11.0
+    */
     suggestion: boolean;
-    /** Print evaluated script paths inside `run` */
+    /** Print evaluated script paths inside `run`
+     * @deprecated Will be removed in 0.11.0
+    */
     scriptPaths: boolean;
-    /** End `run` invocation when an unknown option is encountered while parsing */
+    /** End `run` invocation when an unknown option is encountered while parsing
+     * @deprecated Is configured via `CliOptions.errors.onExecuteCommand` since 0.10.0. Will be removed in 0.11.0
+     */
     stopOnUnknownOption: boolean;
   };
+  /** Configuration related to when errors should be displayed */
+  errors: {
+    /** List of error-types that will be displayed before help */
+    onGenerateHelp: `${ErrorType}`[],
+    /** List of error-types that will cause to end execution with `exit(1)` */
+    onExecuteCommand: `${ErrorType}`[],
+  },
   /** Help-related configuration */
   help: {
     /** Whether to generate help option */

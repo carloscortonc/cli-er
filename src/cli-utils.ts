@@ -90,6 +90,7 @@ export function parseArguments(
   const output: ParsingOutput = {
     location: [],
     options: {},
+    errors: []
   };
   const aliases: { [key: string]: DefinitionElement | string } = {};
   let argsToProcess = args;
@@ -128,7 +129,7 @@ export function parseArguments(
         }
         if (!optsAliases.includes(arg)) {
           const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-          output.error = CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion);
+          output.errors.push(CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion));
         }
         break argsLoop;
       }
@@ -169,27 +170,25 @@ export function parseArguments(
         ...optionDefinition,
         key: curr,
       } as Option);
-      if (parserOutput.error && !output.error) {
-        output.error = parserOutput.error;
-      } else if (!parserOutput.error) {
+      if (parserOutput.error) {
+        output.errors.push(parserOutput.error);
+      } else {
         output.options[outputKey] = parserOutput.value;
       }
       i += parserOutput.next;
-    } else if (!aliases.hasOwnProperty(optionKey) && !output.error) {
+    } else if (!aliases.hasOwnProperty(optionKey)) {
       // Unknown option
-      output.error = CliError.format(ErrorType.OPTION_NOT_FOUND, curr);
+      output.errors.push(CliError.format(ErrorType.OPTION_NOT_FOUND, curr));
     }
   }
 
   // Verify required options
-  if (!output.error) {
-    Object.values(defToProcess).some(opt => {
-      if (opt.required && output.options[opt.key!] === undefined) {
-        output.error = CliError.format(ErrorType.OPTION_REQUIRED, opt.key!);
-        return true;
-      }
-    })
-  }
+  Object.values(defToProcess).some(opt => {
+    if (opt.required && output.options[opt.key!] === undefined) {
+      output.errors.push(CliError.format(ErrorType.OPTION_REQUIRED, opt.key!));
+      return true;
+    }
+  })
 
   // Process value-transformations
   Object.values(aliases)
@@ -204,7 +203,7 @@ export function parseArguments(
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
 export async function executeScript(
-  { location, options }: ParsingOutput,
+  { location, options }: Omit<ParsingOutput, "errors">,
   cliOptions: CliOptions,
   definition: Definition<DefinitionElement>
 ) {

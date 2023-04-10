@@ -76,7 +76,7 @@ You can check the full [docker-based example](./examples/docker) for a more in-d
 
 ## Usage
 
-`cli-er` default-exports a class, which takes in the definition object and an optional argument CliOptions. The available methods are the following:
+`cli-er` default-exports a class, which takes in the definition object and an optional argument [CliOptions](#clioptions). The available methods are the following:
 
 ### parse(args)
 
@@ -118,13 +118,16 @@ new Cli({
 
 invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
 
-If no command is found in the parsing process, an error and suggestion (the closest to the one suplied) will be shown. This can be configured via `CliOptions.onFail.suggestion`.
+If no command is found in the parsing process, an error and suggestion (the closest to the one suplied) will be shown.
 
 You can define an option as required (`required: true`), which will verify that such option is present in the provided arguments, setting an error otherwise.
 
-If an unknown option if found, the default behaviour is to print the error and exit. This can be configured via `CliOptions.onFail.stopOnUnknownOption`.
+This method has three main behaviours: print version, print help and execute a command:
+- **print version**: if [autoincluded version](#versionautoinclude) is enabled and version option is provided, version will be printed.
+- **print help**: if [autoincluded help](#helpautoinclude) is enabled and help option is provided, or a cli without `rootCommand` is invoked without location, or a namespace is invoked, help will be generated. If any errors configured in [`CliOptions.errors.onGenerateHelp`](#errorsongeneratehelp) are generated, they will be outputted before the help.
+- **execute command**: if any errors configured in [`CliOptions.errors.onExecuteCommand`](#errorsonexecutecommand) are generated, they will be printed and execution will end with status `1`. Otherwise, the script location will be calculated, and the corresponding script executed.
 
-If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with `CliOptions.rootCommand: false`. By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](./examples/docker/docker.js#L127)).
+If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](./examples/docker/docker.js#L127)).
 
 ### help(location?)
 
@@ -198,30 +201,93 @@ Options:
 
 Any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition.
 
-#### Templating help-sections
-
-There are five distinct sections in the generated help: **usage**, **description**, **namespaces**, **commands** and **options**. The default structure is:
-
-```js
-"\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n";
-```
-
-This can be modified via `CliOptions.help.template`, to include a header/footer, change the order of the sections, or remove a section altogether. If a section has no content, it will be removed along with any line-breaks that follow. You can see a use-case for this in the [docker example](./examples/docker/docker.js#L129).
-
 > **Note**
-> help-generation option is auto-included by default. This can be configured via `CliOptions.help`
+> help-generation option is auto-included by default. This can be configured via [`CliOptions.help`](#helpautoinclude)
 
 ### version()
 
-Prints the formatted version of the current cli application: finds the package.json for the current application, and
-prints its name and version.
+Prints the formatted version of the current cli application: finds the package.json for the current application, and prints its name and version.
 
 > **Note**
-> version-generation option is auto-included by default. This can be configured via `CliOptions.version`
+> version-generation option is auto-included by default. This can be configured via [`CliOptions.version`](#versionautoinclude)
 
-## Custom logger
+</br>
 
-You may change the default logger via `CliOptions.logger`. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L133).
+### CliOptions
+
+A configuration object may be provided in the class constructor. The available options are:
+
+#### `baseLocation`
+Location of the main cli application.</br>
+**Default**: `path.dirname(entryFile)`
+
+#### `baseScriptLocation`
+Base path where the `ProcessingOutput.location` will start from</br>
+**Default**: `path.dirname(entryFile)`
+
+#### `commandsPath`
+Path where the single-command scripts (not contained in any namespace) are stored, starting from `CliOptions.baseScriptLocation`</br>
+**Default**: `"commands"`
+
+#### `onFail.help`
+Whether to print scoped-help when no valid script path is found</br>
+**Default**: `true`
+
+#### `errors`
+Configuration related to when errors should be displayed. The order of the lists containing the error-types matters, as it changes which error-messages are shown first (elements appearing first have a higher order of precedence).
+The available error-types are: `"command_not_found", "option_wrong_value", "option_required", "option_missing_value", "option_not_found"`
+##### `errors.onGenerateHelp`
+List of error-types that will be displayed before help</br>
+**Default**: `["command_not_found"]`
+##### `errors.onExecuteCommand`
+List of error-types that will cause to end execution with `exit(1)` </br>
+**Default**: `["command_not_found", "option_wrong_value", "option_required", "option_missing_value", "option_not_found"]`
+
+#### `help`
+Help-related configuration
+##### `help.autoInclude`
+Whether to generate help option</br>
+**Default**: `true`
+##### `help.aliases`
+Aliases to be used for help option</br>
+**Default**: `["-h", "--help"]`
+##### `help.description`
+Description for the option
+##### `help.template`
+Template to be used when generating help. There are five distinct sections: **usage**, **description**, **namespaces**, **commands** and **options**. This can be used to include a header/footer, change the order of the sections, or remove a section altogether. If a section has no content, it will be removed along with any line-breaks that follow. You can see a use-case for this in the [docker example](./examples/docker/docker.js#L129)</br>
+**Default**: `\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n`
+
+#### `version`
+Version-related configuration
+##### `version.autoInclude`
+Whether to generate version option</br>
+**Default**: `true`
+##### `version.aliases`
+Aliases to be used for version option</br>
+**Default**: `["-v", "--version"]`
+##### `version.description`
+Description for the option
+
+#### `rootCommand`
+Whether the cli implements a root command (invocation with no additional namespaces/commands)</br>
+**Default**: `true`
+
+#### `logger`
+Logger to be used by the cli. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](./examples/docker/docker.js#L133).</br>
+**Default**: [./src/cli-logger.ts](./src/cli-logger.ts)
+
+#### `cliName`
+Cli name to be used instead of the one defined in package.json</br>
+**Default**: `packageJson.name`
+
+#### `cliVersion`
+Cli version to be used instead of the one defined in package.json</br>
+**Default**: `packageJson.version`
+
+#### `cliDescription`
+Cli description to be used instead of the one defined in package.json</br>
+**Default**: `packageJson.description`
+
 
 ## Typescript cli
 
