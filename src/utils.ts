@@ -24,8 +24,10 @@ export class ColumnFormatter {
 }
 
 /** Shortened method for logging an error an exiting */
-export const logErrorAndExit = (...message: any[]) => {
-  Cli.logger.error(...message, "\n");
+export const logErrorAndExit = (message?: string) => {
+  if (message) {
+    Cli.logger.error(message, "\n");
+  }
   process.exit(1);
 };
 

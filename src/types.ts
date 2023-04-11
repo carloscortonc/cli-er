@@ -103,16 +103,20 @@ export type CliOptions = {
    * @default "commands" 
   */
   commandsPath: string;
-  /** Flags used to describe the behaviour on fail conditions */
+  /** Flags used to describe the behaviour on fail conditions
+   * @deprecated Will be removed in 0.11.0
+  */
   onFail: {
-    /** Print scoped-help */
+    /** Print scoped-help
+     * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
+    */
     help: boolean;
     /** Show suggestion when command not found
      * @deprecated Has no effect since 0.10.0. Will be removed in 0.11.0
     */
     suggestion: boolean;
     /** Print evaluated script paths inside `run`
-     * @deprecated Will be removed in 0.11.0
+     * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
     */
     scriptPaths: boolean;
     /** End `run` invocation when an unknown option is encountered while parsing
@@ -165,4 +169,8 @@ export type CliOptions = {
    * @default packageJson.description
    */
   cliDescription: string;
+  /** Enable debug mode
+   * @default `process.env.CLIER_DEBUG`
+  */
+  debug: boolean;
 };

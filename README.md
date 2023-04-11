@@ -229,9 +229,11 @@ Base path where the `ProcessingOutput.location` will start from</br>
 Path where the single-command scripts (not contained in any namespace) are stored, starting from `CliOptions.baseScriptLocation`</br>
 **Default**: `"commands"`
 
-#### `onFail.help`
+#### ~~`onFail.help`~~
 Whether to print scoped-help when no valid script path is found</br>
 **Default**: `true`
+> **Warning**
+> **Deprecated since 0.10.0. Will be removed in 0.11.0**
 
 #### `errors`
 Configuration related to when errors should be displayed. The order of the lists containing the error-types matters, as it changes which error-messages are shown first (elements appearing first have a higher order of precedence).
@@ -288,6 +290,13 @@ Cli version to be used instead of the one defined in package.json</br>
 Cli description to be used instead of the one defined in package.json</br>
 **Default**: `packageJson.description`
 
+### `debug`
+Enable debug mode. This is intended for the development phase of the cli. It will print verbose errors when a script in not found in the expected path during [`Cli.run`](#runargs). Its value can also be configured using an enviroment variable:
+```shell
+$ CLIER_DEBUG=1 node cli.js
+```
+
+**Default**: `process.env.CLIER_DEBUG`
 
 ## Typescript cli
 

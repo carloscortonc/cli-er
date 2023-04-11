@@ -66,6 +66,7 @@ describe("completeDefinition", () => {
     cliName: "",
     cliVersion: "",
     cliDescription: "",
+    debug: false
   };
   it("Completes missing fields in definition with nested content ", () => {
     const completedDefinition = completeDefinition(d, cliOptions);
@@ -296,37 +297,23 @@ describe("parseArguments", () => {
 
 describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
-  const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
   const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-  const d = new Cli({ opt: { description: "description" } }).definition as Definition<DefinitionElement>;
   it("Logs error if no baseScriptLocation configured", () => {
-    executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" }, d);
+    executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" });
     expect(exitlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
-  it("No valid script found: logs error (onFail.help=false, onFail.scriptPaths=false)", () => {
-    const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, help: false, scriptPaths: false } };
-    executeScript({ location: ["non-existent"], options: {} }, cliOptions_, d);
-    expect(logger).not.toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(exitlogger).not.toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
+  it("[DEBUG-OFF] No valid script found: exits", () => {
+    executeScript({ location: ["non-existent"], options: {} }, { ...cliOptions, debug: false });
+    expect(exitlogger).toHaveBeenCalledWith(undefined);
   });
-  it("No valid script found: prints help + logs error (onFail.help=true, onFail.scriptPaths=false)", () => {
-    const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, scriptPaths: false } };
-    executeScript({ location: ["non-existent"], options: {} }, cliOptions_, d);
-    expect(logger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(exitlogger).not.toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
-  });
-  it("No valid script found: prints help + logs error + prints paths (onFail.help=true, onFail.scriptPaths=true)", () => {
-    executeScript({ location: ["non-existent"], options: {} }, cliOptions, d);
-    expect(logger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
+  it("[DEBUG-ON] No valid script found: logs error + prints paths", () => {
+    executeScript({ location: ["non-existent"], options: {} }, { ...cliOptions, debug: true });
+    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"));
   });
   it("Generates all valid paths with the corresponding named/default import", () => {
     const c = new Cli(definition, { baseScriptLocation: "/" });
     const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
-    executeScript({ location: ["nms", "cmd"], options: {} }, c.options, c.definition);
+    executeScript({ location: ["nms", "cmd"], options: {} }, c.options);
     expect(pathListSpy.mock.calls).toEqual([
       ["/nms/cmd/index.js"],
       ["/nms/cmd.js"],
@@ -341,14 +328,14 @@ describe("executeScript", () => {
     (gcmd as any).mockImplementation(() => {
       throw new Error("errormessage");
     });
-    executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions, d);
+    executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions);
     expect(exitlogger).toHaveBeenCalledWith(
       expect.stringMatching("There was a problem executing the script (.+: errormessage)")
     );
   });
   it("Executes script if found", () => {
     (gcmd as any).mockImplementation();
-    executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions, d);
+    executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions);
     expect(gcmd).toHaveBeenCalledWith({ gcmd: "gcmdvalue" });
     expect(exitlogger).not.toHaveBeenCalled();
   });
