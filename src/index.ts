@@ -61,6 +61,7 @@ export default class Cli {
       cliName: "",
       cliVersion: "",
       cliDescription: "",
+      debug: !["false", "0", "", undefined].includes(process.env.CLIER_DEBUG?.toLowerCase()!)
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
@@ -134,7 +135,7 @@ export default class Cli {
     if (typeof command.action === "function") {
       return command.action(opts);
     }
-    return executeScript(opts, this.options, this.definition);
+    return executeScript(opts, this.options);
   }
   /**
    * Generate and output help documentation

@@ -79,6 +79,7 @@ describe("Cli.constructor", () => {
       cliName: "cli-app",
       cliVersion: "1.0.0",
       cliDescription: "cli-description",
+      debug: false
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
@@ -125,6 +126,7 @@ describe("Cli.constructor", () => {
       cliName: "custom-name",
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
+      debug: false
     });
   });
   it("Override default logger", () => {

@@ -204,8 +204,7 @@ export function parseArguments(
 /** Given the processed options, determine the script location and invoke it with the processed options */
 export async function executeScript(
   { location, options }: Omit<ParsingOutput, "errors">,
-  cliOptions: CliOptions,
-  definition: Definition<DefinitionElement>
+  cliOptions: CliOptions
 ) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
@@ -236,17 +235,8 @@ export async function executeScript(
   const validScriptPath = scriptPaths.find(p => fs.existsSync(p.path));
 
   if (!validScriptPath) {
-    let errorMessage = "";
-    if (cliOptions.onFail.help) {
-      generateScopedHelp(definition, [], cliOptions);
-      errorMessage = "\n";
-    }
-    errorMessage += "There was a problem finding the script to run.";
-    if (cliOptions.onFail.scriptPaths) {
-      errorMessage += " Considered paths were:\n";
-      errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp.path, "\n"), errorMessage);
-    }
-    return logErrorAndExit(errorMessage);
+    const errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp.path, "\n"), "There was a problem finding the script to run. Considered paths were:\n");
+    return logErrorAndExit(cliOptions.debug ? errorMessage : undefined);
   }
 
   try {
