@@ -42,22 +42,15 @@ function getAliases(key: string, element: DefinitionElement) {
 
 /** Process definition and complete any missing fields */
 export function completeDefinition(definition: Definition<DefinitionElement>, cliOptions: CliOptions) {
+  const { autoInclude: helpAutoInclude, template: _, ...helpOption } = cliOptions.help;
   // Auto-include help option
-  if (cliOptions.help.autoInclude) {
-    definition.help = {
-      type: "boolean",
-      aliases: cliOptions.help.aliases,
-      description: cliOptions.help.description,
-    };
+  if (helpAutoInclude) {
+    definition.help = helpOption;
   }
+  const { autoInclude: versionAutoInclude, ...versionOption } = cliOptions.version;
   // Auto-include version option
-  if (cliOptions.version.autoInclude) {
-    definition.version = {
-      type: "boolean",
-      aliases: cliOptions.version.aliases,
-      description: cliOptions.version.description,
-      hidden: true,
-    };
+  if (versionAutoInclude) {
+    definition.version = versionOption;
   }
   for (const element in definition) {
     completeElementDefinition(element, definition[element]);

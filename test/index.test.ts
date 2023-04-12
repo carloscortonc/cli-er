@@ -66,14 +66,17 @@ describe("Cli.constructor", () => {
       },
       help: {
         autoInclude: true,
+        type: "boolean",
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
+        type: "boolean",
         aliases: ["-v", "--version"],
         description: "Display version",
+        hidden: true
       },
       rootCommand: true,
       cliName: "cli-app",
@@ -88,7 +91,7 @@ describe("Cli.constructor", () => {
       baseScriptLocation: "./",
       help: { autoInclude: false, aliases: ["--help"], description: "", template: "template" },
       errors: { onExecuteCommand: [] },
-      version: { aliases: ["--version"], description: "" },
+      version: { aliases: ["--version"], description: "", hidden: false },
       onFail: { suggestion: false },
       cliName: "custom-name",
       cliVersion: "2.0.0",
@@ -113,14 +116,17 @@ describe("Cli.constructor", () => {
       },
       help: {
         autoInclude: overrides.help.autoInclude,
+        type: "boolean",
         aliases: ["--help"],
         description: "",
         template: "template",
       },
       version: {
         autoInclude: true,
+        type: "boolean",
         aliases: ["--version"],
         description: "",
+        hidden: false
       },
       rootCommand: true,
       cliName: "custom-name",
