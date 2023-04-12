@@ -132,24 +132,16 @@ export type CliOptions = {
     onExecuteCommand: `${ErrorType}`[],
   },
   /** Help-related configuration */
-  help: {
+  help: Option & {
     /** Whether to generate help option */
     autoInclude: boolean;
-    /** Aliases to be used for help option */
-    aliases: string[];
-    /** Description for the option */
-    description: string;
     /* Template to be used when generating help */
     template: string;
   };
   /** Version related configuration */
-  version: {
+  version: Option & {
     /** Whether to generate version option */
     autoInclude: boolean;
-    /** Aliases to be used for version option */
-    aliases: string[];
-    /** Description for the option */
-    description: string;
   };
   /** Whether the cli implements a root command (invocation with no additional namespaces/commands)
    * @default true

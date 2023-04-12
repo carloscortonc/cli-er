@@ -13,7 +13,7 @@ import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
 //@ts-ignore
 import gcmd from "./data/gcmd";
-import { Definition, OptionValue, ParsingOutput } from "../src/types";
+import { CliOptions, Definition, OptionValue, ParsingOutput } from "../src/types";
 const definition = _definition as Definition;
 
 beforeEach(() => {
@@ -37,7 +37,7 @@ describe("completeDefinition", () => {
     },
     opt: {},
   };
-  const cliOptions = {
+  const cliOptions: CliOptions = {
     baseLocation: "",
     baseScriptLocation: "",
     commandsPath: "",
@@ -53,12 +53,14 @@ describe("completeDefinition", () => {
     },
     help: {
       autoInclude: false,
+      type: "boolean",
       aliases: [],
       description: "",
       template: "",
     },
     version: {
       autoInclude: false,
+      type: "boolean",
       aliases: [],
       description: "",
     },
