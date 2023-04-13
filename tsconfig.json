@@ -3,6 +3,8 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
     "moduleResolution": "node",
     "module": "commonjs",
     "strict": true,
@@ -10,5 +12,8 @@
     "rootDir": ".",
     "noEmit": true
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": [
+    "src/**/*",
+    "test/**/*",
+  ]
 }
