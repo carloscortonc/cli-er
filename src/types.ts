@@ -27,8 +27,6 @@ type BasicElement = {
   description?: string;
   /** Aliases for an option */
   aliases?: string[];
-  /** Used internally to identify options */
-  key?: string;
   /** Whether to show an element when generating help */
   hidden?: boolean;
 };
