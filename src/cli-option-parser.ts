@@ -1,5 +1,6 @@
 import { CliError, ErrorType } from "./cli-errors";
-import { Kind, OptionValue, Type, Option } from "./types";
+import { OptionExt } from "./cli-utils";
+import { Kind, OptionValue, Type } from "./types";
 
 type ValueParserOutput = { value: any; next: number; error?: string };
 
@@ -7,7 +8,7 @@ type ValueParserOutput = { value: any; next: number; error?: string };
 export default function parseOptionValue(
   value: string | undefined,
   current: OptionValue,
-  option: Option
+  option: OptionExt
 ): ValueParserOutput {
   const type = option.type as Type;
   const defaultParserOutput = {

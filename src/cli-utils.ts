@@ -10,9 +10,10 @@ import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
 type F<T> = Omit<T, "kind" | "options">;
+export type OptionExt = Option & { key?: string; }
 export type DefinitionElement = F<Namespace> &
   F<Command> &
-  F<Option> & {
+  F<OptionExt> & {
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
   };
@@ -187,7 +188,7 @@ export function parseArguments(
   Object.values(aliases)
     .filter((v) => typeof v !== "string" && typeof v.value === "function")
     .forEach((v) => {
-      const k = (v as Option).key!;
+      const k = (v as OptionExt).key!;
       output.options[k] = (v as Option).value!(output.options[k], { ...output.options });
     });
 
