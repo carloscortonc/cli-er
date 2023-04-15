@@ -10,7 +10,7 @@ import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
 type F<T> = Omit<T, "kind" | "options">;
-export type OptionExt = Option & { key?: string; }
+export type OptionExt = Option & { key?: string };
 export type DefinitionElement = F<Namespace> &
   F<Command> &
   F<OptionExt> & {
@@ -79,12 +79,12 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
 export function parseArguments(
   args: string[],
   definition: Definition<DefinitionElement>,
-  cliOptions: CliOptions
+  cliOptions: CliOptions,
 ): ParsingOutput {
   const output: ParsingOutput = {
     location: [],
     options: {},
-    errors: []
+    errors: [],
   };
   const aliases: { [key: string]: DefinitionElement | string } = {};
   let argsToProcess = args;
@@ -177,12 +177,12 @@ export function parseArguments(
   }
 
   // Verify required options
-  Object.values(defToProcess).some(opt => {
+  Object.values(defToProcess).some((opt) => {
     if (opt.required && output.options[opt.key!] === undefined) {
       output.errors.push(CliError.format(ErrorType.OPTION_REQUIRED, opt.key!));
       return true;
     }
-  })
+  });
 
   // Process value-transformations
   Object.values(aliases)
@@ -196,40 +196,42 @@ export function parseArguments(
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
-export async function executeScript(
-  { location, options }: Omit<ParsingOutput, "errors">,
-  cliOptions: CliOptions
-) {
+export async function executeScript({ location, options }: Omit<ParsingOutput, "errors">, cliOptions: CliOptions) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
     return logErrorAndExit("There was a problem finding base script location");
   }
   const entryFile = path.parse(getEntryFile());
 
-  const scriptPaths = [".", ...location].reduce((acc: { path: string, default: boolean }[], _, i: number, list) => {
-    // Reverse index to consider the most specific paths first
-    const index = list.length - 1 - i;
-    const isDefaultImport = index === list.length - 1;
-    const locationPaths = [];
-    // Include index import
-    locationPaths.push(path.join(...location.slice(0, index), "index"));
-    if (index > 0) {
-      // Include location-name import
-      locationPaths.push(path.join(...location.slice(0, index)));
-    } else {
-      // Include entryfile-name import
-      locationPaths.push(entryFile.name);
-    }
-    locationPaths.forEach(lp => {
-      acc.push({ path: lp, default: isDefaultImport })
-    })
-    return acc;
-  }, []).map(p => ({ ...p, path: path.join(base, p.path.concat(entryFile.ext)) }))
+  const scriptPaths = [".", ...location]
+    .reduce((acc: { path: string; default: boolean }[], _, i: number, list) => {
+      // Reverse index to consider the most specific paths first
+      const index = list.length - 1 - i;
+      const isDefaultImport = index === list.length - 1;
+      const locationPaths = [];
+      // Include index import
+      locationPaths.push(path.join(...location.slice(0, index), "index"));
+      if (index > 0) {
+        // Include location-name import
+        locationPaths.push(path.join(...location.slice(0, index)));
+      } else {
+        // Include entryfile-name import
+        locationPaths.push(entryFile.name);
+      }
+      locationPaths.forEach((lp) => {
+        acc.push({ path: lp, default: isDefaultImport });
+      });
+      return acc;
+    }, [])
+    .map((p) => ({ ...p, path: path.join(base, p.path.concat(entryFile.ext)) }));
 
-  const validScriptPath = scriptPaths.find(p => fs.existsSync(p.path));
+  const validScriptPath = scriptPaths.find((p) => fs.existsSync(p.path));
 
   if (!validScriptPath) {
-    const errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp.path, "\n"), "There was a problem finding the script to run. Considered paths were:\n");
+    const errorMessage = scriptPaths.reduce(
+      (acc, sp) => "".concat(acc, "  ", sp.path, "\n"),
+      "There was a problem finding the script to run. Considered paths were:\n",
+    );
     return logErrorAndExit(cliOptions.debug ? errorMessage : undefined);
   }
 
@@ -239,7 +241,9 @@ export async function executeScript(
     if (isCjs()) {
       m = require(validScriptPath.path);
     } else {
-      m = await import(url.pathToFileURL(validScriptPath.path).href).then(_m => validScriptPath.default ? _m.default : _m)
+      m = await import(url.pathToFileURL(validScriptPath.path).href).then((_m) =>
+        validScriptPath.default ? _m.default : _m,
+      );
     }
     const fn = validScriptPath.default ? m : m[location[location.length - 1]];
     if (typeof fn !== "function") {
@@ -262,7 +266,7 @@ enum HELP_SECTIONS {
 export function generateScopedHelp(
   definition: Definition<DefinitionElement>,
   rawLocation: string[],
-  cliOptions: CliOptions
+  cliOptions: CliOptions,
 ) {
   let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
@@ -290,7 +294,7 @@ export function generateScopedHelp(
       }
       return acc;
     },
-    { existingKinds: [] as string[], hasOptions: false }
+    { existingKinds: [] as string[], hasOptions: false },
   );
 
   const formatKinds = (kinds: string[]) =>
@@ -314,7 +318,7 @@ export function generateScopedHelp(
 function generateHelp(
   definition: Definition<DefinitionElement> = {},
   cliOptions: CliOptions,
-  sections: { [key in HELP_SECTIONS]?: string } = {}
+  sections: { [key in HELP_SECTIONS]?: string } = {},
 ) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
@@ -371,7 +375,7 @@ function generateHelp(
           acc.elementSections[sectionKey].content.push(completeElement);
           return acc;
         },
-        { elementSections: elementSectionsTemplate, formattedNames: [] }
+        { elementSections: elementSectionsTemplate, formattedNames: [] },
       );
 
   // Process all names from namespaces, commands and options into formatter
@@ -405,7 +409,7 @@ function generateHelp(
 export function getDefinitionElement(
   definition: Definition<DefinitionElement>,
   rawLocation: string[],
-  cliOptions: CliOptions
+  cliOptions: CliOptions,
 ): DefinitionElement | undefined {
   let definitionRef = definition;
   let inheritedOptions: Definition = {};
@@ -450,7 +454,7 @@ export function closestSuggestion(
   target: string,
   definition: Definition<DefinitionElement>,
   rawLocation: string[],
-  cliOptions: CliOptions
+  cliOptions: CliOptions,
 ) {
   let def = definition;
   if (rawLocation.length > 0) {

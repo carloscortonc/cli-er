@@ -46,11 +46,11 @@ describe("findPackageJson", () => {
   });
   it("Returns the first package.json found", () => {
     const mockReadFile = (path: string) =>
-    ({
-      "/base/location/path/package.json": undefined,
-      "/base/location/package.json": '{"name": "location-package"}',
-      "/base/package.json": '{"name": "base-package"}',
-    }[path]);
+      ({
+        "/base/location/path/package.json": undefined,
+        "/base/location/package.json": '{"name": "location-package"}',
+        "/base/package.json": '{"name": "base-package"}',
+      }[path]);
 
     (fs.existsSync as jest.Mock).mockImplementation(mockReadFile);
     (fs.readFileSync as jest.Mock).mockImplementation(mockReadFile);

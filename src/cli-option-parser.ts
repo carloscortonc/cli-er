@@ -8,7 +8,7 @@ type ValueParserOutput = { value: any; next: number; error?: string };
 export default function parseOptionValue(
   value: string | undefined,
   current: OptionValue,
-  option: OptionExt
+  option: OptionExt,
 ): ValueParserOutput {
   const type = option.type as Type;
   const defaultParserOutput = {

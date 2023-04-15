@@ -49,7 +49,7 @@ describe("completeDefinition", () => {
     },
     errors: {
       onGenerateHelp: [],
-      onExecuteCommand: []
+      onExecuteCommand: [],
     },
     help: {
       autoInclude: false,
@@ -68,7 +68,7 @@ describe("completeDefinition", () => {
     cliName: "",
     cliVersion: "",
     cliDescription: "",
-    debug: false
+    debug: false,
   };
   it("Completes missing fields in definition with nested content ", () => {
     const completedDefinition = completeDefinition(d, cliOptions);
@@ -214,14 +214,14 @@ describe("parseArguments", () => {
     expect(parseArguments([], def, cliOptions)).toStrictEqual({
       location: [],
       options: { globalOption: "globalvalue" },
-      errors: []
+      errors: [],
     });
   });
   it("Command with no type", () => {
     expect(parseArguments(["gcmd"], def, cliOptions)).toStrictEqual({
       location: [cliOptions.commandsPath, "gcmd"],
       options: { globalOption: "globalvalue" },
-      errors: []
+      errors: [],
     });
   });
   it("Namespace + command", () => {
@@ -229,12 +229,12 @@ describe("parseArguments", () => {
     expect(parseArguments(["nms", "cmd"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: undefined, opt: undefined },
-      errors: []
+      errors: [],
     });
     expect(parseArguments(["nms", "cmd", "cmdValue"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: "cmdValue", opt: undefined },
-      errors: []
+      errors: [],
     });
   });
   it("Option with value property", () => {
@@ -256,14 +256,14 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions)).toStrictEqual({
       options: { opt: "optvalue-edited", test: "testvalue", version: undefined, help: undefined },
       location: expect.anything(),
-      errors: []
+      errors: [],
     });
   });
   it("Returns error if wrong namespace/command provided", () => {
     expect(parseArguments(["nms", "non-existent"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
-      errors: ['Command "non-existent" not found. Did you mean "cmd" ?', 'Unknown option \"non-existent\"'],
+      errors: ['Command "non-existent" not found. Did you mean "cmd" ?', 'Unknown option "non-existent"'],
     });
   });
   it("Returns error if unknown options are found", () => {
@@ -284,7 +284,7 @@ describe("parseArguments", () => {
     expect(parseArguments(["nms", "cmd", "--opt", "1"], def, cliOptions)).toStrictEqual({
       options: { cmd: undefined, opt: 1, globalOption: "globalvalue" },
       location: expect.anything(),
-      errors: []
+      errors: [],
     });
   });
   it("Return error if required option not provided", () => {
@@ -292,9 +292,9 @@ describe("parseArguments", () => {
     expect(parseArguments([], definition as Definition, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: [],
-      errors: ["Missing required option \"opt\""]
-    })
-  })
+      errors: ['Missing required option "opt"'],
+    });
+  });
 });
 
 describe("executeScript", () => {
@@ -310,7 +310,9 @@ describe("executeScript", () => {
   });
   it("[DEBUG-ON] No valid script found: logs error + prints paths", () => {
     executeScript({ location: ["non-existent"], options: {} }, { ...cliOptions, debug: true });
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"));
+    expect(exitlogger).toHaveBeenCalledWith(
+      expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"),
+    );
   });
   it("Generates all valid paths with the corresponding named/default import", () => {
     const c = new Cli(definition, { baseScriptLocation: "/" });
@@ -322,17 +324,17 @@ describe("executeScript", () => {
       ["/nms/index.js"],
       ["/nms.js"],
       ["/index.js"],
-      ["/script.js"]
+      ["/script.js"],
     ]);
-    pathListSpy.mockRestore()
-  })
+    pathListSpy.mockRestore();
+  });
   it("Script execution fails: logs error", () => {
     (gcmd as any).mockImplementation(() => {
       throw new Error("errormessage");
     });
     executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions);
     expect(exitlogger).toHaveBeenCalledWith(
-      expect.stringMatching("There was a problem executing the script (.+: errormessage)")
+      expect.stringMatching("There was a problem executing the script (.+: errormessage)"),
     );
   });
   it("Executes script if found", () => {
@@ -403,7 +405,7 @@ Command with no options
     generateScopedHelp(
       { cmd: { kind: "command", type: "string", description: "Command with type" } },
       ["cmd"],
-      cliOptions
+      cliOptions,
     );
     expect(output).toBe(`
 Usage:  cli-name cmd <string>
@@ -420,7 +422,7 @@ Command with type
       expect.stringContaining(`
 Unable to find the specified scope (nms > unknown)
 
-Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`)
+Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`),
     );
   });
   it("With custom footer via CliOptions.help.template", () => {

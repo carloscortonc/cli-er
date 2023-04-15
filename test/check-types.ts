@@ -13,10 +13,10 @@ new Cli({ cmd: { kind: "command", options: { cmd: { kind: "command" } } } });
 new Cli({ cmd: { kind: "command", options: { opt: { kind: "option" } } } });
 
 /* Definition declared outside constructor - Error */
-const definitionError = { opt: { kind: "option" } }
+const definitionError = { opt: { kind: "option" } };
 // @ts-expect-error
 new Cli(definitionError);
 
 /* Definition declared outside constructor */
-const definition: Definition = { opt: { kind: "option" } }
+const definition: Definition = { opt: { kind: "option" } };
 new Cli(definition);
