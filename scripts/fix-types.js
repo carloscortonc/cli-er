@@ -11,11 +11,13 @@ const fs = require("fs");
 
 const fileLocation = path.resolve(path.join(__dirname, "..", "dist", "index.d.ts"));
 let currentDts = fs.readFileSync(fileLocation).toString();
-const newDts = currentDts.replace("export { Cli as default };", `
-declare namespace Cli {
+const newDts = currentDts.replace(
+  "export { Cli as default };",
+  `declare namespace Cli {
   export { type Definition };
   export { Cli as default };
 }
-export = Cli;`
+
+export = Cli;`,
 );
 fs.writeFileSync(fileLocation, newDts);

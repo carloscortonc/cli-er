@@ -9,11 +9,11 @@ const definition = _definition as Definition;
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
 jest.spyOn(utils, "findPackageJson").mockImplementation(
   (_: any) =>
-  ({
-    version: "1.0.0",
-    name: "cli-app",
-    description: "cli-description",
-  } as any)
+    ({
+      version: "1.0.0",
+      name: "cli-app",
+      description: "cli-description",
+    } as any),
 );
 
 beforeEach(() => {
@@ -53,15 +53,13 @@ describe("Cli.constructor", () => {
         stopOnUnknownOption: true,
       },
       errors: {
-        onGenerateHelp: [
-          "command_not_found",
-        ],
+        onGenerateHelp: ["command_not_found"],
         onExecuteCommand: [
           "command_not_found",
           "option_wrong_value",
           "option_required",
           "option_missing_value",
-          "option_not_found"
+          "option_not_found",
         ],
       },
       help: {
@@ -76,13 +74,13 @@ describe("Cli.constructor", () => {
         type: "boolean",
         aliases: ["-v", "--version"],
         description: "Display version",
-        hidden: true
+        hidden: true,
       },
       rootCommand: true,
       cliName: "cli-app",
       cliVersion: "1.0.0",
       cliDescription: "cli-description",
-      debug: false
+      debug: false,
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
@@ -110,9 +108,7 @@ describe("Cli.constructor", () => {
       },
       errors: {
         onExecuteCommand: [],
-        onGenerateHelp: [
-          "command_not_found",
-        ],
+        onGenerateHelp: ["command_not_found"],
       },
       help: {
         autoInclude: overrides.help.autoInclude,
@@ -126,13 +122,13 @@ describe("Cli.constructor", () => {
         type: "boolean",
         aliases: ["--version"],
         description: "",
-        hidden: false
+        hidden: false,
       },
       rootCommand: true,
       cliName: "custom-name",
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
-      debug: false
+      debug: false,
     });
   });
   it("Override default logger", () => {
@@ -172,7 +168,7 @@ describe("Cli.parse", () => {
     expect(output).toStrictEqual({
       location: [],
       options: { globalOption: "globalvalue", help: undefined, version: undefined },
-      errors: []
+      errors: [],
     });
   });
   it("Parsing empty array results in default values from first-level options (without auto-included options)", () => {
@@ -181,7 +177,7 @@ describe("Cli.parse", () => {
     expect(output).toStrictEqual({
       location: [],
       options: { globalOption: "globalvalue" },
-      errors: []
+      errors: [],
     });
   });
 });
@@ -194,7 +190,7 @@ describe("Cli.run", () => {
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: ["nms", "cmd"],
       options: { cmd: "cmdvalue", globalOption: "globalvalue", opt: undefined },
-      errors: []
+      errors: [],
     });
   });
   it("Calling run with arguments invokes the script in the computed location - options only", () => {
@@ -204,7 +200,7 @@ describe("Cli.run", () => {
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: [],
       options: { globalOption: "overridden" },
-      errors: []
+      errors: [],
     });
   });
   it("Calling run with no namespace/command: CliOptions.rootCommand=false", () => {
@@ -245,7 +241,7 @@ describe("Cli.run", () => {
     expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringMatching(/Command "\w+" not found. Did you mean "\w+" \?/),
-      "\n"
+      "\n",
     );
   });
   it("Calling run on namespaces invokes help-generation", () => {
@@ -269,7 +265,9 @@ describe("Cli.run", () => {
   it("[onGenerateHelp] Prints error if configured", () => {
     const logger: any = { error: jest.fn() };
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: { help: true }, errors: ["ERROR"] }));
+    jest
+      .spyOn(cliutils, "parseArguments")
+      .mockImplementation(() => ({ location: [], options: { help: true }, errors: ["ERROR"] }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["command_not_found"] } });
     c.run([]);
     expect(logger.error).toHaveBeenCalledWith("ERROR", "\n");
@@ -277,7 +275,9 @@ describe("Cli.run", () => {
   it("[onGenerateHelp] Does not print error if not configured", () => {
     const logger: any = { error: jest.fn() };
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: { help: true }, errors: ["ERROR"] }));
+    jest
+      .spyOn(cliutils, "parseArguments")
+      .mockImplementation(() => ({ location: [], options: { help: true }, errors: ["ERROR"] }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: [] } });
     c.run([]);
     expect(logger.error).not.toHaveBeenCalled();
@@ -300,10 +300,18 @@ describe("Cli.run", () => {
   });
   it("Errors are printed according to CliOptions.errors list order", () => {
     const logger: any = { error: jest.fn() };
-    jest.spyOn(CliError, "analize").mockImplementation((value) => ({ CMD_NOT_FOUND: ErrorType.COMMAND_NOT_FOUND, OPT_NOT_FOUND: ErrorType.OPTION_NOT_FOUND })[value!]);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: { help: true }, errors: ["CMD_NOT_FOUND", "OPT_NOT_FOUND"] }));
+    jest
+      .spyOn(CliError, "analize")
+      .mockImplementation(
+        (value) => ({ CMD_NOT_FOUND: ErrorType.COMMAND_NOT_FOUND, OPT_NOT_FOUND: ErrorType.OPTION_NOT_FOUND }[value!]),
+      );
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
+      location: [],
+      options: { help: true },
+      errors: ["CMD_NOT_FOUND", "OPT_NOT_FOUND"],
+    }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["option_not_found", "command_not_found"] } });
     c.run([]);
     expect(logger.error).toHaveBeenCalledWith("OPT_NOT_FOUND", "\n");
-  })
+  });
 });

@@ -23,7 +23,8 @@
   "scripts": {
     "build": "rimraf dist && yarn tsup && node ./scripts/fix-types.js",
     "smoke-test": "cd test/smoke && node index.cjs && node index.mjs && ts-node-transpile-only index.ts",
-    "test": "yarn tsc && jest --silent && yarn smoke-test"
+    "test": "yarn tsc && jest --silent && yarn smoke-test",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "fastest-levenshtein": "^1.0.16",
@@ -40,6 +41,7 @@
     "@types/lodash.mergewith": "^4.6.7",
     "@types/node": "^18.6.1",
     "jest": "^27.0.0",
+    "prettier": "^2.8.7",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.0",
     "ts-node": "^10.9.1",

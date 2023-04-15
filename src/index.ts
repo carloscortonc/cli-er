@@ -35,16 +35,14 @@ export default class Cli {
         stopOnUnknownOption: true,
       },
       errors: {
-        onGenerateHelp: [
-          ErrorType.COMMAND_NOT_FOUND,
-        ],
+        onGenerateHelp: [ErrorType.COMMAND_NOT_FOUND],
         onExecuteCommand: [
           ErrorType.COMMAND_NOT_FOUND,
           ErrorType.OPTION_WRONG_VALUE,
           ErrorType.OPTION_REQUIRED,
           ErrorType.OPTION_MISSING_VALUE,
           ErrorType.OPTION_NOT_FOUND,
-        ]
+        ],
       },
       help: {
         autoInclude: true,
@@ -58,13 +56,13 @@ export default class Cli {
         type: "boolean",
         aliases: ["-v", "--version"],
         description: "Display version",
-        hidden: true
+        hidden: true,
       },
       rootCommand: true,
       cliName: "",
       cliVersion: "",
       cliDescription: "",
-      debug: !["false", "0", "", undefined].includes(process.env.CLIER_DEBUG?.toLowerCase()!)
+      debug: !["false", "0", "", undefined].includes(process.env.CLIER_DEBUG?.toLowerCase()!),
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
@@ -117,8 +115,8 @@ export default class Cli {
     ) {
       const onGenHelp = this.options.errors.onGenerateHelp;
       const onGenerateHelpErrors = errors
-        .filter(e => onGenHelp.includes(e.type))
-        .sort((a, b) => onGenHelp.indexOf(a.type) - onGenHelp.indexOf(b.type))
+        .filter((e) => onGenHelp.includes(e.type))
+        .sort((a, b) => onGenHelp.indexOf(a.type) - onGenHelp.indexOf(b.type));
       if (onGenerateHelpErrors.length > 0) {
         Cli.logger.error(onGenerateHelpErrors[0].e, "\n");
       }
@@ -130,8 +128,8 @@ export default class Cli {
     // Check if any error was generated
     const onExecCmd = this.options.errors.onExecuteCommand;
     const onExecuteCommandErrors = errors
-      .filter(e => onExecCmd.includes(e.type))
-      .sort((a, b) => onExecCmd.indexOf(a.type) - onExecCmd.indexOf(b.type))
+      .filter((e) => onExecCmd.includes(e.type))
+      .sort((a, b) => onExecCmd.indexOf(a.type) - onExecCmd.indexOf(b.type));
     if (onExecuteCommandErrors.length > 0) {
       return logErrorAndExit(onExecuteCommandErrors[0].e);
     }

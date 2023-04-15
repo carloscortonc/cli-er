@@ -133,5 +133,5 @@ new Cli(
     logger: {
       error: (...message) => process.stderr.write("\x1b[31mERROR ".concat(message.join(" "), "\x1b[0m")),
     },
-  }
+  },
 ).run();

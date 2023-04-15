@@ -98,24 +98,24 @@ export type CliOptions = {
    */
   baseScriptLocation: string | undefined;
   /** Path where the single-command scripts (not contained in any namespace) are stored
-   * @default "commands" 
-  */
+   * @default "commands"
+   */
   commandsPath: string;
   /** Flags used to describe the behaviour on fail conditions
    * @deprecated Will be removed in 0.11.0
-  */
+   */
   onFail: {
     /** Print scoped-help
      * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
-    */
+     */
     help: boolean;
     /** Show suggestion when command not found
      * @deprecated Has no effect since 0.10.0. Will be removed in 0.11.0
-    */
+     */
     suggestion: boolean;
     /** Print evaluated script paths inside `run`
      * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
-    */
+     */
     scriptPaths: boolean;
     /** End `run` invocation when an unknown option is encountered while parsing
      * @deprecated Is configured via `CliOptions.errors.onExecuteCommand` since 0.10.0. Will be removed in 0.11.0
@@ -125,10 +125,10 @@ export type CliOptions = {
   /** Configuration related to when errors should be displayed */
   errors: {
     /** List of error-types that will be displayed before help */
-    onGenerateHelp: `${ErrorType}`[],
+    onGenerateHelp: `${ErrorType}`[];
     /** List of error-types that will cause to end execution with `exit(1)` */
-    onExecuteCommand: `${ErrorType}`[],
-  },
+    onExecuteCommand: `${ErrorType}`[];
+  };
   /** Help-related configuration */
   help: Option & {
     /** Whether to generate help option */
@@ -161,6 +161,6 @@ export type CliOptions = {
   cliDescription: string;
   /** Enable debug mode
    * @default `process.env.CLIER_DEBUG`
-  */
+   */
   debug: boolean;
 };

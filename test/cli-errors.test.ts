@@ -6,7 +6,7 @@ describe("CliErrors.format", () => {
   });
   it("Formats ErrorType with multiple arguments", () => {
     expect(CliError.format(ErrorType.COMMAND_NOT_FOUND, "cmd", "alternative")).toEqual(
-      'Command "cmd" not found. Did you mean "alternative" ?'
+      'Command "cmd" not found. Did you mean "alternative" ?',
     );
   });
 });

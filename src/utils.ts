@@ -45,7 +45,8 @@ export function merge(objValue: object, srcValue: object) {
  * Returns the content of the nearest package.json. The search goes from `CliOptions.baseLocation` up */
 export function findPackageJson(options: CliOptions) {
   // Split baseLocation into the composing directories
-  const parts = options.baseLocation?.split(new RegExp(`(?!^)${path.sep == "\\" ? path.sep.repeat(2) : path.sep}`)) || [];
+  const parts =
+    options.baseLocation?.split(new RegExp(`(?!^)${path.sep == "\\" ? path.sep.repeat(2) : path.sep}`)) || [];
   for (let len = parts.length; len > 0; len--) {
     const candidate = path.resolve(...parts.slice(0, len), "package.json");
     if (!fs.existsSync(candidate)) {
