@@ -3,9 +3,9 @@ To create a custom option-parser the `value` property can be used, specifying th
 ## Example executions:
 
 ```shell
-# The custom-parser returns current date if no valid date is provided (Option.value since v0.6.0)
+# The custom-parser returns undefined if no valid date is provided (Option.value since v0.6.0, Option.parser since 0.10.0)
 node custom-option-parser.js
 
-# The custom-parser will use the provided value to create a new date (Option.value since v0.6.0)
+# The custom-parser will use the provided value to create a new date (Option.value since v0.6.0, Option.parser since 0.10.0)
 node custom-option-parser.js --date 2022/08/04
 ```

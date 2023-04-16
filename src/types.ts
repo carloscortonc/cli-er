@@ -1,4 +1,4 @@
-import { ErrorType } from "./cli-errors";
+import { CliError, ErrorType } from "./cli-errors";
 
 export enum Kind {
   NAMESPACE = "namespace",
@@ -15,6 +15,29 @@ export enum Type {
 }
 
 export type OptionValue = string | boolean | string[] | number | undefined;
+
+export type ValueParserInput = {
+  /** Value to process */
+  value: string | undefined;
+  /** Current value of the option */
+  current: OptionValue;
+  /** Option definition */
+  option: Option & { key: string };
+  /** Method for formatting errors, to be used in `Option.parser` */
+  format: typeof CliError.format;
+};
+
+export type ValueParserOutput = {
+  /** Final value for the parsed option */
+  value?: any;
+  /** Number of additional arguments that the parser consumed. For example, a boolean option
+   * might not consume any additional arguments ("--show-config", next=0) while a string option
+   * would ("--path path-value", next=1). The main case of `next=0` is when incoming value is `undefined`
+   */
+  next?: number;
+  /** Error generated during parsing */
+  error?: string;
+};
 
 export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
@@ -41,8 +64,12 @@ export type Option = BasicElement & {
    * @default false
    */
   required?: boolean;
-  /** Method to modify an option value after parsing */
+  /** Method to modify an option value after parsing
+   * @deprecated in favor of `Option.parser`. Will be removed in 0.11.0
+   */
   value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
+  /** Custom parser for the option */
+  parser?: (input: ValueParserInput) => ValueParserOutput;
 };
 
 export type Namespace = BasicElement & {

@@ -160,16 +160,22 @@ export function parseArguments(
     const outputKey = optionDefinition && (optionDefinition.key as string);
     if (aliases.hasOwnProperty(optionKey)) {
       const evaluatedValue = aliases.hasOwnProperty(next) ? undefined : next;
-      const parserOutput = parseOptionValue(evaluatedValue, output.options[outputKey], {
-        ...optionDefinition,
-        key: curr,
-      } as Option);
+      const parser = typeof optionDefinition.parser === "function" ? optionDefinition.parser : parseOptionValue;
+      const parserOutput = parser({
+        value: evaluatedValue,
+        current: output.options[outputKey],
+        option: {
+          ...(optionDefinition as Option),
+          key: curr,
+        },
+        format: CliError.format,
+      });
       if (parserOutput.error) {
         output.errors.push(parserOutput.error);
       } else {
         output.options[outputKey] = parserOutput.value;
       }
-      i += parserOutput.next;
+      i += parserOutput.next !== undefined ? parserOutput.next : evaluatedValue !== undefined ? 1 : 0;
     } else if (!aliases.hasOwnProperty(optionKey)) {
       // Unknown option
       output.errors.push(CliError.format(ErrorType.OPTION_NOT_FOUND, curr));
@@ -184,7 +190,7 @@ export function parseArguments(
     }
   });
 
-  // Process value-transformations
+  // Process value-transformations. Remove in 0.11.0 in favor of Option.parser
   Object.values(aliases)
     .filter((v) => typeof v !== "string" && typeof v.value === "function")
     .forEach((v) => {
