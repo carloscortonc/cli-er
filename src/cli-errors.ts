@@ -19,7 +19,7 @@ const ERROR_MESSAGES: { [key in ErrorType]: string } = {
 /** Utility class to format and identify error messages */
 export class CliError {
   /** Format a given error type with the supplied arguments */
-  static format(error: ErrorType, ...args: string[]) {
+  static format(error: `${ErrorType}`, ...args: string[]) {
     return args.reduce(
       (acc, value: string, index: number) => acc.replace(new RegExp(`\\{${index}\\}`, "g"), value),
       ERROR_MESSAGES[error],
@@ -27,7 +27,7 @@ export class CliError {
   }
   /** Test if the given error message matches an error type */
   private static test(value: string, error: string) {
-    return new RegExp(error.replace(/\{\d\}/g, "[a-zA-Z-]+")).test(value);
+    return new RegExp(error.replace(/\{\d\}/g, "[a-zA-Z-0-9/]+")).test(value);
   }
   /** Analize the given error message to identify its type */
   static analize(value: string | undefined): ErrorType | undefined {

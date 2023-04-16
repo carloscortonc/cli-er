@@ -1,22 +1,27 @@
 const Cli = require("cli-er");
 
+/**
+ * @typedef {import("cli-er").ValueParserInput} ValueParserInput
+ */
+
 module.exports = (options) => {
   console.log("Cli invoked with the following options:", options);
 };
 
 /* Custom option-parser implementation */
-function dateParser(d) {
-  if (isNaN(Date.parse(d))) {
-    return new Date();
+/** @param {ValueParserInput} */
+function dateParser({ value, format, option }) {
+  if (isNaN(Date.parse(value))) {
+    return { error: format("option_wrong_value", option.key, "yyyy/mm/dd", value) };
   }
-  return new Date(d);
+  return { value: new Date(value), next: value === undefined ? 0 : 1 };
 }
 
 if (require.main === module) {
   new Cli({
     date: {
       description: "Date option. Format: yyyy/mm/dd",
-      value: dateParser,
+      parser: dateParser,
     },
   }).run();
 }

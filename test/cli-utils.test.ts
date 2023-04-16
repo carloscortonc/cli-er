@@ -209,6 +209,24 @@ describe("parseArguments", () => {
       location: expect.anything(),
     });
   });
+  it("Option with parser property", () => {
+    const d = new Cli({
+      opt: {
+        parser: ({ value, format }) => {
+          // return error if value is not a date
+          if (isNaN(Date.parse(value || ""))) {
+            return { error: format("option_wrong_value", "x", "x", "x") };
+          }
+          return { value: new Date(value!) };
+        },
+      },
+    }).definition;
+    expect(parseArguments(["--opt", "not-a-date"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined, version: undefined, help: undefined },
+      location: expect.anything(),
+      errors: [expect.stringContaining("Wrong value for option")],
+    });
+  });
   it("No arguments", () => {
     //Get completed definition from Cli
     expect(parseArguments([], def, cliOptions)).toStrictEqual({
@@ -237,7 +255,7 @@ describe("parseArguments", () => {
       errors: [],
     });
   });
-  it("Option with value property", () => {
+  it("[deprecated] Option with value property", () => {
     const d = new Cli({
       cmd: {
         kind: "command",

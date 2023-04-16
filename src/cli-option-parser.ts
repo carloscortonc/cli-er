@@ -1,28 +1,21 @@
 import { CliError, ErrorType } from "./cli-errors";
-import { OptionExt } from "./cli-utils";
-import { Kind, OptionValue, Type } from "./types";
-
-type ValueParserOutput = { value: any; next: number; error?: string };
+import { Kind, Option, OptionValue, Type, ValueParserInput, ValueParserOutput } from "./types";
 
 /** Evaluate the value of an option */
-export default function parseOptionValue(
-  value: string | undefined,
-  current: OptionValue,
-  option: OptionExt,
-): ValueParserOutput {
+export default function parseOptionValue({ value, current, option }: ValueParserInput): ValueParserOutput {
   const type = option.type as Type;
   const defaultParserOutput = {
     /* Calculated value */
     value: undefined,
     /* Where to continue after processing current option-value */
-    next: value !== undefined ? 1 : 0,
+    next: undefined,
     /* Error found, if any */
     error:
       value === undefined && option.kind === Kind.OPTION
-        ? CliError.format(ErrorType.OPTION_MISSING_VALUE, type, option.key!)
+        ? CliError.format(ErrorType.OPTION_MISSING_VALUE, type, option.key)
         : undefined,
   };
-  const wrongValueError = CliError.format(ErrorType.OPTION_WRONG_VALUE, option.key!, type, value!);
+  const wrongValueError = CliError.format(ErrorType.OPTION_WRONG_VALUE, option.key, type, value!);
 
   /** Implemented parsers */
   const valueParsers: { [key in Type]: Partial<ValueParserOutput> | (() => Partial<ValueParserOutput>) } = {

@@ -80,14 +80,37 @@ You can check the full [docker-based example](./examples/docker) for a more in-d
 
 ### parse(args)
 
-Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If an error is generated during the process, it will be registered inside an `error` field.
-An option value may be modified after the parsing process is completed: this can be achieved by defining `Option.value` with the following signature:
+Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If any error is generated during the process, they will be registered inside an `errors` field.
+A custom parser for an Option may be used, with the following signature:
 
 ```typescript
-type value = (v: OptionValue, o: ParsingOutput.options) => OptionValue;
+type parser = (input: ValueParserInput) => ValueParserOutput;
+
+type ValueParserInput = {
+  /** Value to process */
+  value: string | undefined;
+  /** Current value of the option */
+  current: OptionValue;
+  /** Option definition */
+  option: Option & { key: string };
+  /** Method for formatting errors */
+  format: typeof CliError.format;
+}
+
+type ValueParserOutput = {
+  /** Final value for the parsed option */
+  value?: any;
+  /** Number of additional arguments that the parser consumed. For example, a boolean option
+   * might not consume any additional arguments ("--show-config", next=0) while a string option
+   * would ("--path path-value", next=1). The main case of `next=0` is when incoming value is `undefined`
+   */
+  next?: number;
+  /** Error generated during parsing */
+  error?: string;
+}
 ```
 
-This allows to create custom parsers for any type of input (check the [custom-option-parser example](./examples/custom-option-parser) for a hint).
+This allows to create custom parsers for any type of input (check the [custom-option-parser example](./examples/custom-option-parser) for a hint), or to override the existing parsers logic.
 
 The execution of the above [example](#example) would be:
 
@@ -239,7 +262,7 @@ Whether to print scoped-help when no valid script path is found</br>
 Configuration related to when errors should be displayed. The order of the lists containing the error-types matters, as it changes which error-messages are shown first (elements appearing first have a higher order of precedence).
 The available error-types are: `"command_not_found", "option_wrong_value", "option_required", "option_missing_value", "option_not_found"`
 ##### `errors.onGenerateHelp`
-List of error-types that will be displayed before help</br>
+List of error-types that will get displayed before help</br>
 **Default**: `["command_not_found"]`
 ##### `errors.onExecuteCommand`
 List of error-types that will cause to end execution with `exit(1)` </br>
