@@ -14,7 +14,7 @@ function dateParser({ value, format, option }) {
   if (isNaN(Date.parse(value))) {
     return { error: format("option_wrong_value", option.key, "yyyy/mm/dd", value) };
   }
-  return { value: new Date(value), next: value === undefined ? 0 : 1 };
+  return { value: new Date(value) };
 }
 
 if (require.main === module) {

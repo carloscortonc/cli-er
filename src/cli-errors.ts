@@ -27,7 +27,7 @@ export class CliError {
   }
   /** Test if the given error message matches an error type */
   private static test(value: string, error: string) {
-    return new RegExp(error.replace(/\{\d\}/g, "[a-zA-Z-0-9/]+")).test(value);
+    return new RegExp(error.replace(/\{\d\}/g, "[a-zA-Z-0-9/\\.]+")).test(value);
   }
   /** Analize the given error message to identify its type */
   static analize(value: string | undefined): ErrorType | undefined {
