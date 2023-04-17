@@ -317,20 +317,24 @@ describe("parseArguments", () => {
 
 describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
+  const debugSpy = jest.spyOn(utils, "debug").mockImplementation();
   const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
   it("Logs error if no baseScriptLocation configured", () => {
     executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" });
     expect(exitlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
   it("[DEBUG-OFF] No valid script found: exits", () => {
+    process.env[utils.CLIER_DEBUG_KEY] = "";
     executeScript({ location: ["non-existent"], options: {} }, { ...cliOptions, debug: false });
-    expect(exitlogger).toHaveBeenCalledWith(undefined);
+    expect(exitlogger).toHaveBeenCalled();
   });
   it("[DEBUG-ON] No valid script found: logs error + prints paths", () => {
+    process.env[utils.CLIER_DEBUG_KEY] = "1";
     executeScript({ location: ["non-existent"], options: {} }, { ...cliOptions, debug: true });
-    expect(exitlogger).toHaveBeenCalledWith(
+    expect(debugSpy).toHaveBeenCalledWith(
       expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"),
     );
+    expect(exitlogger).toHaveBeenCalled();
   });
   it("Generates all valid paths with the corresponding named/default import", () => {
     const c = new Cli(definition, { baseScriptLocation: "/" });

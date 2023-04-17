@@ -314,7 +314,11 @@ Cli description to be used instead of the one defined in package.json</br>
 **Default**: `packageJson.description`
 
 ### `debug`
-Enable debug mode. This is intended for the development phase of the cli. It will print verbose errors when a script in not found in the expected path during [`Cli.run`](#runargs). Its value can also be configured using an enviroment variable:
+Enable debug mode. This is intended for the development phase of the cli. It will:
+- Print verbose errors when a script in not found in the expected path during [`Cli.run`](#runargs).
+- **Print warnings for deprecated properties/methods**, useful for detecting and applying these changes before updating to the next version.
+
+Its value can also be configured using an enviroment variable:
 ```shell
 $ CLIER_DEBUG=1 node cli.js
 ```

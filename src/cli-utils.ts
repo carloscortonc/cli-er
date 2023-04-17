@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import url from "url";
 import { closest } from "fastest-levenshtein";
-import { ColumnFormatter, logErrorAndExit } from "./utils";
+import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
 import parseOptionValue from "./cli-option-parser";
@@ -53,6 +53,12 @@ export function completeDefinition(definition: Definition<DefinitionElement>, cl
   if (versionAutoInclude) {
     definition.version = versionOption;
   }
+  // Print CliOptions deprecations
+  deprecationWarning({
+    condition: cliOptions.onFail !== undefined,
+    property: "CliOptions.onFail.*",
+    version: "0.11.0",
+  });
   for (const element in definition) {
     completeElementDefinition(element, definition[element]);
   }
@@ -70,6 +76,12 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
   }
   // Add name as key
   element.key = name;
+  // Print deprecations
+  deprecationWarning({
+    condition: typeof element.value === "function",
+    property: "Option.value",
+    version: "0.11.0",
+  });
   for (const optionKey in element.options ?? {}) {
     completeElementDefinition(optionKey, element.options![optionKey]);
   }
@@ -234,11 +246,13 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
   const validScriptPath = scriptPaths.find((p) => fs.existsSync(p.path));
 
   if (!validScriptPath) {
-    const errorMessage = scriptPaths.reduce(
-      (acc, sp) => "".concat(acc, "  ", sp.path, "\n"),
-      "There was a problem finding the script to run. Considered paths were:\n",
+    debug(
+      scriptPaths.reduce(
+        (acc, sp) => "".concat(acc, "  ", sp.path, "\n"),
+        "There was a problem finding the script to run. Considered paths were:\n",
+      ),
     );
-    return logErrorAndExit(cliOptions.debug ? errorMessage : undefined);
+    return logErrorAndExit();
   }
 
   try {
