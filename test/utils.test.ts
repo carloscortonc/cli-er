@@ -1,4 +1,4 @@
-import { findPackageJson } from "../src/utils";
+import { CLIER_DEBUG_KEY, debug, deprecationWarning, findPackageJson } from "../src/utils";
 import path from "path";
 import fs from "fs";
 
@@ -62,5 +62,38 @@ describe("findPackageJson", () => {
     (fs.readFileSync as jest.Mock).mockImplementation(() => "*{}");
     const pkgjson = findPackageJson(options as any);
     expect(pkgjson).toBe(undefined);
+  });
+});
+
+describe("debug", () => {
+  const stderr = jest.spyOn(process.stderr, "write").mockImplementationOnce(jest.fn());
+  beforeEach(() => {
+    stderr.mockClear();
+  });
+  afterAll(() => {
+    stderr.mockReset();
+  });
+  it("Invokes process.stderr.write if debug is enabled", () => {
+    process.env[CLIER_DEBUG_KEY] = "1";
+    debug("debug-message");
+    expect(stderr).toHaveBeenCalledWith("[CLIER_DEBUG] debug-message\n");
+  });
+  it("Does nothing if debug is disabled", () => {
+    process.env[CLIER_DEBUG_KEY] = "";
+    debug("debug-message");
+    expect(stderr).not.toHaveBeenCalled();
+  });
+});
+
+describe("deprecationWarning", () => {
+  it("Log a given deprecation if condition is true", () => {
+    process.env[CLIER_DEBUG_KEY] = "1"; // enable debug mode
+    const stderr = jest.spyOn(process.stderr, "write").mockImplementation(jest.fn());
+    deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining(`<P> is deprecated and will be removed in 1.0.0`));
+    // Repeated deprecation will not be logged again
+    stderr.mockClear();
+    deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
+    expect(stderr).not.toHaveBeenCalled();
   });
 });

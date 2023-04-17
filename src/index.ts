@@ -9,7 +9,7 @@ import {
   getEntryFile,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
-import { clone, logErrorAndExit, merge, findPackageJson } from "./utils";
+import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import path from "path";
@@ -62,7 +62,7 @@ export default class Cli {
       cliName: "",
       cliVersion: "",
       cliDescription: "",
-      debug: !["false", "0", "", undefined].includes(process.env.CLIER_DEBUG?.toLowerCase()!),
+      debug: !["false", "0", "", undefined].includes(process.env[CLIER_DEBUG_KEY]?.toLowerCase()!),
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
@@ -78,6 +78,8 @@ export default class Cli {
     if (!this.options.cliDescription) {
       this.options.cliDescription = packagejson.description || "";
     }
+    // Store back at process.env.CLIER_DEBUG the final value of CliOptions.debug, to be accesible without requiring CliOptions
+    process.env[CLIER_DEBUG_KEY] = this.options.debug ? "1" : "";
     this.definition = completeDefinition(clone(definition), this.options) as Definition;
     return this;
   }
