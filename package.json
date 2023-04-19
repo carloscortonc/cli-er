@@ -28,8 +28,7 @@
   },
   "dependencies": {
     "fastest-levenshtein": "^1.0.16",
-    "lodash.clonedeep": "^4.5.0",
-    "lodash.mergewith": "^4.6.2"
+    "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
     "@saithodev/semantic-release-backmerge": "^2.1.2",
@@ -38,7 +37,6 @@
     "@swc/core": "^1.2.220",
     "@types/jest": "^27.0.0",
     "@types/lodash.clonedeep": "^4.5.7",
-    "@types/lodash.mergewith": "^4.6.7",
     "@types/node": "^18.6.1",
     "jest": "^27.0.0",
     "prettier": "^2.8.7",

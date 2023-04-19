@@ -1,4 +1,4 @@
-import { CLIER_DEBUG_KEY, debug, deprecationWarning, findPackageJson } from "../src/utils";
+import { CLIER_DEBUG_KEY, debug, deprecationWarning, findPackageJson, merge } from "../src/utils";
 import path from "path";
 import fs from "fs";
 
@@ -95,5 +95,25 @@ describe("deprecationWarning", () => {
     stderr.mockClear();
     deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
     expect(stderr).not.toHaveBeenCalled();
+  });
+});
+
+describe("merge", () => {
+  it("Merge multiple objects into target", () => {
+    const target = {
+      p0: "p0-target",
+      p1: "p1-target",
+      p2: { p21: "p21-target" },
+      p3: { p3p1: "p3p1-target", p3p2: "p3p2-target", p31: { p32p1: "p32p1-target", p32p2: "p32p2-target" } },
+    };
+    const source1 = { p0: undefined, p1: "p1-source1", p3: { p3p2: "p3p2-source1" } };
+    const source2 = { p3: { p31: { p32p1: "p32p1-source2" } } };
+    merge(target, source1, source2);
+    expect(target).toStrictEqual({
+      p0: "p0-target",
+      p1: "p1-source1",
+      p2: { p21: "p21-target" },
+      p3: { p3p1: "p3p1-target", p3p2: "p3p2-source1", p31: { p32p1: "p32p1-source2", p32p2: "p32p2-target" } },
+    });
   });
 });
