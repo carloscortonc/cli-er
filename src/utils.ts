@@ -1,4 +1,3 @@
-import mergeWith from "lodash.mergewith";
 import lodashclone from "lodash.clonedeep";
 import Cli from ".";
 import { CliOptions } from "./types";
@@ -33,14 +32,26 @@ export const logErrorAndExit = (message?: string) => {
   process.exit(1);
 };
 
-/** Merge two objects using lodash mergeWith, customizing array-merge */
-export function merge(objValue: object, srcValue: object) {
-  function customizer(a: object, b: object) {
-    if (Array.isArray(a)) {
-      return b;
+type TObject = { [k: string]: any };
+
+function isPlainObject(obj: any) {
+  return typeof obj === "object" && obj !== null && obj.constructor === Object;
+}
+
+/** Simple implementation for merging all source objects into target */
+export function merge(target: TObject, ...srcValues: TObject[]) {
+  for (const key in target) {
+    if (isPlainObject(target[key])) {
+      merge(target[key], ...srcValues.map((s) => s[key]));
+      continue;
     }
+    Object.assign(
+      target,
+      ...srcValues.reduce((acc: TObject[], curr = {}) => {
+        return [...acc, curr[key] !== undefined ? { [key]: curr[key] } : {}];
+      }, []),
+    );
   }
-  mergeWith(objValue, srcValue, customizer);
 }
 
 /** Find the package.json of the application that is using this library

@@ -1,5 +1,5 @@
 import { CliError, ErrorType } from "./cli-errors";
-import { Kind, Option, OptionValue, Type, ValueParserInput, ValueParserOutput } from "./types";
+import { Kind, Type, ValueParserInput, ValueParserOutput } from "./types";
 
 /** Evaluate the value of an option */
 export default function parseOptionValue({ value, current, option }: ValueParserInput): ValueParserOutput {
