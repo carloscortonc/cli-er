@@ -84,7 +84,7 @@ describe("Cli.constructor", () => {
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
-    const overrides = {
+    const overwrites = {
       baseLocation: "..",
       baseScriptLocation: "./",
       help: { autoInclude: false, aliases: ["--help"], description: "", template: "template" },
@@ -95,10 +95,10 @@ describe("Cli.constructor", () => {
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
     };
-    const c = new Cli({}, overrides);
+    const c = new Cli({}, overwrites);
     expect(c.options).toStrictEqual({
-      baseLocation: overrides.baseLocation,
-      baseScriptLocation: overrides.baseScriptLocation,
+      baseLocation: overwrites.baseLocation,
+      baseScriptLocation: overwrites.baseScriptLocation,
       commandsPath: "commands",
       onFail: {
         help: true,
@@ -111,7 +111,7 @@ describe("Cli.constructor", () => {
         onGenerateHelp: ["command_not_found"],
       },
       help: {
-        autoInclude: overrides.help.autoInclude,
+        autoInclude: overwrites.help.autoInclude,
         type: "boolean",
         aliases: ["--help"],
         description: "",
@@ -131,7 +131,7 @@ describe("Cli.constructor", () => {
       debug: false,
     });
   });
-  it("Override default logger", () => {
+  it("Overwrite default logger", () => {
     const logger = jest.fn();
     const log = (...message: any[]) => logger("CUSTOMLOG ".concat(message.join(" ")));
     const error = (...message: any[]) => logger("CUSTOMERROR ".concat(message.join(" ")));

@@ -38,7 +38,8 @@ function isPlainObject(obj: any) {
   return typeof obj === "object" && obj !== null && obj.constructor === Object;
 }
 
-/** Simple implementation for merging all source objects into target */
+/** Simple implementation for merging all source objects into target.
+ * Only properties enumerated in target may be overwritten */
 export function merge(target: TObject, ...srcValues: TObject[]) {
   for (const key in target) {
     if (isPlainObject(target[key])) {
@@ -56,10 +57,9 @@ export function merge(target: TObject, ...srcValues: TObject[]) {
 
 /** Find the package.json of the application that is using this library
  * Returns the content of the nearest package.json. The search goes from `CliOptions.baseLocation` up */
-export function findPackageJson(options: CliOptions) {
+export function findPackageJson(baseLocation: string) {
   // Split baseLocation into the composing directories
-  const parts =
-    options.baseLocation?.split(new RegExp(`(?!^)${path.sep == "\\" ? path.sep.repeat(2) : path.sep}`)) || [];
+  const parts = baseLocation?.split(new RegExp(`(?!^)${path.sep == "\\" ? path.sep.repeat(2) : path.sep}`)) || [];
   for (let len = parts.length; len > 0; len--) {
     const candidate = path.resolve(...parts.slice(0, len), "package.json");
     if (!fs.existsSync(candidate)) {

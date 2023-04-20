@@ -20,10 +20,10 @@ beforeEach(() => {
 });
 
 describe("findPackageJson", () => {
-  const options = { baseLocation: "/base/location/path" };
+  const baseLocation = "/base/location/path";
   it("[windows] Checks all directories from baseLocation upwards", () => {
     mockPath.sep = "\\";
-    const pkgjson = findPackageJson({ baseLocation: "C:\\base\\location\\path" } as any);
+    const pkgjson = findPackageJson("C:\\base\\location\\path");
     expect((fs.existsSync as any).mock.calls).toEqual([
       ["C:\\base\\location\\path\\package.json"],
       ["C:\\base\\location\\package.json"],
@@ -35,7 +35,7 @@ describe("findPackageJson", () => {
   });
   it("[unix] Checks all directories from baseLocation upwards", () => {
     mockPath.sep = "/";
-    const pkgjson = findPackageJson(options as any);
+    const pkgjson = findPackageJson(baseLocation);
     expect((fs.existsSync as any).mock.calls).toEqual([
       ["/base/location/path/package.json"],
       ["/base/location/package.json"],
@@ -54,13 +54,13 @@ describe("findPackageJson", () => {
 
     (fs.existsSync as jest.Mock).mockImplementation(mockReadFile);
     (fs.readFileSync as jest.Mock).mockImplementation(mockReadFile);
-    const pkgjson = findPackageJson(options as any);
+    const pkgjson = findPackageJson(baseLocation);
     expect(pkgjson).toStrictEqual({ name: "location-package" });
   });
   it("Returns undefined if an error is generated during parsing", () => {
     (fs.existsSync as jest.Mock).mockImplementation(() => true);
     (fs.readFileSync as jest.Mock).mockImplementation(() => "*{}");
-    const pkgjson = findPackageJson(options as any);
+    const pkgjson = findPackageJson(baseLocation);
     expect(pkgjson).toBe(undefined);
   });
 });

@@ -22,6 +22,6 @@ echo %ERRORLEVEL%
 # Check exit code on linux/windows-powershell
 echo $?
 
-# Print help from secondary cli-app: name is overriden (CliOptions.cliName since v0.7.0)
+# Print help from secondary cli-app: name is overwritten (CliOptions.cliName since v0.7.0)
 node secondary-cli.js -h
 ```
