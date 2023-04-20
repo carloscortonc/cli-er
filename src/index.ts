@@ -24,6 +24,7 @@ export default class Cli {
    * @param {DeepPartial<CliOptions>} options Options to customize the behavior of the tool
    */
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
+    const packagejson: any = findPackageJson(options.baseLocation || getEntryPoint()) || {};
     this.options = {
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
@@ -59,25 +60,20 @@ export default class Cli {
         hidden: true,
       },
       rootCommand: true,
-      cliName: "",
-      cliVersion: "",
-      cliDescription: "",
-      debug: !["false", "0", "", undefined].includes(process.env[CLIER_DEBUG_KEY]?.toLowerCase()!),
+      cliName: packagejson.name || path.parse(getEntryFile()).name,
+      cliVersion: packagejson.version || "-",
+      cliDescription: packagejson.description || "",
+      debug: false,
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
-    merge(this.options, options);
-    // Read cliName and cliVersion from package.json, if not provided
-    const packagejson: any = findPackageJson(this.options) || {};
-    if (!this.options.cliName) {
-      this.options.cliName = packagejson.name || path.parse(getEntryFile()).name;
-    }
-    if (!this.options.cliVersion) {
-      this.options.cliVersion = packagejson.version || "-";
-    }
-    if (!this.options.cliDescription) {
-      this.options.cliDescription = packagejson.description || "";
-    }
+    // Environment variables should have the highest priority
+    const envOverwriteProperties = {
+      ...(process.env[CLIER_DEBUG_KEY]
+        ? { debug: !["false", "0", "", undefined].includes(process.env[CLIER_DEBUG_KEY]?.toLowerCase()!) }
+        : {}),
+    };
+    merge(this.options, options, envOverwriteProperties);
     // Store back at process.env.CLIER_DEBUG the final value of CliOptions.debug, to be accesible without requiring CliOptions
     process.env[CLIER_DEBUG_KEY] = this.options.debug ? "1" : "";
     this.definition = completeDefinition(clone(definition), this.options) as Definition;
