@@ -1,3 +1,10 @@
+## [0.10.1](https://github.com/carloscortonc/cli-er/compare/v0.10.0...v0.10.1) (2023-04-22)
+
+
+### Bug Fixes
+
+* avoid showing onFail deprecation when not used ([#39](https://github.com/carloscortonc/cli-er/issues/39)) ([0b1fcf9](https://github.com/carloscortonc/cli-er/commit/0b1fcf96e7c0d57ea0c7724cecc76cd9d8e71923))
+
 # [0.10.0](https://github.com/carloscortonc/cli-er/compare/v0.9.2...v0.10.0) (2023-04-22)
 
 
