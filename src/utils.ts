@@ -1,6 +1,5 @@
 import lodashclone from "lodash.clonedeep";
 import Cli from ".";
-import { CliOptions } from "./types";
 import path from "path";
 import fs from "fs";
 
