@@ -131,7 +131,7 @@ export type CliOptions = {
   /** Flags used to describe the behaviour on fail conditions
    * @deprecated Will be removed in 0.11.0
    */
-  onFail: {
+  onFail?: {
     /** Print scoped-help
      * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
      */

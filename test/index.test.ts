@@ -46,12 +46,6 @@ describe("Cli.constructor", () => {
       baseLocation: "require.main.filename",
       baseScriptLocation: "require.main.filename",
       commandsPath: "commands",
-      onFail: {
-        help: true,
-        suggestion: true,
-        scriptPaths: true,
-        stopOnUnknownOption: true,
-      },
       errors: {
         onGenerateHelp: ["command_not_found"],
         onExecuteCommand: [
@@ -90,7 +84,6 @@ describe("Cli.constructor", () => {
       help: { autoInclude: false, aliases: ["--help"], description: "", template: "template" },
       errors: { onExecuteCommand: [] },
       version: { aliases: ["--version"], description: "", hidden: false },
-      onFail: { suggestion: false },
       cliName: "custom-name",
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
@@ -100,12 +93,6 @@ describe("Cli.constructor", () => {
       baseLocation: overwrites.baseLocation,
       baseScriptLocation: overwrites.baseScriptLocation,
       commandsPath: "commands",
-      onFail: {
-        help: true,
-        suggestion: false,
-        scriptPaths: true,
-        stopOnUnknownOption: true,
-      },
       errors: {
         onExecuteCommand: [],
         onGenerateHelp: ["command_not_found"],
@@ -196,10 +183,10 @@ describe("Cli.run", () => {
   it("Calling run with arguments invokes the script in the computed location - options only", () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
     const c = new Cli(definition);
-    c.run(["--global", "overridden"]);
+    c.run(["--global", "overwritten"]);
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: [],
-      options: { globalOption: "overridden" },
+      options: { globalOption: "overwritten" },
       errors: [],
     });
   });
@@ -209,7 +196,7 @@ describe("Cli.run", () => {
     c.run([]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
     spy.mockClear();
-    c.run(["--global", "overridden"]);
+    c.run(["--global", "overwritten"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
   it("Calling run on element with action invokes such action", () => {
@@ -229,7 +216,7 @@ describe("Cli.run", () => {
     c.run(["--help"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
     spy.mockClear();
-    c.run(["--global", "overridden", "--help"]);
+    c.run(["--global", "overwritten", "--help"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
   it("Calling run with help option invokes help-generation - wrong location", () => {
