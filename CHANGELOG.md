@@ -1,3 +1,25 @@
+# [0.10.0](https://github.com/carloscortonc/cli-er/compare/v0.9.2...v0.10.0) (2023-04-22)
+
+
+### Bug Fixes
+
+* env variables should overwrite cliOptions ([#36](https://github.com/carloscortonc/cli-er/issues/36)) ([0cd211f](https://github.com/carloscortonc/cli-er/commit/0cd211f394280359459bbe56c5972dea9568009a))
+
+
+### Performance Improvements
+
+* **dependencies:** remove lodash.mergewith ([#35](https://github.com/carloscortonc/cli-er/issues/35)) ([012c3e5](https://github.com/carloscortonc/cli-er/commit/012c3e557ab79f0d5b99942087bb45a41aab1114))
+
+
+### Features
+
+* allow custom option parser ([#33](https://github.com/carloscortonc/cli-er/issues/33)) ([e643234](https://github.com/carloscortonc/cli-er/commit/e6432348b209262a5101687020fc762bcc7d3072))
+* allow to overwrite all fields of version and help ([#29](https://github.com/carloscortonc/cli-er/issues/29)) ([97ef5c9](https://github.com/carloscortonc/cli-er/commit/97ef5c9c3634b68bbf2dd2bbf9217f21f6314aa2))
+* create new debug mode for developing ([#28](https://github.com/carloscortonc/cli-er/issues/28)) ([c2ec2d3](https://github.com/carloscortonc/cli-er/commit/c2ec2d303c4978ccc06dd5e53fedbf365218297d))
+* improve error handler, allow customization ([#27](https://github.com/carloscortonc/cli-er/issues/27)) ([c4bb1c5](https://github.com/carloscortonc/cli-er/commit/c4bb1c5df0d764792398eb483f2135ad39631448))
+* print deprecations in debug mode ([#34](https://github.com/carloscortonc/cli-er/issues/34)) ([e936f45](https://github.com/carloscortonc/cli-er/commit/e936f45a5c1dadea8e0a7c4952483edd9ce02e54))
+* types available through named exports ([#30](https://github.com/carloscortonc/cli-er/issues/30)) ([1486085](https://github.com/carloscortonc/cli-er/commit/148608592ab098efa6d9b0803b015c1248b1eced))
+
 ## [0.9.2](https://github.com/carloscortonc/cli-er/compare/v0.9.1...v0.9.2) (2023-04-09)
 
 
