@@ -1,4 +1,4 @@
-import { ICliLogger, LogType } from "./types";
+import { ICliLogger } from "./types";
 
 /** Class implementing the ICliLogger interface */
 export default class CliLogger implements ICliLogger {

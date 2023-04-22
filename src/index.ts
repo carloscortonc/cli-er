@@ -9,7 +9,7 @@ import {
   getEntryFile,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
-import { clone, logErrorAndExit, merge, findPackageJson } from "./utils";
+import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import path from "path";
@@ -24,6 +24,7 @@ export default class Cli {
    * @param {DeepPartial<CliOptions>} options Options to customize the behavior of the tool
    */
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
+    const packagejson: any = findPackageJson(options.baseLocation || getEntryPoint()) || {};
     this.options = {
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
@@ -34,36 +35,47 @@ export default class Cli {
         scriptPaths: true,
         stopOnUnknownOption: true,
       },
+      errors: {
+        onGenerateHelp: [ErrorType.COMMAND_NOT_FOUND],
+        onExecuteCommand: [
+          ErrorType.COMMAND_NOT_FOUND,
+          ErrorType.OPTION_WRONG_VALUE,
+          ErrorType.OPTION_REQUIRED,
+          ErrorType.OPTION_MISSING_VALUE,
+          ErrorType.OPTION_NOT_FOUND,
+        ],
+      },
       help: {
         autoInclude: true,
+        type: "boolean",
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
+        type: "boolean",
         aliases: ["-v", "--version"],
         description: "Display version",
+        hidden: true,
       },
       rootCommand: true,
-      cliName: "",
-      cliVersion: "",
-      cliDescription: "",
+      cliName: packagejson.name || path.parse(getEntryFile()).name,
+      cliVersion: packagejson.version || "-",
+      cliDescription: packagejson.description || "",
+      debug: false,
     };
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
-    merge(this.options, options);
-    // Read cliName and cliVersion from package.json, if not provided
-    const packagejson: any = findPackageJson(this.options) || {};
-    if (!this.options.cliName) {
-      this.options.cliName = packagejson.name || path.parse(getEntryFile()).name;
-    }
-    if (!this.options.cliVersion) {
-      this.options.cliVersion = packagejson.version || "-";
-    }
-    if (!this.options.cliDescription) {
-      this.options.cliDescription = packagejson.description || "";
-    }
+    // Environment variables should have the highest priority
+    const envOverwriteProperties = {
+      ...(process.env[CLIER_DEBUG_KEY]
+        ? { debug: !["false", "0", "", undefined].includes(process.env[CLIER_DEBUG_KEY]?.toLowerCase()!) }
+        : {}),
+    };
+    merge(this.options, options, envOverwriteProperties);
+    // Store back at process.env.CLIER_DEBUG the final value of CliOptions.debug, to be accesible without requiring CliOptions
+    process.env[CLIER_DEBUG_KEY] = this.options.debug ? "1" : "";
     this.definition = completeDefinition(clone(definition), this.options) as Definition;
     return this;
   }
@@ -84,7 +96,7 @@ export default class Cli {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
     const command = getDefinitionElement(this.definition, opts.location, this.options)!;
-    const e = CliError.analize(opts.error);
+    const errors = opts.errors.map((e) => ({ type: CliError.analize(e)!, e })).filter(({ e }) => e);
 
     // Evaluate auto-included version
     if (this.options.version.autoInclude && opts.options.version) {
@@ -99,8 +111,12 @@ export default class Cli {
         (!this.options.rootCommand && opts.location.length === 0) ||
         command.kind === Kind.NAMESPACE)
     ) {
-      if (opts.error && e !== ErrorType.OPTION_REQUIRED) {
-        Cli.logger.error(opts.error, "\n");
+      const onGenHelp = this.options.errors.onGenerateHelp;
+      const onGenerateHelpErrors = errors
+        .filter((e) => onGenHelp.includes(e.type))
+        .sort((a, b) => onGenHelp.indexOf(a.type) - onGenHelp.indexOf(b.type));
+      if (onGenerateHelpErrors.length > 0) {
+        Cli.logger.error(onGenerateHelpErrors[0].e, "\n");
       }
       return generateScopedHelp(this.definition, opts.location, this.options);
     } else if (this.options.help.autoInclude) {
@@ -108,19 +124,17 @@ export default class Cli {
     }
 
     // Check if any error was generated
-    if (
-      (e === ErrorType.COMMAND_NOT_FOUND && this.options.onFail.suggestion) ||
-      ([ErrorType.OPTION_NOT_FOUND, ErrorType.OPTION_WRONG_VALUE, ErrorType.OPTION_MISSING_VALUE, ErrorType.OPTION_REQUIRED].includes(
-        e as ErrorType
-      ) &&
-        this.options.onFail.stopOnUnknownOption)
-    ) {
-      return logErrorAndExit(opts.error);
+    const onExecCmd = this.options.errors.onExecuteCommand;
+    const onExecuteCommandErrors = errors
+      .filter((e) => onExecCmd.includes(e.type))
+      .sort((a, b) => onExecCmd.indexOf(a.type) - onExecCmd.indexOf(b.type));
+    if (onExecuteCommandErrors.length > 0) {
+      return logErrorAndExit(onExecuteCommandErrors[0].e);
     }
     if (typeof command.action === "function") {
       return command.action(opts);
     }
-    return executeScript(opts, this.options, this.definition);
+    return executeScript(opts, this.options);
   }
   /**
    * Generate and output help documentation

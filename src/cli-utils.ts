@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import url from "url";
 import { closest } from "fastest-levenshtein";
-import { ColumnFormatter, logErrorAndExit } from "./utils";
+import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
 import parseOptionValue from "./cli-option-parser";
@@ -10,9 +10,10 @@ import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
 type F<T> = Omit<T, "kind" | "options">;
+export type OptionExt = Option & { key?: string };
 export type DefinitionElement = F<Namespace> &
   F<Command> &
-  F<Option> & {
+  F<OptionExt> & {
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
   };
@@ -42,23 +43,22 @@ function getAliases(key: string, element: DefinitionElement) {
 
 /** Process definition and complete any missing fields */
 export function completeDefinition(definition: Definition<DefinitionElement>, cliOptions: CliOptions) {
+  const { autoInclude: helpAutoInclude, template: _, ...helpOption } = cliOptions.help;
   // Auto-include help option
-  if (cliOptions.help.autoInclude) {
-    definition.help = {
-      type: "boolean",
-      aliases: cliOptions.help.aliases,
-      description: cliOptions.help.description,
-    };
+  if (helpAutoInclude) {
+    definition.help = helpOption;
   }
+  const { autoInclude: versionAutoInclude, ...versionOption } = cliOptions.version;
   // Auto-include version option
-  if (cliOptions.version.autoInclude) {
-    definition.version = {
-      type: "boolean",
-      aliases: cliOptions.version.aliases,
-      description: cliOptions.version.description,
-      hidden: true,
-    };
+  if (versionAutoInclude) {
+    definition.version = versionOption;
   }
+  // Print CliOptions deprecations
+  deprecationWarning({
+    condition: cliOptions.onFail !== undefined,
+    property: "CliOptions.onFail.*",
+    version: "0.11.0",
+  });
   for (const element in definition) {
     completeElementDefinition(element, definition[element]);
   }
@@ -76,6 +76,12 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
   }
   // Add name as key
   element.key = name;
+  // Print deprecations
+  deprecationWarning({
+    condition: typeof element.value === "function",
+    property: "Option.value",
+    version: "0.11.0",
+  });
   for (const optionKey in element.options ?? {}) {
     completeElementDefinition(optionKey, element.options![optionKey]);
   }
@@ -85,11 +91,12 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
 export function parseArguments(
   args: string[],
   definition: Definition<DefinitionElement>,
-  cliOptions: CliOptions
+  cliOptions: CliOptions,
 ): ParsingOutput {
   const output: ParsingOutput = {
     location: [],
     options: {},
+    errors: [],
   };
   const aliases: { [key: string]: DefinitionElement | string } = {};
   let argsToProcess = args;
@@ -128,7 +135,7 @@ export function parseArguments(
         }
         if (!optsAliases.includes(arg)) {
           const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-          output.error = CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion);
+          output.errors.push(CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion));
         }
         break argsLoop;
       }
@@ -165,37 +172,41 @@ export function parseArguments(
     const outputKey = optionDefinition && (optionDefinition.key as string);
     if (aliases.hasOwnProperty(optionKey)) {
       const evaluatedValue = aliases.hasOwnProperty(next) ? undefined : next;
-      const parserOutput = parseOptionValue(evaluatedValue, output.options[outputKey], {
-        ...optionDefinition,
-        key: curr,
-      } as Option);
-      if (parserOutput.error && !output.error) {
-        output.error = parserOutput.error;
-      } else if (!parserOutput.error) {
+      const parser = typeof optionDefinition.parser === "function" ? optionDefinition.parser : parseOptionValue;
+      const parserOutput = parser({
+        value: evaluatedValue,
+        current: output.options[outputKey],
+        option: {
+          ...(optionDefinition as Option),
+          key: curr,
+        },
+        format: CliError.format,
+      });
+      if (parserOutput.error) {
+        output.errors.push(parserOutput.error);
+      } else {
         output.options[outputKey] = parserOutput.value;
       }
-      i += parserOutput.next;
-    } else if (!aliases.hasOwnProperty(optionKey) && !output.error) {
+      i += parserOutput.next !== undefined ? parserOutput.next : evaluatedValue !== undefined ? 1 : 0;
+    } else if (!aliases.hasOwnProperty(optionKey)) {
       // Unknown option
-      output.error = CliError.format(ErrorType.OPTION_NOT_FOUND, curr);
+      output.errors.push(CliError.format(ErrorType.OPTION_NOT_FOUND, curr));
     }
   }
 
   // Verify required options
-  if (!output.error) {
-    Object.values(defToProcess).some(opt => {
-      if (opt.required && output.options[opt.key!] === undefined) {
-        output.error = CliError.format(ErrorType.OPTION_REQUIRED, opt.key!);
-        return true;
-      }
-    })
-  }
+  Object.values(defToProcess).some((opt) => {
+    if (opt.required && output.options[opt.key!] === undefined) {
+      output.errors.push(CliError.format(ErrorType.OPTION_REQUIRED, opt.key!));
+      return true;
+    }
+  });
 
-  // Process value-transformations
+  // Process value-transformations. Remove in 0.11.0 in favor of Option.parser
   Object.values(aliases)
     .filter((v) => typeof v !== "string" && typeof v.value === "function")
     .forEach((v) => {
-      const k = (v as Option).key!;
+      const k = (v as OptionExt).key!;
       output.options[k] = (v as Option).value!(output.options[k], { ...output.options });
     });
 
@@ -203,51 +214,45 @@ export function parseArguments(
 }
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
-export async function executeScript(
-  { location, options }: ParsingOutput,
-  cliOptions: CliOptions,
-  definition: Definition<DefinitionElement>
-) {
+export async function executeScript({ location, options }: Omit<ParsingOutput, "errors">, cliOptions: CliOptions) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
     return logErrorAndExit("There was a problem finding base script location");
   }
   const entryFile = path.parse(getEntryFile());
 
-  const scriptPaths = [".", ...location].reduce((acc: { path: string, default: boolean }[], _, i: number, list) => {
-    // Reverse index to consider the most specific paths first
-    const index = list.length - 1 - i;
-    const isDefaultImport = index === list.length - 1;
-    const locationPaths = [];
-    // Include index import
-    locationPaths.push(path.join(...location.slice(0, index), "index"));
-    if (index > 0) {
-      // Include location-name import
-      locationPaths.push(path.join(...location.slice(0, index)));
-    } else {
-      // Include entryfile-name import
-      locationPaths.push(entryFile.name);
-    }
-    locationPaths.forEach(lp => {
-      acc.push({ path: lp, default: isDefaultImport })
-    })
-    return acc;
-  }, []).map(p => ({ ...p, path: path.join(base, p.path.concat(entryFile.ext)) }))
+  const scriptPaths = [".", ...location]
+    .reduce((acc: { path: string; default: boolean }[], _, i: number, list) => {
+      // Reverse index to consider the most specific paths first
+      const index = list.length - 1 - i;
+      const isDefaultImport = index === list.length - 1;
+      const locationPaths = [];
+      // Include index import
+      locationPaths.push(path.join(...location.slice(0, index), "index"));
+      if (index > 0) {
+        // Include location-name import
+        locationPaths.push(path.join(...location.slice(0, index)));
+      } else {
+        // Include entryfile-name import
+        locationPaths.push(entryFile.name);
+      }
+      locationPaths.forEach((lp) => {
+        acc.push({ path: lp, default: isDefaultImport });
+      });
+      return acc;
+    }, [])
+    .map((p) => ({ ...p, path: path.join(base, p.path.concat(entryFile.ext)) }));
 
-  const validScriptPath = scriptPaths.find(p => fs.existsSync(p.path));
+  const validScriptPath = scriptPaths.find((p) => fs.existsSync(p.path));
 
   if (!validScriptPath) {
-    let errorMessage = "";
-    if (cliOptions.onFail.help) {
-      generateScopedHelp(definition, [], cliOptions);
-      errorMessage = "\n";
-    }
-    errorMessage += "There was a problem finding the script to run.";
-    if (cliOptions.onFail.scriptPaths) {
-      errorMessage += " Considered paths were:\n";
-      errorMessage = scriptPaths.reduce((acc, sp) => "".concat(acc, "  ", sp.path, "\n"), errorMessage);
-    }
-    return logErrorAndExit(errorMessage);
+    debug(
+      scriptPaths.reduce(
+        (acc, sp) => "".concat(acc, "  ", sp.path, "\n"),
+        "There was a problem finding the script to run. Considered paths were:\n",
+      ),
+    );
+    return logErrorAndExit();
   }
 
   try {
@@ -256,7 +261,9 @@ export async function executeScript(
     if (isCjs()) {
       m = require(validScriptPath.path);
     } else {
-      m = await import(url.pathToFileURL(validScriptPath.path).href).then(_m => validScriptPath.default ? _m.default : _m)
+      m = await import(url.pathToFileURL(validScriptPath.path).href).then((_m) =>
+        validScriptPath.default ? _m.default : _m,
+      );
     }
     const fn = validScriptPath.default ? m : m[location[location.length - 1]];
     if (typeof fn !== "function") {
@@ -279,7 +286,7 @@ enum HELP_SECTIONS {
 export function generateScopedHelp(
   definition: Definition<DefinitionElement>,
   rawLocation: string[],
-  cliOptions: CliOptions
+  cliOptions: CliOptions,
 ) {
   let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
@@ -307,7 +314,7 @@ export function generateScopedHelp(
       }
       return acc;
     },
-    { existingKinds: [] as string[], hasOptions: false }
+    { existingKinds: [] as string[], hasOptions: false },
   );
 
   const formatKinds = (kinds: string[]) =>
@@ -331,7 +338,7 @@ export function generateScopedHelp(
 function generateHelp(
   definition: Definition<DefinitionElement> = {},
   cliOptions: CliOptions,
-  sections: { [key in HELP_SECTIONS]?: string } = {}
+  sections: { [key in HELP_SECTIONS]?: string } = {},
 ) {
   const formatter = new ColumnFormatter();
   const sectionIndentation = 2;
@@ -388,7 +395,7 @@ function generateHelp(
           acc.elementSections[sectionKey].content.push(completeElement);
           return acc;
         },
-        { elementSections: elementSectionsTemplate, formattedNames: [] }
+        { elementSections: elementSectionsTemplate, formattedNames: [] },
       );
 
   // Process all names from namespaces, commands and options into formatter
@@ -422,7 +429,7 @@ function generateHelp(
 export function getDefinitionElement(
   definition: Definition<DefinitionElement>,
   rawLocation: string[],
-  cliOptions: CliOptions
+  cliOptions: CliOptions,
 ): DefinitionElement | undefined {
   let definitionRef = definition;
   let inheritedOptions: Definition = {};
@@ -467,7 +474,7 @@ export function closestSuggestion(
   target: string,
   definition: Definition<DefinitionElement>,
   rawLocation: string[],
-  cliOptions: CliOptions
+  cliOptions: CliOptions,
 ) {
   let def = definition;
   if (rawLocation.length > 0) {

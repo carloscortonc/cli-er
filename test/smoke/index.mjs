@@ -3,10 +3,11 @@ import url from "url";
 
 export default () => {
   console.log("[ESM] Invoked cli");
-}
+};
 
+//@ts-expect-error
 if (import.meta.url === url.pathToFileURL(process.argv[1]).href) {
   new Cli({
-    debug: {}
+    debug: {},
   }).run();
 }

@@ -4,6 +4,6 @@
   "main": "options-only.js",
   "author": "carloscortonc",
   "dependencies": {
-    "cli-er": "0.7.0"
+    "cli-er": "0.10.0"
   }
 }

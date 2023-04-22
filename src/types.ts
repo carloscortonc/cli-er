@@ -1,3 +1,5 @@
+import { CliError, ErrorType } from "./cli-errors";
+
 export enum Kind {
   NAMESPACE = "namespace",
   COMMAND = "command",
@@ -14,6 +16,29 @@ export enum Type {
 
 export type OptionValue = string | boolean | string[] | number | undefined;
 
+export type ValueParserInput = {
+  /** Value to process */
+  value: string | undefined;
+  /** Current value of the option */
+  current: OptionValue;
+  /** Option definition */
+  option: Option & { key: string };
+  /** Method for formatting errors, to be used in `Option.parser` */
+  format: typeof CliError.format;
+};
+
+export type ValueParserOutput = {
+  /** Final value for the parsed option */
+  value?: any;
+  /** Number of additional arguments that the parser consumed. For example, a boolean option
+   * might not consume any additional arguments ("--show-config", next=0) while a string option
+   * would ("--path path-value", next=1). The main case of `next=0` is when incoming value is `undefined`
+   */
+  next?: number;
+  /** Error generated during parsing */
+  error?: string;
+};
+
 export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
@@ -25,8 +50,6 @@ type BasicElement = {
   description?: string;
   /** Aliases for an option */
   aliases?: string[];
-  /** Used internally to identify options */
-  key?: string;
   /** Whether to show an element when generating help */
   hidden?: boolean;
 };
@@ -41,8 +64,12 @@ export type Option = BasicElement & {
    * @default false
    */
   required?: boolean;
-  /** Method to modify an option value after parsing */
+  /** Method to modify an option value after parsing
+   * @deprecated in favor of `Option.parser`. Will be removed in 0.11.0
+   */
   value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
+  /** Custom parser for the option */
+  parser?: (input: ValueParserInput) => ValueParserOutput;
 };
 
 export type Namespace = BasicElement & {
@@ -68,8 +95,8 @@ export type ParsingOutput = {
   location: string[];
   /** Calculated options */
   options: { [key: string]: OptionValue | undefined };
-  /** Error originated while parsing */
-  error?: string;
+  /** Errors originated while parsing */
+  errors: string[];
 };
 
 export enum LogType {
@@ -97,38 +124,49 @@ export type CliOptions = {
    * @default path.dirname(require.main.filename)
    */
   baseScriptLocation: string | undefined;
-  /** Path where the single-command scripts (not contained in any namespace) are stored */
+  /** Path where the single-command scripts (not contained in any namespace) are stored
+   * @default "commands"
+   */
   commandsPath: string;
-  /** Flags to describe the behaviour on fail conditions */
+  /** Flags used to describe the behaviour on fail conditions
+   * @deprecated Will be removed in 0.11.0
+   */
   onFail: {
-    /** Print scoped-help */
+    /** Print scoped-help
+     * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
+     */
     help: boolean;
-    /** Show suggestion when command not found */
+    /** Show suggestion when command not found
+     * @deprecated Has no effect since 0.10.0. Will be removed in 0.11.0
+     */
     suggestion: boolean;
-    /** Print evaluated script paths inside `run` */
+    /** Print evaluated script paths inside `run`
+     * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
+     */
     scriptPaths: boolean;
-    /** End `run` invocation when an unknown option is encountered while parsing */
+    /** End `run` invocation when an unknown option is encountered while parsing
+     * @deprecated Is configured via `CliOptions.errors.onExecuteCommand` since 0.10.0. Will be removed in 0.11.0
+     */
     stopOnUnknownOption: boolean;
   };
+  /** Configuration related to when errors should be displayed */
+  errors: {
+    /** List of error-types that will be displayed before help */
+    onGenerateHelp: `${ErrorType}`[];
+    /** List of error-types that will cause to end execution with `exit(1)` */
+    onExecuteCommand: `${ErrorType}`[];
+  };
   /** Help-related configuration */
-  help: {
+  help: Option & {
     /** Whether to generate help option */
     autoInclude: boolean;
-    /** Aliases to be used for help option */
-    aliases: string[];
-    /** Description for the option */
-    description: string;
     /* Template to be used when generating help */
     template: string;
   };
   /** Version related configuration */
-  version: {
+  version: Option & {
     /** Whether to generate version option */
     autoInclude: boolean;
-    /** Aliases to be used for version option */
-    aliases: string[];
-    /** Description for the option */
-    description: string;
   };
   /** Whether the cli implements a root command (invocation with no additional namespaces/commands)
    * @default true
@@ -148,4 +186,8 @@ export type CliOptions = {
    * @default packageJson.description
    */
   cliDescription: string;
+  /** Enable debug mode
+   * @default `process.env.CLIER_DEBUG`
+   */
+  debug: boolean;
 };

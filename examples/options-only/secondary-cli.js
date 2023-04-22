@@ -14,6 +14,6 @@ if (require.main === module) {
         default: false,
       },
     },
-    { cliName: "secondary-cli" }
+    { cliName: "secondary-cli" },
   ).run();
 }

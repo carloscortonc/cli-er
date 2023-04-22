@@ -3,12 +3,15 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
     "moduleResolution": "node",
     "module": "commonjs",
     "strict": true,
     "outDir": "dist",
     "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "noUnusedLocals": true
   },
   "include": ["src/**/*", "test/**/*"]
 }

@@ -9,11 +9,11 @@ const definition = _definition as Definition;
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
 jest.spyOn(utils, "findPackageJson").mockImplementation(
   (_: any) =>
-  ({
-    version: "1.0.0",
-    name: "cli-app",
-    description: "cli-description",
-  } as any)
+    ({
+      version: "1.0.0",
+      name: "cli-app",
+      description: "cli-description",
+    } as any),
 );
 
 beforeEach(() => {
@@ -52,38 +52,53 @@ describe("Cli.constructor", () => {
         scriptPaths: true,
         stopOnUnknownOption: true,
       },
+      errors: {
+        onGenerateHelp: ["command_not_found"],
+        onExecuteCommand: [
+          "command_not_found",
+          "option_wrong_value",
+          "option_required",
+          "option_missing_value",
+          "option_not_found",
+        ],
+      },
       help: {
         autoInclude: true,
+        type: "boolean",
         aliases: ["-h", "--help"],
         description: "Display global help, or scoped to a namespace/command",
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
+        type: "boolean",
         aliases: ["-v", "--version"],
         description: "Display version",
+        hidden: true,
       },
       rootCommand: true,
       cliName: "cli-app",
       cliVersion: "1.0.0",
       cliDescription: "cli-description",
+      debug: false,
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
-    const overrides = {
+    const overwrites = {
       baseLocation: "..",
       baseScriptLocation: "./",
       help: { autoInclude: false, aliases: ["--help"], description: "", template: "template" },
-      version: { aliases: ["--version"], description: "" },
+      errors: { onExecuteCommand: [] },
+      version: { aliases: ["--version"], description: "", hidden: false },
       onFail: { suggestion: false },
       cliName: "custom-name",
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
     };
-    const c = new Cli({}, overrides);
+    const c = new Cli({}, overwrites);
     expect(c.options).toStrictEqual({
-      baseLocation: overrides.baseLocation,
-      baseScriptLocation: overrides.baseScriptLocation,
+      baseLocation: overwrites.baseLocation,
+      baseScriptLocation: overwrites.baseScriptLocation,
       commandsPath: "commands",
       onFail: {
         help: true,
@@ -91,24 +106,32 @@ describe("Cli.constructor", () => {
         scriptPaths: true,
         stopOnUnknownOption: true,
       },
+      errors: {
+        onExecuteCommand: [],
+        onGenerateHelp: ["command_not_found"],
+      },
       help: {
-        autoInclude: overrides.help.autoInclude,
+        autoInclude: overwrites.help.autoInclude,
+        type: "boolean",
         aliases: ["--help"],
         description: "",
         template: "template",
       },
       version: {
         autoInclude: true,
+        type: "boolean",
         aliases: ["--version"],
         description: "",
+        hidden: false,
       },
       rootCommand: true,
       cliName: "custom-name",
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
+      debug: false,
     });
   });
-  it("Override default logger", () => {
+  it("Overwrite default logger", () => {
     const logger = jest.fn();
     const log = (...message: any[]) => logger("CUSTOMLOG ".concat(message.join(" ")));
     const error = (...message: any[]) => logger("CUSTOMERROR ".concat(message.join(" ")));
@@ -145,6 +168,7 @@ describe("Cli.parse", () => {
     expect(output).toStrictEqual({
       location: [],
       options: { globalOption: "globalvalue", help: undefined, version: undefined },
+      errors: [],
     });
   });
   it("Parsing empty array results in default values from first-level options (without auto-included options)", () => {
@@ -153,6 +177,7 @@ describe("Cli.parse", () => {
     expect(output).toStrictEqual({
       location: [],
       options: { globalOption: "globalvalue" },
+      errors: [],
     });
   });
 });
@@ -165,6 +190,7 @@ describe("Cli.run", () => {
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: ["nms", "cmd"],
       options: { cmd: "cmdvalue", globalOption: "globalvalue", opt: undefined },
+      errors: [],
     });
   });
   it("Calling run with arguments invokes the script in the computed location - options only", () => {
@@ -174,6 +200,7 @@ describe("Cli.run", () => {
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: [],
       options: { globalOption: "overridden" },
+      errors: [],
     });
   });
   it("Calling run with no namespace/command: CliOptions.rootCommand=false", () => {
@@ -214,7 +241,7 @@ describe("Cli.run", () => {
     expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringMatching(/Command "\w+" not found. Did you mean "\w+" \?/),
-      "\n"
+      "\n",
     );
   });
   it("Calling run on namespaces invokes help-generation", () => {
@@ -235,52 +262,56 @@ describe("Cli.run", () => {
     c.run(["--version"]);
     expect(spy).toHaveBeenCalledWith(expect.anything());
   });
-  it("Prints command-not-found error if configured", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-    const c = new Cli(definition);
-    c.run([]);
-    expect(errorlogger).toHaveBeenCalledWith("ERROR");
-  });
-  it("Prints option-not-found error if configured", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_NOT_FOUND);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-    const c = new Cli(definition);
-    c.run([]);
-    expect(errorlogger).toHaveBeenCalledWith("ERROR");
-  });
-  it("Prints option-wrong-value error if configured", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_WRONG_VALUE);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-    const c = new Cli(definition);
-    c.run([]);
-    expect(errorlogger).toHaveBeenCalledWith("ERROR");
-  });
-  it("Prints missing-option-value error if configured", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_MISSING_VALUE);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, error: "ERROR" }));
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-    const c = new Cli(definition);
-    c.run([]);
-    expect(errorlogger).toHaveBeenCalledWith("ERROR");
-  });
-  it("Prints required-option error if no help requested", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_REQUIRED);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: { help: undefined }, error: "ERROR" }));
-    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-    const c = new Cli(definition);
-    c.run([]);
-    expect(errorlogger).toHaveBeenCalledWith("ERROR");
-  })
-  it("Does not log error if required-option error but help requested", () => {
+  it("[onGenerateHelp] Prints error if configured", () => {
     const logger: any = { error: jest.fn() };
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.OPTION_REQUIRED);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: { help: true }, error: "ERROR" }));
-    const c = new Cli(definition, { logger });
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest
+      .spyOn(cliutils, "parseArguments")
+      .mockImplementation(() => ({ location: [], options: { help: true }, errors: ["ERROR"] }));
+    const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["command_not_found"] } });
+    c.run([]);
+    expect(logger.error).toHaveBeenCalledWith("ERROR", "\n");
+  });
+  it("[onGenerateHelp] Does not print error if not configured", () => {
+    const logger: any = { error: jest.fn() };
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest
+      .spyOn(cliutils, "parseArguments")
+      .mockImplementation(() => ({ location: [], options: { help: true }, errors: ["ERROR"] }));
+    const c = new Cli(definition, { logger, errors: { onGenerateHelp: [] } });
     c.run([]);
     expect(logger.error).not.toHaveBeenCalled();
-  })
+  });
+  it("[onExecuteCommand] Prints error if configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, errors: ["ERROR"] }));
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
+    const c = new Cli(definition, { errors: { onExecuteCommand: ["command_not_found"] } });
+    c.run([]);
+    expect(errorlogger).toHaveBeenCalledWith("ERROR");
+  });
+  it("[onExecuteCommand] Does not print error if not configured", () => {
+    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, errors: ["ERROR"] }));
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
+    const c = new Cli(definition, { errors: { onExecuteCommand: [] } });
+    c.run([]);
+    expect(errorlogger).not.toHaveBeenCalled();
+  });
+  it("Errors are printed according to CliOptions.errors list order", () => {
+    const logger: any = { error: jest.fn() };
+    jest
+      .spyOn(CliError, "analize")
+      .mockImplementation(
+        (value) => ({ CMD_NOT_FOUND: ErrorType.COMMAND_NOT_FOUND, OPT_NOT_FOUND: ErrorType.OPTION_NOT_FOUND }[value!]),
+      );
+    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
+      location: [],
+      options: { help: true },
+      errors: ["CMD_NOT_FOUND", "OPT_NOT_FOUND"],
+    }));
+    const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["option_not_found", "command_not_found"] } });
+    c.run([]);
+    expect(logger.error).toHaveBeenCalledWith("OPT_NOT_FOUND", "\n");
+  });
 });

@@ -9,10 +9,10 @@ if (require.main === module) {
 ## Example executions:
 
 ```shell
-# Use the default "path" value, aka cwd (Option.value since v0.6.0)
+# Use the default "path" value, aka cwd (Option.value since v0.6.0, Option.parser since 0.10.0)
 node options-only.js
 
-# Provide "path" option with a relative value (Option.value since v0.6.0)
+# Provide "path" option with a relative value (Option.value since v0.6.0, Option.parser since 0.10.0)
 node options-only.js --path ..
 
 # Provide wrong value for "opt" option
@@ -22,6 +22,6 @@ echo %ERRORLEVEL%
 # Check exit code on linux/windows-powershell
 echo $?
 
-# Print help from secondary cli-app: name is overriden (CliOptions.cliName since v0.7.0)
+# Print help from secondary cli-app: name is overwritten (CliOptions.cliName since v0.7.0)
 node secondary-cli.js -h
 ```

@@ -9,12 +9,12 @@ if (require.main === module) {
   new Cli({
     path: {
       description: "Location where the command will be applied",
-      default: ".",
-      value: (p) => {
-        if (!path.isAbsolute(p)) {
-          return path.join(process.cwd(), p);
-        }
-        return p;
+      default: process.cwd(),
+      parser: ({ value: v, current }) => {
+        // "current" in this case is the default value defined
+        const p = v || current;
+        const value = !path.isAbsolute(p) ? path.join(process.cwd(), p) : p;
+        return { value };
       },
     },
     opt: {

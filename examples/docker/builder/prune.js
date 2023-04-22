@@ -1,4 +1,4 @@
-function prune(options){
+function prune(options) {
   console.log("Invoked prune with the following options:", options);
 }
 

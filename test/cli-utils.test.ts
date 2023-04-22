@@ -13,7 +13,7 @@ import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
 //@ts-ignore
 import gcmd from "./data/gcmd";
-import { Definition, OptionValue, ParsingOutput } from "../src/types";
+import { CliOptions, Definition, OptionValue, ParsingOutput } from "../src/types";
 const definition = _definition as Definition;
 
 beforeEach(() => {
@@ -37,7 +37,7 @@ describe("completeDefinition", () => {
     },
     opt: {},
   };
-  const cliOptions = {
+  const cliOptions: CliOptions = {
     baseLocation: "",
     baseScriptLocation: "",
     commandsPath: "",
@@ -47,14 +47,20 @@ describe("completeDefinition", () => {
       scriptPaths: true,
       stopOnUnknownOption: true,
     },
+    errors: {
+      onGenerateHelp: [],
+      onExecuteCommand: [],
+    },
     help: {
       autoInclude: false,
+      type: "boolean",
       aliases: [],
       description: "",
       template: "",
     },
     version: {
       autoInclude: false,
+      type: "boolean",
       aliases: [],
       description: "",
     },
@@ -62,6 +68,7 @@ describe("completeDefinition", () => {
     cliName: "",
     cliVersion: "",
     cliDescription: "",
+    debug: false,
   };
   it("Completes missing fields in definition with nested content ", () => {
     const completedDefinition = completeDefinition(d, cliOptions);
@@ -131,7 +138,7 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions).options.opt).toBe("optvalue");
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { opt: "defaultvalue" },
-      error: 'Missing value of type <string> for option "--opt"',
+      errors: ['Missing value of type <string> for option "--opt"'],
       location: expect.anything(),
     });
   });
@@ -156,7 +163,7 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "one,two"], d, cliOptions).options.opt).toStrictEqual(["one", "two"]);
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Missing value of type <list> for option "--opt"',
+      errors: ['Missing value of type <list> for option "--opt"'],
       location: expect.anything(),
     });
   });
@@ -177,12 +184,12 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "1"], d, cliOptions).options.opt).toBe(1);
     expect(parseArguments(["--opt", "not-a-number"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Wrong value for option "--opt". Expected <number> but found "not-a-number"',
+      errors: ['Wrong value for option "--opt". Expected <number> but found "not-a-number"'],
       location: expect.anything(),
     });
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Missing value of type <number> for option "--opt"',
+      errors: ['Missing value of type <number> for option "--opt"'],
       location: expect.anything(),
     });
   });
@@ -193,13 +200,31 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "1.5"], d, cliOptions).options.opt).toBe(1.5);
     expect(parseArguments(["--opt", "not-a-number"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Wrong value for option "--opt". Expected <float> but found "not-a-number"',
+      errors: ['Wrong value for option "--opt". Expected <float> but found "not-a-number"'],
       location: expect.anything(),
     });
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { opt: undefined },
-      error: 'Missing value of type <float> for option "--opt"',
+      errors: ['Missing value of type <float> for option "--opt"'],
       location: expect.anything(),
+    });
+  });
+  it("Option with parser property", () => {
+    const d = new Cli({
+      opt: {
+        parser: ({ value, format }) => {
+          // return error if value is not a date
+          if (isNaN(Date.parse(value || ""))) {
+            return { error: format("option_wrong_value", "x", "x", "x") };
+          }
+          return { value: new Date(value!) };
+        },
+      },
+    }).definition;
+    expect(parseArguments(["--opt", "not-a-date"], d, cliOptions)).toStrictEqual({
+      options: { opt: undefined, version: undefined, help: undefined },
+      location: expect.anything(),
+      errors: [expect.stringContaining("Wrong value for option")],
     });
   });
   it("No arguments", () => {
@@ -207,12 +232,14 @@ describe("parseArguments", () => {
     expect(parseArguments([], def, cliOptions)).toStrictEqual({
       location: [],
       options: { globalOption: "globalvalue" },
+      errors: [],
     });
   });
   it("Command with no type", () => {
     expect(parseArguments(["gcmd"], def, cliOptions)).toStrictEqual({
       location: [cliOptions.commandsPath, "gcmd"],
       options: { globalOption: "globalvalue" },
+      errors: [],
     });
   });
   it("Namespace + command", () => {
@@ -220,13 +247,15 @@ describe("parseArguments", () => {
     expect(parseArguments(["nms", "cmd"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: undefined, opt: undefined },
+      errors: [],
     });
     expect(parseArguments(["nms", "cmd", "cmdValue"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: "cmdValue", opt: undefined },
+      errors: [],
     });
   });
-  it("Option with value property", () => {
+  it("[deprecated] Option with value property", () => {
     const d = new Cli({
       cmd: {
         kind: "command",
@@ -245,33 +274,35 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "optvalue"], d, cliOptions)).toStrictEqual({
       options: { opt: "optvalue-edited", test: "testvalue", version: undefined, help: undefined },
       location: expect.anything(),
+      errors: [],
     });
   });
   it("Returns error if wrong namespace/command provided", () => {
     expect(parseArguments(["nms", "non-existent"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
-      error: expect.stringContaining('Command "non-existent" not found. Did you mean "cmd" ?'),
+      errors: ['Command "non-existent" not found. Did you mean "cmd" ?', 'Unknown option "non-existent"'],
     });
   });
   it("Returns error if unknown options are found", () => {
     expect(parseArguments(["nms", "cmd", "cmdvalue", "unknown-option"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
-      error: 'Unknown option "unknown-option"',
+      errors: ['Unknown option "unknown-option"'],
     });
   });
   it("Returns error if option has incorrect value", () => {
     expect(parseArguments(["nms", "cmd", "cmdvalue", "--opt", "true"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
-      error: 'Wrong value for option "--opt". Expected <number> but found "true"',
+      errors: ['Wrong value for option "--opt". Expected <number> but found "true"'],
     });
   });
   it("Option alias should have preference over other option values", () => {
     expect(parseArguments(["nms", "cmd", "--opt", "1"], def, cliOptions)).toStrictEqual({
       options: { cmd: undefined, opt: 1, globalOption: "globalvalue" },
       location: expect.anything(),
+      errors: [],
     });
   });
   it("Return error if required option not provided", () => {
@@ -279,66 +310,58 @@ describe("parseArguments", () => {
     expect(parseArguments([], definition as Definition, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: [],
-      error: "Missing required option \"opt\""
-    })
-  })
+      errors: ['Missing required option "opt"'],
+    });
+  });
 });
 
 describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
-  const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
+  const debugSpy = jest.spyOn(utils, "debug").mockImplementation();
   const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-  const d = new Cli({ opt: { description: "description" } }).definition as Definition<DefinitionElement>;
   it("Logs error if no baseScriptLocation configured", () => {
-    executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" }, d);
+    executeScript({ location: [], options: {} }, { ...cliOptions, baseScriptLocation: "" });
     expect(exitlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
-  it("No valid script found: logs error (onFail.help=false, onFail.scriptPaths=false)", () => {
-    const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, help: false, scriptPaths: false } };
-    executeScript({ location: ["non-existent"], options: {} }, cliOptions_, d);
-    expect(logger).not.toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(exitlogger).not.toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
+  it("[DEBUG-OFF] No valid script found: exits", () => {
+    process.env[utils.CLIER_DEBUG_KEY] = "";
+    executeScript({ location: ["non-existent"], options: {} }, { ...cliOptions, debug: false });
+    expect(exitlogger).toHaveBeenCalled();
   });
-  it("No valid script found: prints help + logs error (onFail.help=true, onFail.scriptPaths=false)", () => {
-    const cliOptions_ = { ...cliOptions, onFail: { ...cliOptions.onFail, scriptPaths: false } };
-    executeScript({ location: ["non-existent"], options: {} }, cliOptions_, d);
-    expect(logger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(exitlogger).not.toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
-  });
-  it("No valid script found: prints help + logs error + prints paths (onFail.help=true, onFail.scriptPaths=true)", () => {
-    executeScript({ location: ["non-existent"], options: {} }, cliOptions, d);
-    expect(logger).toHaveBeenCalledWith(expect.stringContaining("Options:"));
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining("There was a problem finding the script to run."));
-    expect(exitlogger).toHaveBeenCalledWith(expect.stringContaining(" Considered paths were:\n"));
+  it("[DEBUG-ON] No valid script found: logs error + prints paths", () => {
+    process.env[utils.CLIER_DEBUG_KEY] = "1";
+    executeScript({ location: ["non-existent"], options: {} }, { ...cliOptions, debug: true });
+    expect(debugSpy).toHaveBeenCalledWith(
+      expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"),
+    );
+    expect(exitlogger).toHaveBeenCalled();
   });
   it("Generates all valid paths with the corresponding named/default import", () => {
     const c = new Cli(definition, { baseScriptLocation: "/" });
     const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
-    executeScript({ location: ["nms", "cmd"], options: {} }, c.options, c.definition);
+    executeScript({ location: ["nms", "cmd"], options: {} }, c.options);
     expect(pathListSpy.mock.calls).toEqual([
       ["/nms/cmd/index.js"],
       ["/nms/cmd.js"],
       ["/nms/index.js"],
       ["/nms.js"],
       ["/index.js"],
-      ["/script.js"]
+      ["/script.js"],
     ]);
-    pathListSpy.mockRestore()
-  })
+    pathListSpy.mockRestore();
+  });
   it("Script execution fails: logs error", () => {
     (gcmd as any).mockImplementation(() => {
       throw new Error("errormessage");
     });
-    executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions, d);
+    executeScript({ location: ["data", "gcmd"], options: {} }, cliOptions);
     expect(exitlogger).toHaveBeenCalledWith(
-      expect.stringMatching("There was a problem executing the script (.+: errormessage)")
+      expect.stringMatching("There was a problem executing the script (.+: errormessage)"),
     );
   });
   it("Executes script if found", () => {
     (gcmd as any).mockImplementation();
-    executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions, d);
+    executeScript({ location: ["data", "gcmd"], options: { gcmd: "gcmdvalue" } }, cliOptions);
     expect(gcmd).toHaveBeenCalledWith({ gcmd: "gcmdvalue" });
     expect(exitlogger).not.toHaveBeenCalled();
   });
@@ -404,7 +427,7 @@ Command with no options
     generateScopedHelp(
       { cmd: { kind: "command", type: "string", description: "Command with type" } },
       ["cmd"],
-      cliOptions
+      cliOptions,
     );
     expect(output).toBe(`
 Usage:  cli-name cmd <string>
@@ -421,7 +444,7 @@ Command with type
       expect.stringContaining(`
 Unable to find the specified scope (nms > unknown)
 
-Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`)
+Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`),
     );
   });
   it("With custom footer via CliOptions.help.template", () => {

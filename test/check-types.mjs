@@ -1,5 +1,10 @@
+//@ts-check
 /* This file is intended for testing library types. The assertions made here will be tested via `yarn tsc` in "test" script */
-import Cli, { type Definition } from "../dist";
+import Cli from "../dist";
+
+/**
+ * @typedef {import("../dist").Definition} Definition
+ */
 
 /* Option can not declare nested options */
 //@ts-expect-error
@@ -14,9 +19,10 @@ new Cli({ cmd: { kind: "command", options: { opt: { kind: "option" } } } });
 
 /* Definition declared outside constructor - Error */
 const definitionError = { opt: { kind: "option" } };
-// @ts-expect-error
+//@ts-expect-error
 new Cli(definitionError);
 
 /* Definition declared outside constructor */
-const definition: Definition = { opt: { kind: "option" } };
+/** @type {Definition} */
+const definition = { opt: { kind: "option" } };
 new Cli(definition);
