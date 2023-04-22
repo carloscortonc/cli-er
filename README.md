@@ -102,8 +102,8 @@ type ValueParserOutput = {
   value?: any;
   /** Number of additional arguments that the parser consumed. For example, a boolean option
    * might not consume any additional arguments ("--show-config", next=0) while a string option
-   * would ("--path path-value", next=1). The main case of `next=0` is when incoming value is `undefined`
-   */
+   * would ("--path path-value", next=1). The main case of `next=0` is when incoming value
+   * is `undefined` */
   next?: number;
   /** Error generated during parsing */
   error?: string;
@@ -150,7 +150,7 @@ This method has three main behaviours: print version, print help and execute a c
 - **print help**: if [autoincluded help](#helpautoinclude) is enabled and help option is provided, or a cli without `rootCommand` is invoked without location, or a namespace is invoked, help will be generated. If any errors configured in [`CliOptions.errors.onGenerateHelp`](#errorsongeneratehelp) are generated, they will be outputted before the help.
 - **execute command**: if any errors configured in [`CliOptions.errors.onExecuteCommand`](#errorsonexecutecommand) are generated, they will be printed and execution will end with status `1`. Otherwise, the script location will be calculated, and the corresponding script executed.
 
-If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](./examples/docker/docker.js#L127)).
+If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](./examples/docker/docker.js#L128)).
 
 ### help(location?)
 
@@ -260,7 +260,13 @@ Whether to print scoped-help when no valid script path is found</br>
 
 #### `errors`
 Configuration related to when errors should be displayed. The order of the lists containing the error-types matters, as it changes which error-messages are shown first (elements appearing first have a higher order of precedence).
-The available error-types are: `"command_not_found", "option_wrong_value", "option_required", "option_missing_value", "option_not_found"`
+The available error-types are:
+- `command_not_found`: an unknown argument is encountered when a command was expected
+- `option_wrong_value`: the option parser considers the given value as incorrect (e.g. `type:number` when given `"a123"`)
+- `option_required`: an option is marked as required but is not provided
+- `option_missing_value`: an option is provided without its corresponding value
+- `option_not_found`: an unknown argument is encountered when an option was expected
+
 ##### `errors.onGenerateHelp`
 List of error-types that will get displayed before help</br>
 **Default**: `["command_not_found"]`
@@ -279,7 +285,7 @@ Aliases to be used for help option</br>
 ##### `help.description`
 Description for the option
 ##### `help.template`
-Template to be used when generating help. There are five distinct sections: **usage**, **description**, **namespaces**, **commands** and **options**. This can be used to include a header/footer, change the order of the sections, or remove a section altogether. If a section has no content, it will be removed along with any line-breaks that follow. You can see a use-case for this in the [docker example](./examples/docker/docker.js#L129)</br>
+Template to be used when generating help. There are five distinct sections: **usage**, **description**, **namespaces**, **commands** and **options**. This can be used to include a header/footer, change the order of the sections, or remove a section altogether. If a section has no content, it will be removed along with any line-breaks that follow. You can see a use-case for this in the [docker example](./examples/docker/docker.js#L130)</br>
 **Default**: `\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n`
 
 #### `version`

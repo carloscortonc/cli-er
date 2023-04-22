@@ -10,7 +10,8 @@
     "strict": true,
     "outDir": "dist",
     "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "noUnusedLocals": true
   },
   "include": ["src/**/*", "test/**/*"]
 }
