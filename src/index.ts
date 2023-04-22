@@ -29,12 +29,6 @@ export default class Cli {
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
       commandsPath: "commands",
-      onFail: {
-        help: true,
-        suggestion: true,
-        scriptPaths: true,
-        stopOnUnknownOption: true,
-      },
       errors: {
         onGenerateHelp: [ErrorType.COMMAND_NOT_FOUND],
         onExecuteCommand: [

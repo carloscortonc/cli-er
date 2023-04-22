@@ -41,12 +41,6 @@ describe("completeDefinition", () => {
     baseLocation: "",
     baseScriptLocation: "",
     commandsPath: "",
-    onFail: {
-      help: true,
-      suggestion: true,
-      scriptPaths: true,
-      stopOnUnknownOption: true,
-    },
     errors: {
       onGenerateHelp: [],
       onExecuteCommand: [],
