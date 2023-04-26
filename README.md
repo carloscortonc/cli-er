@@ -29,7 +29,6 @@ Given the following definition (docker.js):
 ```js
 const definition = {
   builder: {
-    kind: "namespace",
     options: {
       build: {
         kind: "command",
@@ -126,7 +125,6 @@ With the following example (action.js):
 ```js
 new Cli({
   cmd: {
-    kind: "command",
     options: {
       log: { type: "boolean" },
     },
@@ -159,7 +157,6 @@ Generates and outputs help message based on the provided definition. Given the f
 ```js
 const definition = {
   nms: {
-    kind: "namespace",
     description: "Description for the namespace",
     options: {
       cmd: {

@@ -117,6 +117,56 @@ describe("completeDefinition", () => {
       },
     });
   });
+  it("Infer element.kind when missing", () => {
+    expect(
+      completeDefinition(
+        {
+          nms1: {
+            options: {
+              cmd: {
+                // command with "action"
+                action: () => {},
+              },
+            },
+          },
+          nms2: {
+            options: {
+              cmd: {
+                // command with options (even empty)
+                options: {},
+              },
+            },
+          },
+          cmd: {
+            // all options are of kind Option
+            options: {
+              debug: { type: "boolean" },
+            },
+          },
+        },
+        cliOptions,
+      ),
+    ).toEqual({
+      nms1: expect.objectContaining({
+        kind: "namespace",
+        options: {
+          cmd: expect.objectContaining({ kind: "command" }),
+        },
+      }),
+      nms2: expect.objectContaining({
+        kind: "namespace",
+        options: {
+          cmd: expect.objectContaining({ kind: "command" }),
+        },
+      }),
+      cmd: expect.objectContaining({
+        kind: "command",
+        options: expect.objectContaining({
+          debug: expect.objectContaining({ type: "boolean", kind: "option" }),
+        }),
+      }),
+    });
+  });
 });
 
 describe("parseArguments", () => {
