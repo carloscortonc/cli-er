@@ -65,11 +65,23 @@ export function completeDefinition(definition: Definition<DefinitionElement>, cl
   return definition;
 }
 
+/** Calculate if the provided element is a command  */
+const isCommand = (element: DefinitionElement) =>
+  element.kind === Kind.COMMAND ||
+  typeof element.action === "function" ||
+  (element.options !== undefined && !Object.values(element.options).some(isCommand));
+
 function completeElementDefinition(name: string, element: DefinitionElement) {
+  // Infer kind when not specified
+  if (!element.kind) {
+    element.kind = Object.values(element.options || {}).some(isCommand)
+      ? Kind.NAMESPACE
+      : isCommand(element)
+      ? Kind.COMMAND
+      : Kind.OPTION;
+  }
   // Complete aliases
   element.aliases = getAliases(name, element);
-  // Set kind to Option if missing
-  element.kind = element.kind ?? Kind.OPTION;
   // Set option type to string if missing
   if (element.kind === Kind.OPTION && !element.type) {
     element.type = Type.STRING;
@@ -80,7 +92,6 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
   deprecationWarning({
     condition: typeof element.value === "function",
     property: "Option.value",
-    version: "0.11.0",
   });
   for (const optionKey in element.options ?? {}) {
     completeElementDefinition(optionKey, element.options![optionKey]);

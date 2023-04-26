@@ -83,8 +83,13 @@ export function debug(message: string) {
  * printed, to avoid duplicates */
 class DeprecationWarning {
   list = new Set();
-  deprecate = (options: { condition: boolean; property: string; version: string }) => {
-    const depMessage = `<${options.property}> is deprecated and will be removed in ${options.version}`;
+  deprecate = (
+    options: { condition?: boolean; property?: string; version?: string; alternative?: string } = { condition: true },
+  ) => {
+    const depMessage = `<${options.property}> is deprecated`.concat(
+      options.version ? ` and will be removed in ${options.version}` : "",
+      options.alternative ? `. Use <${options.alternative}> instead` : "",
+    );
     if (options.condition && !this.list.has(depMessage)) {
       this.list.add(depMessage);
       debug(depMessage);
