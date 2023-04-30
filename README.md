@@ -150,6 +150,7 @@ This method has three main behaviours: print version, print help and execute a c
 
 If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](./examples/docker/docker.js#L128)).
 
+You also use `CliOptions.rootCommand` to define a default command to execute, when no command/namespace is supplied (check this [webpack-cli example](./examples/webpack-cli)).
 ### help(location?)
 
 Generates and outputs help message based on the provided definition. Given the following code (test.js):
@@ -297,7 +298,8 @@ Aliases to be used for version option</br>
 Description for the option
 
 #### `rootCommand`
-Whether the cli implements a root command (invocation with no additional namespaces/commands)</br>
+Whether the cli implements a root command (invocation with no additional namespaces/commands).
+If a string is provided, it will be used as the default command to execute </br>
 **Default**: `true`
 
 #### `logger`

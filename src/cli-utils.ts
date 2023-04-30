@@ -154,9 +154,6 @@ export function parseArguments(
         if (element.type === undefined) {
           argsToProcess = argsToProcess.slice(1);
         }
-        if (output.location.length === 0) {
-          output.location.push(cliOptions.commandsPath);
-        }
         output.location.push(key);
         // No more namespaces/commands are allowed to follow, so end
         break argsLoop;
@@ -168,10 +165,13 @@ export function parseArguments(
       break;
     }
   }
-
-  const defElement = getDefinitionElement(definition, output.location, cliOptions)!;
+  const elLocation =
+    output.location.length === 0 && typeof cliOptions.rootCommand === "string"
+      ? [cliOptions.rootCommand]
+      : output.location;
+  const defElement = getDefinitionElement(definition, elLocation, cliOptions)!;
   // Process all element aliases and defaults
-  const defToProcess = output.location.length > 0 ? { "": defElement, ...defElement.options } : definition;
+  const defToProcess = elLocation.length > 0 ? { "": defElement, ...defElement.options } : definition;
   Object.values(defToProcess).forEach(processElement);
 
   // Process args
@@ -232,7 +232,14 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
   }
   const entryFile = path.parse(getEntryFile());
 
-  const scriptPaths = [".", ...location]
+  const finalLocation = [
+    // Apply CliOptions.commandsPath configuration for single commands
+    ...(location.length === 1 && cliOptions.commandsPath !== "." ? [cliOptions.commandsPath] : []),
+    // Include CliOptions.rootCommand if empty location provided
+    ...(location.length === 0 && typeof cliOptions.rootCommand === "string" ? [cliOptions.rootCommand] : []),
+  ].concat(location);
+
+  const scriptPaths = [".", ...finalLocation]
     .reduce((acc: { path: string; default: boolean }[], _, i: number, list) => {
       // Reverse index to consider the most specific paths first
       const index = list.length - 1 - i;
@@ -278,7 +285,7 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     }
     const fn = validScriptPath.default ? m : m[location[location.length - 1]];
     if (typeof fn !== "function") {
-      logErrorAndExit("Could not find handler for command");
+      logErrorAndExit("Could not find handler for command in ".concat(validScriptPath.path));
     }
     return fn(options);
   } catch (e: any) {
@@ -299,7 +306,7 @@ export function generateScopedHelp(
   rawLocation: string[],
   cliOptions: CliOptions,
 ) {
-  let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
+  let location = rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
   const sections: { [key in HELP_SECTIONS]?: string } = {};

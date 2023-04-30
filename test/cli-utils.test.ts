@@ -281,7 +281,7 @@ describe("parseArguments", () => {
   });
   it("Command with no type", () => {
     expect(parseArguments(["gcmd"], def, cliOptions)).toStrictEqual({
-      location: [cliOptions.commandsPath, "gcmd"],
+      location: ["gcmd"],
       options: { globalOption: "globalvalue" },
       errors: [],
     });
@@ -296,6 +296,21 @@ describe("parseArguments", () => {
     expect(parseArguments(["nms", "cmd", "cmdValue"], def, cliOptions)).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: "cmdValue", opt: undefined },
+      errors: [],
+    });
+  });
+  it("No args but rootCommand:string", () => {
+    const c = new Cli(
+      {
+        cmd: {
+          options: { opt: { type: "string" } },
+        },
+      },
+      { rootCommand: "cmd" },
+    );
+    expect(parseArguments([], c.definition, c.options)).toStrictEqual({
+      options: expect.objectContaining({ opt: undefined }),
+      location: [],
       errors: [],
     });
   });
