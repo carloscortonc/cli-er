@@ -89,7 +89,11 @@ export default class Cli {
   run(args?: string[]): void | Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
-    const command = getDefinitionElement(this.definition, opts.location, this.options)!;
+    const elementLocation =
+      opts.location.length === 0 && typeof this.options.rootCommand === "string"
+        ? [this.options.rootCommand]
+        : opts.location;
+    const command = getDefinitionElement(this.definition, elementLocation, this.options)!;
     const errors = opts.errors.map((e) => ({ type: CliError.analize(e)!, e })).filter(({ e }) => e);
 
     // Evaluate auto-included version
@@ -102,7 +106,7 @@ export default class Cli {
     if (
       this.options.help.autoInclude &&
       (opts.options.help ||
-        (!this.options.rootCommand && opts.location.length === 0) ||
+        (this.options.rootCommand === false && opts.location.length === 0) ||
         command.kind === Kind.NAMESPACE)
     ) {
       const onGenHelp = this.options.errors.onGenerateHelp;

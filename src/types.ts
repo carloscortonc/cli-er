@@ -91,7 +91,7 @@ export type Definition<T = Namespace | Command | Option> = {
 };
 
 export type ParsingOutput = {
-  /** List of directories that leads to the calculated script location */
+  /** Location based solely on supplied namespaces/commands */
   location: string[];
   /** Calculated options */
   options: { [key: string]: OptionValue | undefined };
@@ -169,9 +169,10 @@ export type CliOptions = {
     autoInclude: boolean;
   };
   /** Whether the cli implements a root command (invocation with no additional namespaces/commands)
+   * If a string is provided, it will be used as the default command to execute
    * @default true
    */
-  rootCommand: boolean;
+  rootCommand: boolean | string;
   /** Logger to be used by the cli */
   logger?: Partial<ICliLogger>;
   /** Cli name to be used instead of the one defined in package.json
