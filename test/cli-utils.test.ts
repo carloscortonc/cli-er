@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import {
   completeDefinition,
   parseArguments,
@@ -399,13 +400,14 @@ describe("executeScript", () => {
     const c = new Cli(definition, { baseScriptLocation: "/" });
     const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
     executeScript({ location: ["nms", "cmd"], options: {} }, c.options);
+    const norm = (p: string) => p.replace(/\//g, path.sep);
     expect(pathListSpy.mock.calls).toEqual([
-      ["/nms/cmd/index.js"],
-      ["/nms/cmd.js"],
-      ["/nms/index.js"],
-      ["/nms.js"],
-      ["/index.js"],
-      ["/script.js"],
+      [norm("/nms/cmd/index.js")],
+      [norm("/nms/cmd.js")],
+      [norm("/nms/index.js")],
+      [norm("/nms.js")],
+      [norm("/index.js")],
+      [norm("/script.js")],
     ]);
     pathListSpy.mockRestore();
   });

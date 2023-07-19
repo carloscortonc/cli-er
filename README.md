@@ -318,7 +318,7 @@ Cli version to be used instead of the one defined in package.json</br>
 Cli description to be used instead of the one defined in package.json</br>
 **Default**: `packageJson.description`
 
-### `debug`
+#### `debug`
 Enable debug mode. This is intended for the development phase of the cli. It will:
 - Print verbose errors when a script in not found in the expected path during [`Cli.run`](#runargs).
 - **Print warnings for deprecated properties/methods**, useful for detecting and applying these changes before updating to the next version.
@@ -329,6 +329,11 @@ $ CLIER_DEBUG=1 node cli.js
 ```
 
 **Default**: `process.env.CLIER_DEBUG`
+
+#### `messages`
+Object containing the messages to be used in the Cli, to override the default ones defined by this library. This enables internationalization and customization of cli-native messages. You can see a use-case in this [intl-cli example](./examples/intl-cli)</br>
+**Default**: defined in [./src/cli-messages](./src/cli-messages.ts) and [./src/cli-errors](./src/cli-errors.ts)
+
 
 ## Typescript cli
 
