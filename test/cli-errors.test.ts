@@ -1,4 +1,9 @@
-import { CliError, ErrorType } from "../src/cli-errors";
+import { CliError, ErrorType, ERROR_MESSAGES } from "../src/cli-errors";
+import Cli from "../src";
+
+beforeAll(() => {
+  Cli.messages = ERROR_MESSAGES;
+});
 
 describe("CliErrors.format", () => {
   it("Formats ErrorType with a single argument", () => {

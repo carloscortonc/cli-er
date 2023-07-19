@@ -115,6 +115,8 @@ export interface ICliLogger {
   error: (...message: any[]) => void;
 }
 
+export type Messages = { [key in ErrorType | string]: string };
+
 export type CliOptions = {
   /** Location of the main cli application
    * @default path.dirname(require.main.filename)
@@ -191,4 +193,8 @@ export type CliOptions = {
    * @default `process.env.CLIER_DEBUG`
    */
   debug: boolean;
+  /** Messages to be used, overriding the ones defined by this library
+   * This allows to include new translations, or tweak the current ones
+   */
+  messages?: Messages;
 };
