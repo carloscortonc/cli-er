@@ -129,9 +129,19 @@ export function parseArguments(
     }
   };
 
-  let definitionRef = definition;
+  let definitionRef = definition,
+    commandFound = false;
   const optsAliases = [];
-  argsLoop: for (const arg of args) {
+  argsLoop: for (let argIndex = 0; argIndex < args.length; argIndex++) {
+    const arg = args[argIndex];
+    // Detect "--" delimiter to stop parsing
+    if (arg === "--") {
+      output.options._ = args.slice(argIndex + 1);
+      argsToProcess = argsToProcess.slice(0, argIndex - 1);
+      break argsLoop;
+    } else if (commandFound) {
+      continue;
+    }
     // Sort definition to process options first
     const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
     for (let i = 0; i < entries.length; i++) {
@@ -155,8 +165,8 @@ export function parseArguments(
           argsToProcess = argsToProcess.slice(1);
         }
         output.location.push(key);
-        // No more namespaces/commands are allowed to follow, so end
-        break argsLoop;
+        commandFound = true;
+        break;
       }
       // Namespaces will follow here
       argsToProcess = argsToProcess.slice(1);

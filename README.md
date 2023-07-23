@@ -57,7 +57,7 @@ it will allow us to structure the code as follows:
 so we can then execute:
 
 ```
-node docker.js builder build .
+node docker.js builder build . -- someother-external-option
 ```
 
 which will try to invoke, in order:
@@ -111,10 +111,16 @@ type ValueParserOutput = {
 
 This allows to create custom parsers for any type of input (check the [custom-option-parser example](./examples/custom-option-parser) for a hint), or to override the existing parsers logic.
 
+If no command is found in the parsing process, an error with a suggestion (the closest to the one suplied) will be returned.
+
+You can define an option as required (`required: true`), which will verify that such option is present in the provided arguments, setting an error otherwise.
+
+This library also interprets the delimiter `--` to stop parsing, including the remaning arguments as an array inside `ParsingOutput.options._`
+
 The execution of the above [example](#example) would be:
 
 ```json
-{ "options": { "build": ".", "debug": false }, "location": ["builder", "build"] }
+{ "options": { "build": ".", "debug": false, "_": ["someother-external-option"] }, "location": ["builder", "build"] }
 ```
 
 ### run(args?)
@@ -138,10 +144,6 @@ new Cli({
 ```
 
 invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
-
-If no command is found in the parsing process, an error and suggestion (the closest to the one suplied) will be shown.
-
-You can define an option as required (`required: true`), which will verify that such option is present in the provided arguments, setting an error otherwise.
 
 This method has three main behaviours: print version, print help and execute a command:
 - **print version**: if [autoincluded version](#versionautoinclude) is enabled and version option is provided, version will be printed.
