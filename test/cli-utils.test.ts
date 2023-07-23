@@ -373,6 +373,23 @@ describe("parseArguments", () => {
       errors: ['Missing required option "opt"'],
     });
   });
+  it("Detect '--' delimiter", () => {
+    const definition = new Cli(
+      { cmd: { options: { opt: {} } } },
+      { help: { autoInclude: false }, version: { autoInclude: false } },
+    ).definition;
+    expect(
+      parseArguments(
+        ["cmd", "--opt", "optvalue", "--", "firstparam-a firstparam-b", "secondparam"],
+        definition as Definition,
+        cliOptions,
+      ),
+    ).toStrictEqual({
+      options: { opt: "optvalue", _: ["firstparam-a firstparam-b", "secondparam"] },
+      location: ["cmd"],
+      errors: [],
+    });
+  });
 });
 
 describe("executeScript", () => {
