@@ -65,7 +65,7 @@ export type Option = BasicElement & {
    */
   required?: boolean;
   /** Method to modify an option value after parsing
-   * @deprecated in favor of `Option.parser`. Will be removed in 0.11.0
+   * @deprecated in favor of `Option.parser`. Will be removed in 0.12.0
    */
   value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
   /** Custom parser for the option */
@@ -130,27 +130,6 @@ export type CliOptions = {
    * @default "commands"
    */
   commandsPath: string;
-  /** Flags used to describe the behaviour on fail conditions
-   * @deprecated Will be removed in 0.11.0
-   */
-  onFail?: {
-    /** Print scoped-help
-     * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
-     */
-    help: boolean;
-    /** Show suggestion when command not found
-     * @deprecated Has no effect since 0.10.0. Will be removed in 0.11.0
-     */
-    suggestion: boolean;
-    /** Print evaluated script paths inside `run`
-     * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
-     */
-    scriptPaths: boolean;
-    /** End `run` invocation when an unknown option is encountered while parsing
-     * @deprecated Is configured via `CliOptions.errors.onExecuteCommand` since 0.10.0. Will be removed in 0.11.0
-     */
-    stopOnUnknownOption: boolean;
-  };
   /** Configuration related to when errors should be displayed */
   errors: {
     /** List of error-types that will be displayed before help */
