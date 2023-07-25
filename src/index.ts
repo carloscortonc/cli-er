@@ -129,7 +129,7 @@ export default class Cli {
       delete opts.options.help;
     }
 
-    // Check if any error was generated
+    // Check if any error were generated
     const onExecCmd = this.options.errors.onExecuteCommand;
     const onExecuteCommandErrors = errors
       .filter((e) => onExecCmd.includes(e.type))
