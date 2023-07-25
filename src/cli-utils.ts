@@ -53,12 +53,6 @@ export function completeDefinition(definition: Definition<DefinitionElement>, cl
   if (versionAutoInclude) {
     definition.version = versionOption;
   }
-  // Print CliOptions deprecations
-  deprecationWarning({
-    condition: cliOptions.onFail !== undefined,
-    property: "CliOptions.onFail.*",
-    version: "0.11.0",
-  });
   for (const element in definition) {
     completeElementDefinition(element, definition[element]);
   }
@@ -90,8 +84,10 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
   element.key = name;
   // Print deprecations
   deprecationWarning({
-    condition: typeof element.value === "function",
     property: "Option.value",
+    condition: typeof element.value === "function",
+    version: "0.12.0",
+    alternative: "Option.parser",
   });
   for (const optionKey in element.options ?? {}) {
     completeElementDefinition(optionKey, element.options![optionKey]);
