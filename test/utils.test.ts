@@ -1,4 +1,4 @@
-import { CLIER_DEBUG_KEY, debug, deprecationWarning, findPackageJson, merge } from "../src/utils";
+import { CLIER_DEBUG_KEY, clone, debug, deprecationWarning, findPackageJson, merge } from "../src/utils";
 import path from "path";
 import fs from "fs";
 
@@ -115,5 +115,64 @@ describe("merge", () => {
       p2: { p21: "p21-target" },
       p3: { p3p1: "p3p1-target", p3p2: "p3p2-source1", p31: { p32p1: "p32p1-source2", p32p2: "p32p2-target" } },
     });
+  });
+});
+
+describe("clone", () => {
+  it("Primitives", () => {
+    const orig = { a: 1, b: "2", c: true, d: { nested: "1", undef: undefined, n: null } };
+    const c = clone(orig);
+    expect(c).toEqual({ a: 1, b: "2", c: true, d: { nested: "1", undef: undefined, n: null } });
+    expect(c !== orig).toBeTruthy();
+    orig.a = 2;
+    orig.b = "3";
+    orig.c = false;
+    orig.d.nested = "2";
+    expect(c).toEqual({ a: 1, b: "2", c: true, d: { nested: "1", undef: undefined, n: null } });
+  });
+  it("Array", () => {
+    const orig = { array: new Array(1, 2, 3) };
+    const c = clone(orig);
+    expect(c.array instanceof Array).toBeTruthy();
+    expect(c.array !== orig.array).toBeTruthy();
+    expect(c.array).toStrictEqual([1, 2, 3]);
+    orig.array.push(4);
+    expect(c.array.length).toBe(3);
+  });
+  it("Set", () => {
+    const orig = { set: new Set([1, 2, 3]) };
+    const c = clone(orig);
+    expect(c.set instanceof Set).toBeTruthy();
+    expect(c.set !== orig.set).toBeTruthy();
+    expect([...c.set]).toStrictEqual([1, 2, 3]);
+    orig.set.add(4);
+    expect([...c.set].length).toBe(3);
+  });
+  it("Map", () => {
+    const orig = { map: new Map([["key", "value"]]) };
+    const c = clone(orig);
+    expect(c.map instanceof Map).toBeTruthy();
+    expect(c.map !== orig.map).toBeTruthy();
+    expect([...c.map.entries()]).toStrictEqual([["key", "value"]]);
+    orig.map.set("key2", "value2");
+    expect([...c.map.entries()].length).toBe(1);
+  });
+  it("Nested", () => {
+    const orig: any = {
+      a1: { a2: { set: new Set(["setvalue"]) }, array: [1, true, { map: new Map([["key", { v: "value" }]]) }] },
+      b1: { b2: {} },
+    };
+    const c = clone(orig);
+    expect(c).toStrictEqual({
+      a1: { a2: { set: new Set(["setvalue"]) }, array: [1, true, { map: new Map([["key", { v: "value" }]]) }] },
+      b1: { b2: {} },
+    });
+    expect(c !== orig).toBeTruthy();
+    orig.a1.a2.set.add("anothervalue");
+    orig.a1.array.push(2);
+    orig.a1.array[2].map.get("key").v = "newvalue";
+    expect([...c.a1.a2.set].length).toBe(1);
+    expect(c.a1.array.length).toBe(3);
+    expect(c.a1.array[2].map.get("key").v).toBe("value");
   });
 });
