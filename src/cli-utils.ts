@@ -76,9 +76,15 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
   }
   // Complete aliases
   element.aliases = getAliases(name, element);
-  // Set option type to string if missing
-  if (element.kind === Kind.OPTION && !element.type) {
-    element.type = Type.STRING;
+  if (element.kind === Kind.OPTION) {
+    // Set positional arguments configured as "true" with type=list
+    if (element.positional === true) {
+      element.type = Type.LIST;
+    }
+    // Set option type to string if missing
+    else if (!element.type) {
+      element.type = Type.STRING;
+    }
   }
   // Add name as key
   element.key = name;
@@ -102,7 +108,7 @@ export function parseArguments(
 ): ParsingOutput {
   const output: ParsingOutput = {
     location: [],
-    options: {},
+    options: { _: [] },
     errors: [],
   };
   const aliases: { [key: string]: DefinitionElement | string } = {};
@@ -120,7 +126,7 @@ export function parseArguments(
       aliases[alias] = mainAlias;
     });
     //Process default
-    if (element.kind !== Kind.COMMAND || element.type !== undefined) {
+    if (element.type !== undefined && element.default !== undefined) {
       output.options[element.key!] = element.default;
     }
   };
@@ -132,7 +138,7 @@ export function parseArguments(
     const arg = args[argIndex];
     // Detect "--" delimiter to stop parsing
     if (arg === "--") {
-      output.options._ = args.slice(argIndex + 1);
+      output.options.__ = args.slice(argIndex + 1);
       argsToProcess = argsToProcess.slice(0, argIndex - 1);
       break argsLoop;
     } else if (commandFound) {
@@ -150,7 +156,8 @@ export function parseArguments(
         if (i < entries.length - 1) {
           continue;
         }
-        if (!optsAliases.includes(arg)) {
+        // Only generate error when no root-command is registered
+        if (!optsAliases.includes(arg) && (!cliOptions.rootCommand || output.location.length > 0)) {
           const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
           output.errors.push(CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion));
         }
@@ -179,16 +186,42 @@ export function parseArguments(
   // Process all element aliases and defaults
   const defToProcess = elLocation.length > 0 ? { "": defElement, ...defElement.options } : definition;
   Object.values(defToProcess).forEach(processElement);
+  // Generate a map containing the positional-options
+  const positionalOptions = Object.values(defToProcess).reduce(
+    (acc: { [k: string]: DefinitionElement }, { positional, kind, ...opt }) => {
+      if (kind === Kind.OPTION && (positional === true || typeof positional === "number")) {
+        acc[positional.toString()] = opt;
+      }
+      return acc;
+    },
+    {},
+  );
+  // prettier-ignore
+  enum Positional { TRUE = "1", FALSE = "0" }
+  // Flag to ignore all positional options if the first one is misplaced (missing)
+  let ignorePositional = false;
 
   // Process args
   for (let i = 0; i < argsToProcess.length; i++) {
     const curr = argsToProcess[i],
       next = argsToProcess[i + 1];
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
-    const optionDefinition = aliases[optionKey] as DefinitionElement;
-    const outputKey = optionDefinition && (optionDefinition.key as string);
-    if (aliases.hasOwnProperty(optionKey)) {
-      const evaluatedValue = aliases.hasOwnProperty(next) ? undefined : next;
+    const strictPositional = positionalOptions[i];
+    // If an option-alias is found where a numeric-positional option was expected, discard all remaining numeric-positional options
+    ignorePositional ||= strictPositional && aliases.hasOwnProperty(optionKey);
+    const positional = (!ignorePositional ? strictPositional : undefined) || positionalOptions.true;
+    const [optionDefinition, isPositional] = aliases.hasOwnProperty(optionKey)
+      ? [aliases[optionKey] as DefinitionElement, Positional.FALSE]
+      : [positional, !!positional ? Positional.TRUE : Positional.FALSE];
+    if (optionDefinition !== undefined) {
+      const outputKey = optionDefinition.key!;
+      // Mapping between whether a positional-option applies, and the value to be used in parsing
+      const posMapping: { [k: string]: string } = { [Positional.FALSE]: next, [Positional.TRUE]: curr };
+      const evaluatedValue = Object.entries(posMapping).some(
+        ([pString, v]) => pString === isPositional && aliases.hasOwnProperty(v),
+      )
+        ? undefined
+        : posMapping[isPositional];
       const parser = typeof optionDefinition.parser === "function" ? optionDefinition.parser : parseOptionValue;
       const parserOutput = parser({
         value: evaluatedValue,
@@ -205,8 +238,11 @@ export function parseArguments(
         output.options[outputKey] = parserOutput.value;
       }
       i += parserOutput.next !== undefined ? parserOutput.next : evaluatedValue !== undefined ? 1 : 0;
-    } else if (!aliases.hasOwnProperty(optionKey)) {
-      // Unknown option
+      // Adjust for positional options
+      i -= isPositional === Positional.TRUE ? 1 : 0;
+    } else {
+      // Include unknown arg inside "_" key, and add an error
+      output.options._.push(curr);
       output.errors.push(CliError.format(ErrorType.OPTION_NOT_FOUND, curr));
     }
   }
@@ -439,7 +475,7 @@ function generateHelp(
   const formattedHelp = Object.entries(sections).reduce((acc, [sectionKey, sectionContent]) => {
     const regexp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
     return acc.replace(regexp, sectionContent || "");
-  }, cliOptions.help.template);
+  }, cliOptions.help.template!);
   Cli.logger.log(formattedHelp);
 }
 
