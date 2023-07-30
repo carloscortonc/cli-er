@@ -365,32 +365,48 @@ export function generateScopedHelp(
     sections[HELP_SECTIONS.DESCRIPTION] = cliOptions.cliDescription.concat("\n");
   }
   // Add usage section
-  const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
+  const { existingKinds, hasOptions, positionalOptions } = Object.values(definitionRef || {}).reduce(
     (acc, curr) => {
-      if (curr.kind === Kind.OPTION) {
+      const { kind, positional, required, key } = curr;
+      if (kind === Kind.OPTION) {
         acc.hasOptions = true;
-      } else if (acc.existingKinds.indexOf(curr.kind as string) < 0) {
-        acc.existingKinds.push(curr.kind as string);
+        if (positional === true || typeof positional === "number") {
+          acc.positionalOptions.push({ index: positional, key, required });
+        }
+      } else if (acc.existingKinds.indexOf(kind as string) < 0) {
+        acc.existingKinds.push(kind as string);
       }
       return acc;
     },
-    { existingKinds: [] as string[], hasOptions: false },
+    { existingKinds: [] as string[], hasOptions: false, positionalOptions: [] as any[] },
   );
 
   const formatKinds = (kinds: string[]) =>
-    ` ${kinds
+    kinds
       .sort((a) => (a === Kind.NAMESPACE ? -1 : 1))
       .join("|")
-      .toUpperCase()}`;
+      .toUpperCase();
+
+  const formatPositionalOptions = (positionalOpts: any[]) =>
+    positionalOpts
+      .sort((a, b) => (b.index === true ? -1 : a.index === true ? 1 : a.index - b.index))
+      .map(({ index, key, required }) => {
+        const s = index === true ? "..." : "";
+        return required ? `<${key}${s}>` : `[${key}${s}]`;
+      })
+      .join(" ");
 
   sections[HELP_SECTIONS.USAGE] = [
     `${Cli.formatMessage("generate-help.usage")}:  ${cliOptions.cliName}`,
-    location.length > 0 ? ` ${location.join(" ")}` : "",
-    existingKinds.length > 0 ? formatKinds(existingKinds) : "",
-    element?.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
-    hasOptions ? " ".concat(Cli.formatMessage("generate-help.has-options")) : "",
-    "\n",
-  ].join("");
+    location.join(" "),
+    formatKinds(existingKinds),
+    element?.kind === Kind.COMMAND && element!.type !== undefined ? `<${element!.type}>` : "",
+    formatPositionalOptions(positionalOptions),
+    hasOptions ? Cli.formatMessage("generate-help.has-options") : "",
+  ]
+    .filter((e) => e)
+    .join(" ")
+    .concat("\n");
   generateHelp(definitionRef, cliOptions, sections);
 }
 

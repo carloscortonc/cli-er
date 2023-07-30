@@ -635,6 +635,29 @@ Namespaces:
 This is a custom footer
 `);
   });
+  it("With options", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const { definition: def } = new Cli({
+      bool: { type: "boolean", default: true, description: "boolean option" },
+      arg1: { positional: 0, required: true, description: "first positional mandatory option" },
+      arg2: { positional: 1, description: "second positional option" },
+      arg3: { positional: true, hidden: true },
+    });
+    generateScopedHelp(def, [], cliOptions);
+    expect(output).toStrictEqual(`
+Usage:  cli-name <arg1> [arg2] [arg3...] [OPTIONS]
+
+cli-description
+
+Options:
+  --bool      boolean option (default: true)
+  --arg1      first positional mandatory option
+  --arg2      second positional option
+  -h, --help  Display global help, or scoped to a namespace/command
+
+`);
+  });
 });
 
 describe("getDefinitionElement", () => {
