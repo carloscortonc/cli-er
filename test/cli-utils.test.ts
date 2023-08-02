@@ -499,6 +499,8 @@ describe("executeScript", () => {
       expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"),
     );
     expect(exitlogger).toHaveBeenCalled();
+    //Restore debug value
+    process.env[utils.CLIER_DEBUG_KEY] = "";
   });
   it("Generates all valid paths with the corresponding named/default import", () => {
     const c = new Cli(definition, { baseScriptLocation: "/" });

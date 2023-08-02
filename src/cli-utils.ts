@@ -6,6 +6,7 @@ import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./u
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
 import parseOptionValue from "./cli-option-parser";
+import { validatePositional } from "./definition-validations";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
@@ -17,6 +18,9 @@ export type DefinitionElement = F<Namespace> &
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
   };
+type ValidationContext = {
+  positional: Option[];
+};
 
 /** Check whether the program using this library is running in cjs */
 const isCjs = () => require.main !== undefined;
@@ -53,9 +57,12 @@ export function completeDefinition(definition: Definition<DefinitionElement>, cl
   if (versionAutoInclude) {
     definition.version = versionOption;
   }
+  const validationContext = { positional: [] };
   for (const element in definition) {
-    completeElementDefinition(element, definition[element]);
+    completeElementDefinition(element, definition[element], validationContext);
   }
+  // validate positional arguments for current definition
+  validatePositional(validationContext.positional);
   return definition;
 }
 
@@ -65,7 +72,7 @@ const isCommand = (element: DefinitionElement) =>
   typeof element.action === "function" ||
   (element.options !== undefined && !Object.values(element.options).some(isCommand));
 
-function completeElementDefinition(name: string, element: DefinitionElement) {
+function completeElementDefinition(name: string, element: DefinitionElement, validationContext: ValidationContext) {
   // Infer kind when not specified
   if (!element.kind) {
     element.kind = Object.values(element.options || {}).some(isCommand)
@@ -85,19 +92,29 @@ function completeElementDefinition(name: string, element: DefinitionElement) {
     else if (!element.type) {
       element.type = Type.STRING;
     }
+    // update validation context
+    ![undefined, false].includes(element.positional as any) && validationContext.positional.push(element as Option);
   }
   // Add name as key
   element.key = name;
   // Print deprecations
+  deprecationWarning({
+    property: "Command.type",
+    condition: element.kind === Kind.COMMAND && element.type !== undefined,
+    description: "Create inside a new option with `positional: 0` instead",
+  });
   deprecationWarning({
     property: "Option.value",
     condition: typeof element.value === "function",
     version: "0.12.0",
     alternative: "Option.parser",
   });
+  const deValidationContext = { positional: [] };
   for (const optionKey in element.options ?? {}) {
-    completeElementDefinition(optionKey, element.options![optionKey]);
+    completeElementDefinition(optionKey, element.options![optionKey], deValidationContext);
   }
+  // validate positional arguments for nested options
+  validatePositional(deValidationContext.positional);
 }
 
 /** Process incoming args based on provided definition */

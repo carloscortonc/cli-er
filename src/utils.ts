@@ -102,23 +102,34 @@ export function findPackageJson(baseLocation: string) {
   return undefined;
 }
 
+export const isDebugActive = () => process.env[CLIER_DEBUG_KEY];
+
 /** Utility to print messages only when debug mode is active */
 export function debug(message: string) {
-  process.env[CLIER_DEBUG_KEY] && process.stderr.write("[CLIER_DEBUG] ".concat(message, "\n"));
+  isDebugActive() && process.stderr.write("[CLIER_DEBUG] ".concat(message, "\n"));
 }
 
 /** Class containing the logic for logging deprecations. It holds the list of deprecation-messages already
  * printed, to avoid duplicates */
 class DeprecationWarning {
   list = new Set();
-  deprecate = (
-    options: { condition?: boolean; property?: string; version?: string; alternative?: string } = { condition: true },
-  ) => {
+  deprecate = (options: {
+    condition?: boolean;
+    property?: string;
+    version?: string;
+    alternative?: string;
+    description?: string;
+  }) => {
+    // Check if debug mode is active to avoid unnecessary execution
+    if (!isDebugActive()) {
+      return;
+    }
     const depMessage = `<${options.property}> is deprecated`.concat(
       options.version ? ` and will be removed in ${options.version}` : "",
       options.alternative ? `. Use <${options.alternative}> instead` : "",
+      options.description ? ". ".concat(options.description) : "",
     );
-    if (options.condition && !this.list.has(depMessage)) {
+    if (options.condition !== false && !this.list.has(depMessage)) {
       this.list.add(depMessage);
       debug(depMessage);
     }
