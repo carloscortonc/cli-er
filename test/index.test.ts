@@ -154,7 +154,7 @@ describe("Cli.parse", () => {
     const output = c.parse([]);
     expect(output).toStrictEqual({
       location: [],
-      options: { globalOption: "globalvalue", help: undefined, version: undefined },
+      options: { globalOption: "globalvalue", _: [] },
       errors: [],
     });
   });
@@ -163,7 +163,7 @@ describe("Cli.parse", () => {
     const output = c.parse([]);
     expect(output).toStrictEqual({
       location: [],
-      options: { globalOption: "globalvalue" },
+      options: { globalOption: "globalvalue", _: [] },
       errors: [],
     });
   });
@@ -176,7 +176,7 @@ describe("Cli.run", () => {
     c.run(["nms", "cmd", "cmdvalue"]);
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: ["nms", "cmd"],
-      options: { cmd: "cmdvalue", globalOption: "globalvalue", opt: undefined },
+      options: { cmd: "cmdvalue", globalOption: "globalvalue", _: [] },
       errors: [],
     });
   });
@@ -186,7 +186,7 @@ describe("Cli.run", () => {
     c.run(["--global", "overwritten"]);
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: [],
-      options: { globalOption: "overwritten" },
+      options: { globalOption: "overwritten", _: [] },
       errors: [],
     });
   });
@@ -254,7 +254,7 @@ describe("Cli.run", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
     jest
       .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { help: true }, errors: ["ERROR"] }));
+      .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"] }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["command_not_found"] } });
     c.run([]);
     expect(logger.error).toHaveBeenCalledWith("ERROR", "\n");
@@ -264,14 +264,16 @@ describe("Cli.run", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
     jest
       .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { help: true }, errors: ["ERROR"] }));
+      .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"] }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: [] } });
     c.run([]);
     expect(logger.error).not.toHaveBeenCalled();
   });
   it("[onExecuteCommand] Prints error if configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, errors: ["ERROR"] }));
+    jest
+      .spyOn(cliutils, "parseArguments")
+      .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"] }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition, { errors: { onExecuteCommand: ["command_not_found"] } });
     c.run([]);
@@ -279,7 +281,9 @@ describe("Cli.run", () => {
   });
   it("[onExecuteCommand] Does not print error if not configured", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({ location: [], options: {}, errors: ["ERROR"] }));
+    jest
+      .spyOn(cliutils, "parseArguments")
+      .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"] }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition, { errors: { onExecuteCommand: [] } });
     c.run([]);
@@ -294,7 +298,7 @@ describe("Cli.run", () => {
       );
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
       location: [],
-      options: { help: true },
+      options: { help: true, _: [] },
       errors: ["CMD_NOT_FOUND", "OPT_NOT_FOUND"],
     }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["option_not_found", "command_not_found"] } });

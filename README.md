@@ -115,7 +115,16 @@ If no command is found in the parsing process, an error with a suggestion (the c
 
 You can define an option as required (`required: true`), which will verify that such option is present in the provided arguments, setting an error otherwise.
 
-This library also interprets the delimiter `--` to stop parsing, including the remaning arguments as an array inside `ParsingOutput.options._`
+This library also interprets the delimiter `--` to stop parsing, including the remaning arguments as an array inside `ParsingOutput.options.__`
+
+Positional options (`Option.positional: boolean | number`) allow asigning an option to a determinate position in the arguments (full example [here](./examples/jest-cli)), p.e:
+
+```js
+new Cli({ projectName: { positional: 0} }, { cliName: "create-project" });
+
+// $ create-project newproject [...]
+// => { options: { projectName: "newproject" }}
+```
 
 The execution of the above [example](#example) would be:
 

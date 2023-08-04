@@ -48,16 +48,23 @@ type BasicElement = {
   kind?: `${Kind}`;
   /** Description of the element */
   description?: string;
-  /** Aliases for an option */
-  aliases?: string[];
   /** Whether to show an element when generating help */
   hidden?: boolean;
 };
 
 export type Option = BasicElement & {
   kind?: `${Kind.OPTION}`;
+  /** Aliases for an option */
+  aliases?: string[];
   /** Type of option */
   type?: `${Type}`;
+  /** Whether the option is positional.
+   * If `true`, all unknown options found will be included in this option
+   * If a number is provided, a param placed at that given position will be assigned
+   * to this option, only if that value does not correspond with any other existing aliases
+   * @default false
+   */
+  positional?: boolean | number;
   /** Default value for the option */
   default?: OptionValue;
   /** Whether is required or not
@@ -78,7 +85,7 @@ export type Namespace = BasicElement & {
   options?: Definition;
 };
 
-export type Command = Omit<Option, "kind"> & {
+export type Command = Omit<Option, "kind" | "aliases"> & {
   kind: `${Kind.COMMAND}`;
   /** Nested options definition */
   options?: Definition<Option>;
@@ -94,7 +101,7 @@ export type ParsingOutput = {
   /** Location based solely on supplied namespaces/commands */
   location: string[];
   /** Calculated options */
-  options: { [key: string]: OptionValue | undefined };
+  options: { _: string[]; [key: string]: OptionValue | undefined };
   /** Errors originated while parsing */
   errors: string[];
 };
@@ -140,9 +147,9 @@ export type CliOptions = {
   /** Help-related configuration */
   help: Option & {
     /** Whether to generate help option */
-    autoInclude: boolean;
+    autoInclude?: boolean;
     /* Template to be used when generating help */
-    template: string;
+    template?: string;
   };
   /** Version related configuration */
   version: Option & {
