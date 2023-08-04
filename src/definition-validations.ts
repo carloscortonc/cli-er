@@ -9,9 +9,9 @@ export function validatePositional(positionalOptions: DefinitionElement[]) {
   const fOpts = (opts: DefinitionElement[]) => opts.map((o) => o.key).join(",");
   // Check duplicities
   const values = positionalOptions.map((o) => o.positional!);
-  let duplicate;
-  if ((duplicate = values.find((v, index) => values.slice(index + 1).indexOf(v) > -1))) {
-    debug(`Duplicated Option.positional value <${duplicate}> in options: ${fOpts(positionalOptions)}`);
+  let duplicate, duplicatedIndex: number;
+  if ((duplicate = values.find((v, index) => values.indexOf(v) !== (duplicatedIndex = index)))) {
+    debug(`Duplicated Option.positional value <${duplicate}> in option ${positionalOptions[duplicatedIndex!].key}`);
   }
   // Check correlation between numerical values
   const numericalOpts = positionalOptions.filter((o) => typeof o.positional === "number");
