@@ -376,18 +376,18 @@ describe("parseArguments", () => {
   });
   it("Detect '--' delimiter", () => {
     const definition = new Cli(
-      { cmd: { options: { opt: {} } } },
+      { nms: { options: { cmd: { options: { opt: {} } } } } },
       { help: { autoInclude: false }, version: { autoInclude: false } },
     ).definition;
     expect(
       parseArguments(
-        ["cmd", "--opt", "optvalue", "--", "firstparam-a firstparam-b", "secondparam"],
+        ["nms", "cmd", "--opt", "optvalue", "--", "firstparam-a firstparam-b", "secondparam"],
         definition as Definition,
         cliOptions,
       ),
     ).toStrictEqual({
       options: { opt: "optvalue", __: ["firstparam-a firstparam-b", "secondparam"], _: [] },
-      location: ["cmd"],
+      location: ["nms", "cmd"],
       errors: [],
     });
   });

@@ -43,7 +43,7 @@ export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
 
-type BasicElement = {
+type BaseElement = {
   /** Kind of element */
   kind?: `${Kind}`;
   /** Description of the element */
@@ -52,7 +52,7 @@ type BasicElement = {
   hidden?: boolean;
 };
 
-export type Option = BasicElement & {
+export type Option = BaseElement & {
   kind?: `${Kind.OPTION}`;
   /** Aliases for an option */
   aliases?: string[];
@@ -79,7 +79,7 @@ export type Option = BasicElement & {
   parser?: (input: ValueParserInput) => ValueParserOutput;
 };
 
-export type Namespace = BasicElement & {
+export type Namespace = BaseElement & {
   kind?: `${Kind.NAMESPACE}`;
   /** Nested options definition */
   options?: Definition;

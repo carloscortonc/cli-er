@@ -7,8 +7,12 @@ new Cli(
       options: {
         build: {
           description: "Build an image from a Dockerfile",
-          type: "string",
           options: {
+            source: {
+              positional: 0,
+              required: true,
+              description: "Path or Url to the Dockerfile",
+            },
             addHost: {
               aliases: ["--add-host"],
               type: "list",
