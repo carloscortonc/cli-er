@@ -1,3 +1,19 @@
+# [0.11.0](https://github.com/carloscortonc/cli-er/compare/v0.10.1...v0.11.0) (2023-08-06)
+
+
+### Features
+
+* allow defining a default command ([#42](https://github.com/carloscortonc/cli-er/issues/42)) ([1b33b66](https://github.com/carloscortonc/cli-er/commit/1b33b667cdcf416187fda7603cf3a2b5ca965186))
+* allow defining custom messages ([#43](https://github.com/carloscortonc/cli-er/issues/43)) ([fd0350e](https://github.com/carloscortonc/cli-er/commit/fd0350e8973215975a17733e1ce37882b0be4721))
+* implement positional arguments ([#47](https://github.com/carloscortonc/cli-er/issues/47)) ([89cfb69](https://github.com/carloscortonc/cli-er/commit/89cfb69c6714ed51d6a00ed5f6ba3e88e470e9bc))
+* implement stop-parsing symbol ([#44](https://github.com/carloscortonc/cli-er/issues/44)) ([99a6c8d](https://github.com/carloscortonc/cli-er/commit/99a6c8db8aafe2d5448b7d8a0403846687f50c69))
+* infer Element.kind when possible ([#41](https://github.com/carloscortonc/cli-er/issues/41)) ([61817c8](https://github.com/carloscortonc/cli-er/commit/61817c820a976f0a03a0c8234e23c4dbc9d547a1))
+
+
+### Performance Improvements
+
+* **dependencies:** remove lodash.clonedeep ([#45](https://github.com/carloscortonc/cli-er/issues/45)) ([3193e4d](https://github.com/carloscortonc/cli-er/commit/3193e4dafc1400d5b0fa26fc39ff1c1201f99d12))
+
 ## [0.10.1](https://github.com/carloscortonc/cli-er/compare/v0.10.0...v0.10.1) (2023-04-22)
 
 
