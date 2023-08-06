@@ -8,14 +8,18 @@ import {
   getEntryPoint,
   getEntryFile,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind, Messages } from "./types";
 import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY } from "./utils";
 import { CliError, ErrorType } from "./cli-errors";
 import CliLogger from "./cli-logger";
+import { ERROR_MESSAGES } from "./cli-errors";
+import { CLI_MESSAGES, formatMessage } from "./cli-messages";
 import path from "path";
 
 export default class Cli {
   static logger: ICliLogger = new CliLogger();
+  static messages: Messages = { ...ERROR_MESSAGES, ...CLI_MESSAGES };
+  static formatMessage = formatMessage;
   definition: Definition;
   options: CliOptions;
   /** Creates a new Cli instance
@@ -25,6 +29,11 @@ export default class Cli {
    */
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
     const packagejson: any = findPackageJson(options.baseLocation || getEntryPoint()) || {};
+    // Allow to override logger implementation
+    Object.assign(Cli.logger, options.logger || {});
+    // Allow to override messages
+    Object.assign(Cli.messages, options.messages || {});
+
     this.options = {
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
@@ -43,14 +52,14 @@ export default class Cli {
         autoInclude: true,
         type: "boolean",
         aliases: ["-h", "--help"],
-        description: "Display global help, or scoped to a namespace/command",
+        description: Cli.formatMessage("help.description"),
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
         type: "boolean",
         aliases: ["-v", "--version"],
-        description: "Display version",
+        description: Cli.formatMessage("version.description"),
         hidden: true,
       },
       rootCommand: true,
@@ -59,8 +68,7 @@ export default class Cli {
       cliDescription: packagejson.description || "",
       debug: false,
     };
-    // Allow to override logger implementation
-    Object.assign(Cli.logger, options.logger || {});
+
     // Environment variables should have the highest priority
     const envOverwriteProperties = {
       ...(process.env[CLIER_DEBUG_KEY]
@@ -89,7 +97,11 @@ export default class Cli {
   run(args?: string[]): void | Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
-    const command = getDefinitionElement(this.definition, opts.location, this.options)!;
+    const elementLocation =
+      opts.location.length === 0 && typeof this.options.rootCommand === "string"
+        ? [this.options.rootCommand]
+        : opts.location;
+    const command = getDefinitionElement(this.definition, elementLocation, this.options)!;
     const errors = opts.errors.map((e) => ({ type: CliError.analize(e)!, e })).filter(({ e }) => e);
 
     // Evaluate auto-included version
@@ -102,7 +114,7 @@ export default class Cli {
     if (
       this.options.help.autoInclude &&
       (opts.options.help ||
-        (!this.options.rootCommand && opts.location.length === 0) ||
+        (this.options.rootCommand === false && opts.location.length === 0) ||
         command.kind === Kind.NAMESPACE)
     ) {
       const onGenHelp = this.options.errors.onGenerateHelp;
@@ -117,7 +129,7 @@ export default class Cli {
       delete opts.options.help;
     }
 
-    // Check if any error was generated
+    // Check if any error were generated
     const onExecCmd = this.options.errors.onExecuteCommand;
     const onExecuteCommandErrors = errors
       .filter((e) => onExecCmd.includes(e.type))

@@ -1,11 +1,39 @@
-import lodashclone from "lodash.clonedeep";
 import Cli from ".";
 import path from "path";
 import fs from "fs";
 
 export const CLIER_DEBUG_KEY: string = "CLIER_DEBUG";
 
-export const clone = (o: any) => lodashclone(o);
+/** Basic implementation of an object deepclone algorithm.
+ * Does not cover all cases (does not create new Integer, Float, Boolean, etc objects),
+ * but does the essentials for our use case, including nested objects, arrays, maps and sets */
+export const clone = (o: any): any => {
+  if (o?.constructor?.name === "Map") {
+    const m = new Map();
+    for (const [k, v] of o.entries()) {
+      m.set(k, clone(v));
+    }
+    return m;
+  }
+  if (o?.constructor?.name === "Set") {
+    const m = new Set();
+    for (const v of [...o]) {
+      m.add(clone(v));
+    }
+    return m;
+  }
+  if (Array.isArray(o)) {
+    return o.map(clone);
+  }
+  if (!isPlainObject(o)) {
+    return o;
+  }
+  const m = {};
+  for (const p of Object.keys(o)) {
+    Object.assign(m, { [p]: clone(o[p]) });
+  }
+  return m;
+};
 
 /** Utility class to format column values to a fixed length */
 export class ColumnFormatter {
@@ -74,18 +102,34 @@ export function findPackageJson(baseLocation: string) {
   return undefined;
 }
 
+export const isDebugActive = () => process.env[CLIER_DEBUG_KEY];
+
 /** Utility to print messages only when debug mode is active */
 export function debug(message: string) {
-  process.env[CLIER_DEBUG_KEY] && process.stderr.write("[CLIER_DEBUG] ".concat(message, "\n"));
+  isDebugActive() && process.stderr.write("[CLIER_DEBUG] ".concat(message, "\n"));
 }
 
 /** Class containing the logic for logging deprecations. It holds the list of deprecation-messages already
  * printed, to avoid duplicates */
 class DeprecationWarning {
   list = new Set();
-  deprecate = (options: { condition: boolean; property: string; version: string }) => {
-    const depMessage = `<${options.property}> is deprecated and will be removed in ${options.version}`;
-    if (options.condition && !this.list.has(depMessage)) {
+  deprecate = (options: {
+    condition?: boolean;
+    property?: string;
+    version?: string;
+    alternative?: string;
+    description?: string;
+  }) => {
+    // Check if debug mode is active to avoid unnecessary execution
+    if (!isDebugActive()) {
+      return;
+    }
+    const depMessage = `<${options.property}> is deprecated`.concat(
+      options.version ? ` and will be removed in ${options.version}` : "",
+      options.alternative ? `. Use <${options.alternative}> instead` : "",
+      options.description ? ". ".concat(options.description) : "",
+    );
+    if (options.condition !== false && !this.list.has(depMessage)) {
       this.list.add(depMessage);
       debug(depMessage);
     }

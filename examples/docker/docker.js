@@ -3,14 +3,16 @@ const Cli = require("cli-er");
 new Cli(
   {
     builder: {
-      kind: "namespace",
       description: "Manage builds",
       options: {
         build: {
-          kind: "command",
           description: "Build an image from a Dockerfile",
-          type: "string",
           options: {
+            source: {
+              positional: 0,
+              required: true,
+              description: "Path or Url to the Dockerfile",
+            },
             addHost: {
               aliases: ["--add-host"],
               type: "list",
@@ -92,7 +94,6 @@ new Cli(
           },
         },
         prune: {
-          kind: "command",
           description: "Remove build cache",
           options: {
             all: {

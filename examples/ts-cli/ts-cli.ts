@@ -4,7 +4,6 @@ import path from "path";
 new Cli(
   {
     nms: {
-      kind: "namespace",
       description: "Namespaces allow us to organize similar commands",
       options: {
         cmd: {

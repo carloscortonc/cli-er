@@ -1,3 +1,5 @@
+import Cli from ".";
+
 /** Existing errors */
 export enum ErrorType {
   COMMAND_NOT_FOUND = "command_not_found",
@@ -8,7 +10,7 @@ export enum ErrorType {
 }
 
 /** Error messages for each error type */
-const ERROR_MESSAGES: { [key in ErrorType]: string } = {
+export const ERROR_MESSAGES: { [key in ErrorType]: string } = {
   [ErrorType.COMMAND_NOT_FOUND]: 'Command "{0}" not found. Did you mean "{1}" ?',
   [ErrorType.OPTION_NOT_FOUND]: 'Unknown option "{0}"',
   [ErrorType.OPTION_WRONG_VALUE]: 'Wrong value for option "{0}". Expected <{1}> but found "{2}"',
@@ -22,7 +24,7 @@ export class CliError {
   static format(error: `${ErrorType}`, ...args: string[]) {
     return args.reduce(
       (acc, value: string, index: number) => acc.replace(new RegExp(`\\{${index}\\}`, "g"), value),
-      ERROR_MESSAGES[error],
+      Cli.messages[error],
     );
   }
   /** Test if the given error message matches an error type */
@@ -34,6 +36,6 @@ export class CliError {
     if (!value) {
       return undefined;
     }
-    return Object.entries(ERROR_MESSAGES).find(([_, message]) => this.test(value, message))?.[0] as ErrorType;
+    return Object.entries(Cli.messages).find(([_, message]) => this.test(value, message))?.[0] as ErrorType;
   }
 }

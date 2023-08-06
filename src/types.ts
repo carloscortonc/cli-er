@@ -43,21 +43,28 @@ export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
 
-type BasicElement = {
+type BaseElement = {
   /** Kind of element */
   kind?: `${Kind}`;
   /** Description of the element */
   description?: string;
-  /** Aliases for an option */
-  aliases?: string[];
   /** Whether to show an element when generating help */
   hidden?: boolean;
 };
 
-export type Option = BasicElement & {
+export type Option = BaseElement & {
   kind?: `${Kind.OPTION}`;
+  /** Aliases for an option */
+  aliases?: string[];
   /** Type of option */
   type?: `${Type}`;
+  /** Whether the option is positional.
+   * If `true`, all unknown options found will be included in this option
+   * If a number is provided, a param placed at that given position will be assigned
+   * to this option, only if that value does not correspond with any other existing aliases
+   * @default false
+   */
+  positional?: boolean | number;
   /** Default value for the option */
   default?: OptionValue;
   /** Whether is required or not
@@ -65,20 +72,20 @@ export type Option = BasicElement & {
    */
   required?: boolean;
   /** Method to modify an option value after parsing
-   * @deprecated in favor of `Option.parser`. Will be removed in 0.11.0
+   * @deprecated in favor of `Option.parser`. Will be removed in 0.12.0
    */
   value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
   /** Custom parser for the option */
   parser?: (input: ValueParserInput) => ValueParserOutput;
 };
 
-export type Namespace = BasicElement & {
+export type Namespace = BaseElement & {
   kind?: `${Kind.NAMESPACE}`;
   /** Nested options definition */
   options?: Definition;
 };
 
-export type Command = Omit<Option, "kind"> & {
+export type Command = Omit<Option, "kind" | "aliases"> & {
   kind: `${Kind.COMMAND}`;
   /** Nested options definition */
   options?: Definition<Option>;
@@ -91,10 +98,10 @@ export type Definition<T = Namespace | Command | Option> = {
 };
 
 export type ParsingOutput = {
-  /** List of directories that leads to the calculated script location */
+  /** Location based solely on supplied namespaces/commands */
   location: string[];
   /** Calculated options */
-  options: { [key: string]: OptionValue | undefined };
+  options: { _: string[]; [key: string]: OptionValue | undefined };
   /** Errors originated while parsing */
   errors: string[];
 };
@@ -115,6 +122,8 @@ export interface ICliLogger {
   error: (...message: any[]) => void;
 }
 
+export type Messages = { [key in ErrorType | string]: string };
+
 export type CliOptions = {
   /** Location of the main cli application
    * @default path.dirname(require.main.filename)
@@ -128,27 +137,6 @@ export type CliOptions = {
    * @default "commands"
    */
   commandsPath: string;
-  /** Flags used to describe the behaviour on fail conditions
-   * @deprecated Will be removed in 0.11.0
-   */
-  onFail?: {
-    /** Print scoped-help
-     * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
-     */
-    help: boolean;
-    /** Show suggestion when command not found
-     * @deprecated Has no effect since 0.10.0. Will be removed in 0.11.0
-     */
-    suggestion: boolean;
-    /** Print evaluated script paths inside `run`
-     * @deprecated Is now under `CliOptions.debug` since 0.10.0. Will be removed in 0.11.0
-     */
-    scriptPaths: boolean;
-    /** End `run` invocation when an unknown option is encountered while parsing
-     * @deprecated Is configured via `CliOptions.errors.onExecuteCommand` since 0.10.0. Will be removed in 0.11.0
-     */
-    stopOnUnknownOption: boolean;
-  };
   /** Configuration related to when errors should be displayed */
   errors: {
     /** List of error-types that will be displayed before help */
@@ -159,9 +147,9 @@ export type CliOptions = {
   /** Help-related configuration */
   help: Option & {
     /** Whether to generate help option */
-    autoInclude: boolean;
+    autoInclude?: boolean;
     /* Template to be used when generating help */
-    template: string;
+    template?: string;
   };
   /** Version related configuration */
   version: Option & {
@@ -169,9 +157,10 @@ export type CliOptions = {
     autoInclude: boolean;
   };
   /** Whether the cli implements a root command (invocation with no additional namespaces/commands)
+   * If a string is provided, it will be used as the default command to execute
    * @default true
    */
-  rootCommand: boolean;
+  rootCommand: boolean | string;
   /** Logger to be used by the cli */
   logger?: Partial<ICliLogger>;
   /** Cli name to be used instead of the one defined in package.json
@@ -190,4 +179,8 @@ export type CliOptions = {
    * @default `process.env.CLIER_DEBUG`
    */
   debug: boolean;
+  /** Messages to be used, overriding the ones defined by this library
+   * This allows to include new translations, or tweak the current ones
+   */
+  messages?: Messages;
 };

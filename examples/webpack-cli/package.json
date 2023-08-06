@@ -1,0 +1,11 @@
+{
+  "name": "webpack-cli",
+  "version": "1.0.0",
+  "description": "Webpack's Command Line Interface",
+  "main": "webpack-cli.js",
+  "type": "module",
+  "author": "carloscortonc",
+  "dependencies": {
+    "cli-er": "0.11.0"
+  }
+}

@@ -6,6 +6,7 @@ import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./u
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import { CliError, ErrorType } from "./cli-errors";
 import parseOptionValue from "./cli-option-parser";
+import { validatePositional } from "./definition-validations";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
@@ -17,6 +18,9 @@ export type DefinitionElement = F<Namespace> &
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
   };
+type ValidationContext = {
+  positional: Option[];
+};
 
 /** Check whether the program using this library is running in cjs */
 const isCjs = () => require.main !== undefined;
@@ -53,38 +57,64 @@ export function completeDefinition(definition: Definition<DefinitionElement>, cl
   if (versionAutoInclude) {
     definition.version = versionOption;
   }
-  // Print CliOptions deprecations
-  deprecationWarning({
-    condition: cliOptions.onFail !== undefined,
-    property: "CliOptions.onFail.*",
-    version: "0.11.0",
-  });
+  const validationContext = { positional: [] };
   for (const element in definition) {
-    completeElementDefinition(element, definition[element]);
+    completeElementDefinition(element, definition[element], validationContext);
   }
+  // validate positional arguments for current definition
+  validatePositional(validationContext.positional);
   return definition;
 }
 
-function completeElementDefinition(name: string, element: DefinitionElement) {
+/** Calculate if the provided element is a command  */
+const isCommand = (element: DefinitionElement) =>
+  element.kind === Kind.COMMAND ||
+  typeof element.action === "function" ||
+  (element.options !== undefined && !Object.values(element.options).some(isCommand));
+
+function completeElementDefinition(name: string, element: DefinitionElement, validationContext: ValidationContext) {
+  // Infer kind when not specified
+  if (!element.kind) {
+    element.kind = Object.values(element.options || {}).some(isCommand)
+      ? Kind.NAMESPACE
+      : isCommand(element)
+      ? Kind.COMMAND
+      : Kind.OPTION;
+  }
   // Complete aliases
   element.aliases = getAliases(name, element);
-  // Set kind to Option if missing
-  element.kind = element.kind ?? Kind.OPTION;
-  // Set option type to string if missing
-  if (element.kind === Kind.OPTION && !element.type) {
-    element.type = Type.STRING;
+  if (element.kind === Kind.OPTION) {
+    // Set positional arguments configured as "true" with type=list
+    if (element.positional === true) {
+      element.type = Type.LIST;
+    }
+    // Set option type to string if missing
+    else if (!element.type) {
+      element.type = Type.STRING;
+    }
+    // update validation context
+    ![undefined, false].includes(element.positional as any) && validationContext.positional.push(element as Option);
   }
   // Add name as key
   element.key = name;
   // Print deprecations
   deprecationWarning({
-    condition: typeof element.value === "function",
-    property: "Option.value",
-    version: "0.11.0",
+    property: "Command.type",
+    condition: element.kind === Kind.COMMAND && element.type !== undefined,
+    description: "Create inside a new option with `positional: 0` instead",
   });
+  deprecationWarning({
+    property: "Option.value",
+    condition: typeof element.value === "function",
+    version: "0.12.0",
+    alternative: "Option.parser",
+  });
+  const deValidationContext = { positional: [] };
   for (const optionKey in element.options ?? {}) {
-    completeElementDefinition(optionKey, element.options![optionKey]);
+    completeElementDefinition(optionKey, element.options![optionKey], deValidationContext);
   }
+  // validate positional arguments for nested options
+  validatePositional(deValidationContext.positional);
 }
 
 /** Process incoming args based on provided definition */
@@ -95,7 +125,7 @@ export function parseArguments(
 ): ParsingOutput {
   const output: ParsingOutput = {
     location: [],
-    options: {},
+    options: { _: [] },
     errors: [],
   };
   const aliases: { [key: string]: DefinitionElement | string } = {};
@@ -113,14 +143,25 @@ export function parseArguments(
       aliases[alias] = mainAlias;
     });
     //Process default
-    if (element.kind !== Kind.COMMAND || element.type !== undefined) {
+    if (element.type !== undefined && element.default !== undefined) {
       output.options[element.key!] = element.default;
     }
   };
 
-  let definitionRef = definition;
+  let definitionRef = definition,
+    commandFound = false;
   const optsAliases = [];
-  argsLoop: for (const arg of args) {
+  argsLoop: for (let argIndex = 0; argIndex < args.length; argIndex++) {
+    const arg = args[argIndex];
+    // Detect "--" delimiter to stop parsing
+    if (arg === "--") {
+      output.options.__ = args.slice(argIndex + 1);
+      const argsRemoved = args.length - argsToProcess.length;
+      argsToProcess = argsToProcess.slice(0, argIndex - (argsRemoved - 1) - 1);
+      break argsLoop;
+    } else if (commandFound) {
+      continue;
+    }
     // Sort definition to process options first
     const entries = Object.entries(definitionRef ?? {}).sort(([_, a]) => (a.kind === Kind.OPTION ? -1 : 1));
     for (let i = 0; i < entries.length; i++) {
@@ -133,7 +174,8 @@ export function parseArguments(
         if (i < entries.length - 1) {
           continue;
         }
-        if (!optsAliases.includes(arg)) {
+        // Only generate error when no root-command is registered
+        if (!optsAliases.includes(arg) && (!cliOptions.rootCommand || output.location.length > 0)) {
           const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
           output.errors.push(CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion));
         }
@@ -143,12 +185,9 @@ export function parseArguments(
         if (element.type === undefined) {
           argsToProcess = argsToProcess.slice(1);
         }
-        if (output.location.length === 0) {
-          output.location.push(cliOptions.commandsPath);
-        }
         output.location.push(key);
-        // No more namespaces/commands are allowed to follow, so end
-        break argsLoop;
+        commandFound = true;
+        break;
       }
       // Namespaces will follow here
       argsToProcess = argsToProcess.slice(1);
@@ -157,21 +196,50 @@ export function parseArguments(
       break;
     }
   }
-
-  const defElement = getDefinitionElement(definition, output.location, cliOptions)!;
+  const elLocation =
+    output.location.length === 0 && typeof cliOptions.rootCommand === "string"
+      ? [cliOptions.rootCommand]
+      : output.location;
+  const defElement = getDefinitionElement(definition, elLocation, cliOptions)!;
   // Process all element aliases and defaults
-  const defToProcess = output.location.length > 0 ? { "": defElement, ...defElement.options } : definition;
+  const defToProcess = elLocation.length > 0 ? { "": defElement, ...defElement.options } : definition;
   Object.values(defToProcess).forEach(processElement);
+  // Generate a map containing the positional-options
+  const positionalOptions = Object.values(defToProcess).reduce(
+    (acc: { [k: string]: DefinitionElement }, { positional, kind, ...opt }) => {
+      if (kind === Kind.OPTION && (positional === true || typeof positional === "number")) {
+        acc[positional.toString()] = opt;
+      }
+      return acc;
+    },
+    {},
+  );
+  // prettier-ignore
+  enum Positional { TRUE = "1", FALSE = "0" }
+  // Flag to ignore all positional options if the first one is misplaced (missing)
+  let ignorePositional = false;
 
   // Process args
   for (let i = 0; i < argsToProcess.length; i++) {
     const curr = argsToProcess[i],
       next = argsToProcess[i + 1];
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
-    const optionDefinition = aliases[optionKey] as DefinitionElement;
-    const outputKey = optionDefinition && (optionDefinition.key as string);
-    if (aliases.hasOwnProperty(optionKey)) {
-      const evaluatedValue = aliases.hasOwnProperty(next) ? undefined : next;
+    const strictPositional = positionalOptions[i];
+    // If an option-alias is found where a numeric-positional option was expected, discard all remaining numeric-positional options
+    ignorePositional ||= strictPositional && aliases.hasOwnProperty(optionKey);
+    const positional = (!ignorePositional ? strictPositional : undefined) || positionalOptions.true;
+    const [optionDefinition, isPositional] = aliases.hasOwnProperty(optionKey)
+      ? [aliases[optionKey] as DefinitionElement, Positional.FALSE]
+      : [positional, !!positional ? Positional.TRUE : Positional.FALSE];
+    if (optionDefinition !== undefined) {
+      const outputKey = optionDefinition.key!;
+      // Mapping between whether a positional-option applies, and the value to be used in parsing
+      const posMapping: { [k: string]: string } = { [Positional.FALSE]: next, [Positional.TRUE]: curr };
+      const evaluatedValue = Object.entries(posMapping).some(
+        ([pString, v]) => pString === isPositional && aliases.hasOwnProperty(v),
+      )
+        ? undefined
+        : posMapping[isPositional];
       const parser = typeof optionDefinition.parser === "function" ? optionDefinition.parser : parseOptionValue;
       const parserOutput = parser({
         value: evaluatedValue,
@@ -188,8 +256,11 @@ export function parseArguments(
         output.options[outputKey] = parserOutput.value;
       }
       i += parserOutput.next !== undefined ? parserOutput.next : evaluatedValue !== undefined ? 1 : 0;
-    } else if (!aliases.hasOwnProperty(optionKey)) {
-      // Unknown option
+      // Adjust for positional options
+      i -= isPositional === Positional.TRUE ? 1 : 0;
+    } else {
+      // Include unknown arg inside "_" key, and add an error
+      output.options._.push(curr);
       output.errors.push(CliError.format(ErrorType.OPTION_NOT_FOUND, curr));
     }
   }
@@ -217,11 +288,18 @@ export function parseArguments(
 export async function executeScript({ location, options }: Omit<ParsingOutput, "errors">, cliOptions: CliOptions) {
   const base = cliOptions.baseScriptLocation;
   if (!base) {
-    return logErrorAndExit("There was a problem finding base script location");
+    return logErrorAndExit(Cli.formatMessage("execute.base-location-error"));
   }
   const entryFile = path.parse(getEntryFile());
 
-  const scriptPaths = [".", ...location]
+  const finalLocation = [
+    // Apply CliOptions.commandsPath configuration for single commands
+    ...(location.length === 1 && cliOptions.commandsPath !== "." ? [cliOptions.commandsPath] : []),
+    // Include CliOptions.rootCommand if empty location provided
+    ...(location.length === 0 && typeof cliOptions.rootCommand === "string" ? [cliOptions.rootCommand] : []),
+  ].concat(location);
+
+  const scriptPaths = [".", ...finalLocation]
     .reduce((acc: { path: string; default: boolean }[], _, i: number, list) => {
       // Reverse index to consider the most specific paths first
       const index = list.length - 1 - i;
@@ -267,11 +345,11 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     }
     const fn = validScriptPath.default ? m : m[location[location.length - 1]];
     if (typeof fn !== "function") {
-      logErrorAndExit("Could not find handler for command");
+      logErrorAndExit(Cli.formatMessage("execute.handler-not-found", { path: validScriptPath.path }));
     }
     return fn(options);
   } catch (e: any) {
-    logErrorAndExit(`There was a problem executing the script (${validScriptPath.path}: ${e.message})`);
+    logErrorAndExit(Cli.formatMessage("execute.execution-error", { path: validScriptPath.path, error: e.message }));
   }
 }
 
@@ -288,7 +366,7 @@ export function generateScopedHelp(
   rawLocation: string[],
   cliOptions: CliOptions,
 ) {
-  let location = rawLocation[0] === cliOptions.commandsPath ? rawLocation.slice(1) : rawLocation;
+  let location = rawLocation;
   const element = getDefinitionElement(definition, location, cliOptions);
   let definitionRef = definition;
   const sections: { [key in HELP_SECTIONS]?: string } = {};
@@ -298,39 +376,55 @@ export function generateScopedHelp(
       definitionRef = element.options as Definition<DefinitionElement>;
     } else {
       // Some element in location was incorrect. Output the entire help
-      Cli.logger.log(`\nUnable to find the specified scope (${location.join(" > ")})\n`);
+      Cli.logger.log(`\n${Cli.formatMessage("generate-help.scope-not-found", { scope: location.join(" > ") })}\n`);
       location = [];
     }
   } else if (cliOptions.cliDescription) {
     sections[HELP_SECTIONS.DESCRIPTION] = cliOptions.cliDescription.concat("\n");
   }
   // Add usage section
-  const { existingKinds, hasOptions } = Object.values(definitionRef || {}).reduce(
+  const { existingKinds, hasOptions, positionalOptions } = Object.values(definitionRef || {}).reduce(
     (acc, curr) => {
-      if (curr.kind === Kind.OPTION) {
+      const { kind, positional, required, key } = curr;
+      if (kind === Kind.OPTION) {
         acc.hasOptions = true;
-      } else if (acc.existingKinds.indexOf(curr.kind as string) < 0) {
-        acc.existingKinds.push(curr.kind as string);
+        if (positional === true || typeof positional === "number") {
+          acc.positionalOptions.push({ index: positional, key, required });
+        }
+      } else if (acc.existingKinds.indexOf(kind as string) < 0) {
+        acc.existingKinds.push(kind as string);
       }
       return acc;
     },
-    { existingKinds: [] as string[], hasOptions: false },
+    { existingKinds: [] as string[], hasOptions: false, positionalOptions: [] as any[] },
   );
 
   const formatKinds = (kinds: string[]) =>
-    ` ${kinds
+    kinds
       .sort((a) => (a === Kind.NAMESPACE ? -1 : 1))
       .join("|")
-      .toUpperCase()}`;
+      .toUpperCase();
+
+  const formatPositionalOptions = (positionalOpts: any[]) =>
+    positionalOpts
+      .sort((a, b) => (b.index === true ? -1 : a.index === true ? 1 : a.index - b.index))
+      .map(({ index, key, required }) => {
+        const s = index === true ? "..." : "";
+        return required ? `<${key}${s}>` : `[${key}${s}]`;
+      })
+      .join(" ");
 
   sections[HELP_SECTIONS.USAGE] = [
-    `Usage:  ${cliOptions.cliName}`,
-    location.length > 0 ? ` ${location.join(" ")}` : "",
-    existingKinds.length > 0 ? formatKinds(existingKinds) : "",
-    element?.kind === Kind.COMMAND && element!.type !== undefined ? ` <${element!.type}>` : "",
-    hasOptions ? " [OPTIONS]" : "",
-    "\n",
-  ].join("");
+    `${Cli.formatMessage("generate-help.usage")}:  ${cliOptions.cliName}`,
+    location.join(" "),
+    formatKinds(existingKinds),
+    element?.kind === Kind.COMMAND && element!.type !== undefined ? `<${element!.type}>` : "",
+    formatPositionalOptions(positionalOptions),
+    hasOptions ? Cli.formatMessage("generate-help.has-options") : "",
+  ]
+    .filter((e) => e)
+    .join(" ")
+    .concat("\n");
   generateHelp(definitionRef, cliOptions, sections);
 }
 
@@ -344,13 +438,15 @@ function generateHelp(
   const sectionIndentation = 2;
 
   type ExtendedDefinitionElement = DefinitionElement & { name: string };
-  type ElementSections = { [key in HELP_SECTIONS]?: { title: string; content: ExtendedDefinitionElement[] } };
+  type ElementSections = { [key in HELP_SECTIONS]?: ExtendedDefinitionElement[] };
 
   // Generate the formatted versions of aliases
   const formatAliases = (aliases: string[] = []) => aliases.join(", ");
   // Generate default-value hint, if present
   const defaultHint = (option: DefinitionElement) =>
-    option.default !== undefined ? ` (default: ${option.default})` : "";
+    option.default !== undefined
+      ? " ".concat(Cli.formatMessage("generate-help.option-default", { default: option.default.toString() }))
+      : "";
   // Format all the information relative to an element
   const formatElement = (element: ExtendedDefinitionElement, formatter: ColumnFormatter, indentation: number) =>
     [
@@ -363,18 +459,9 @@ function generateHelp(
 
   // Initialize element-sections
   const elementSectionsTemplate: ElementSections = {
-    [HELP_SECTIONS.NAMESPACES]: {
-      title: "Namespaces:",
-      content: [],
-    },
-    [HELP_SECTIONS.COMMANDS]: {
-      title: "Commands:",
-      content: [],
-    },
-    [HELP_SECTIONS.OPTIONS]: {
-      title: "Options:",
-      content: [],
-    },
+    [HELP_SECTIONS.NAMESPACES]: [],
+    [HELP_SECTIONS.COMMANDS]: [],
+    [HELP_SECTIONS.OPTIONS]: [],
   };
 
   // Caculate all element-sections and process section values
@@ -392,7 +479,7 @@ function generateHelp(
             name = formatAliases(element.aliases);
           const completeElement = { ...element, name };
           acc.formattedNames.push(name);
-          acc.elementSections[sectionKey].content.push(completeElement);
+          acc.elementSections[sectionKey].push(completeElement);
           return acc;
         },
         { elementSections: elementSectionsTemplate, formattedNames: [] },
@@ -403,9 +490,10 @@ function generateHelp(
 
   // Format all element-sections
   Object.entries(elementSections)
-    .filter(([_, section]) => section.content.length > 0)
-    .forEach(([sectionKey, { title, content }]) => {
-      let sectionContent = `${title}\n`;
+    .filter(([_, content]) => content.length > 0)
+    .forEach(([sectionKey, content]) => {
+      const sectionTitle = Cli.formatMessage(`generate-help.${sectionKey}-title`);
+      let sectionContent = `${sectionTitle}:\n`;
       content.forEach((item: ExtendedDefinitionElement) => {
         sectionContent += formatElement(item, formatter, sectionIndentation);
       });
@@ -421,7 +509,7 @@ function generateHelp(
   const formattedHelp = Object.entries(sections).reduce((acc, [sectionKey, sectionContent]) => {
     const regexp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
     return acc.replace(regexp, sectionContent || "");
-  }, cliOptions.help.template);
+  }, cliOptions.help.template!);
   Cli.logger.log(formattedHelp);
 }
 
