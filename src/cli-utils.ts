@@ -156,7 +156,8 @@ export function parseArguments(
     // Detect "--" delimiter to stop parsing
     if (arg === "--") {
       output.options.__ = args.slice(argIndex + 1);
-      argsToProcess = argsToProcess.slice(0, argIndex - 1);
+      const argsRemoved = args.length - argsToProcess.length;
+      argsToProcess = argsToProcess.slice(0, argIndex - (argsRemoved - 1) - 1);
       break argsLoop;
     } else if (commandFound) {
       continue;
