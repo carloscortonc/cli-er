@@ -44,11 +44,11 @@ new Cli({
 invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
 
 This method has three main behaviours: print version, print help and execute a command:
-- **print version**: if [autoincluded version](#versionautoinclude) is enabled and version option is provided, version will be printed.
-- **print help**: if [autoincluded help](#helpautoinclude) is enabled and help option is provided, or a cli without `rootCommand` is invoked without location, or a namespace is invoked, help will be generated. If any errors configured in [`CliOptions.errors.onGenerateHelp`](#errorsongeneratehelp) are generated, they will be outputted before the help.
-- **execute command**: if any errors configured in [`CliOptions.errors.onExecuteCommand`](#errorsonexecutecommand) are generated, they will be printed and execution will end with status `1`. Otherwise, the script location will be calculated, and the corresponding script executed.
+- **print version**: if [autoincluded version](./cli-options.md#versionautoinclude) is enabled and version option is provided, version will be printed.
+- **print help**: if [autoincluded help](./cli-options.md#helpautoinclude) is enabled and help option is provided, or a cli without `rootCommand` is invoked without location, or a namespace is invoked, help will be generated. If any errors configured in [`CliOptions.errors.onGenerateHelp`](./cli-options.md#errorsongeneratehelp) are generated, they will be outputted before the help.
+- **execute command**: if any errors configured in [`CliOptions.errors.onExecuteCommand`](./cli-options.md#errorsonexecutecommand) are generated, they will be printed and execution will end with status `1`. Otherwise, the script location will be calculated, and the corresponding script executed.
 
-If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](/examples/docker/docker.js#L128)).
+If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](./cli-options.md#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](/examples/docker/docker.js#L128)).
 
 You also use `CliOptions.rootCommand` to define a default command to execute, when no command/namespace is supplied (check this [webpack-cli example](/examples/webpack-cli)).
 
@@ -129,11 +129,11 @@ Options:
 _**TIP**: any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition._
 
 > **Note**
-> help-generation option is auto-included by default. This can be configured via [`CliOptions.help`](#helpautoinclude)
+> help-generation option is auto-included by default. This can be configured via [`CliOptions.help`](./cli-options.md#helpautoinclude)
 
 ## version()
 
 Prints the formatted version of the current cli application: finds the package.json for the current application, and prints its name and version.
 
 > **Note**
-> version-generation option is auto-included by default. This can be configured via [`CliOptions.version`](#versionautoinclude)
+> version-generation option is auto-included by default. This can be configured via [`CliOptions.version`](./cli-options.md#versionautoinclude)
