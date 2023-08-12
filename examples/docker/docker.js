@@ -14,28 +14,28 @@ new Cli(
               description: "Path or Url to the Dockerfile",
             },
             addHost: {
-              aliases: ["--add-host"],
+              aliases: ["add-host"],
               type: "list",
               description: "Add a custom host-to-IP mapping (host:ip)",
             },
             buildArg: {
-              aliases: ["--build-arg"],
+              aliases: ["build-arg"],
               type: "list",
               description: "Set build-time variables",
             },
             cacheFrom: {
-              aliases: ["--cache-from"],
+              aliases: ["cache-from"],
               type: "list",
               description: "Images to consider as cache sources",
             },
             disableContentTrust: {
-              aliases: ["--disable-content-trust"],
+              aliases: ["disable-content-trust"],
               type: "boolean",
               default: true,
               description: "Skip image verification",
             },
             file: {
-              aliases: ["-f", "--file"],
+              aliases: ["f", "file"],
               description: "Name of the Dockerfile (Default is 'PATH/Dockerfile')",
             },
             iidfile: {
@@ -53,12 +53,12 @@ new Cli(
               description: "Set the networking mode for the RUN instructions during build",
             },
             noCache: {
-              aliases: ["--no-cache"],
+              aliases: ["no-cache"],
               type: "boolean",
               description: "Do not use cache when building the image",
             },
             output: {
-              aliases: ["-o", "--output"],
+              aliases: ["o", "output"],
               description: "Output destination (format: type=local,dest=path)",
             },
             platform: {
@@ -73,7 +73,7 @@ new Cli(
               description: "Always attempt to pull a newer version of the image",
             },
             quiet: {
-              aliases: ["-q", "--quiet"],
+              aliases: ["q", "quiet"],
               type: "boolean",
               description: "Suppress the build output and print image ID on success",
             },
@@ -84,7 +84,7 @@ new Cli(
               description: "SSH agent socket or keys to expose to the build (only if BuildKit enabled)",
             },
             tag: {
-              aliases: ["-t", "--tag"],
+              aliases: ["t", "tag"],
               type: "list",
               description: "Name and optionally a tag in the 'name:tag' format",
             },
@@ -97,7 +97,7 @@ new Cli(
           description: "Remove build cache",
           options: {
             all: {
-              aliases: ["-a", "--all"],
+              aliases: ["a", "all"],
               type: "boolean",
               description: "Remove all unused build cache, not just dangling ones",
             },
@@ -105,12 +105,12 @@ new Cli(
               description: "Provide filter values (e.g. 'until=24h')",
             },
             force: {
-              aliases: ["-f", "--force"],
+              aliases: ["f", "force"],
               type: "boolean",
               description: "Do not prompt for confirmation",
             },
             keepStorage: {
-              aliases: ["--keep-storage"],
+              aliases: ["keep-storage"],
               type: "number",
               description: "Amount of disk space to keep for cache",
             },
@@ -120,7 +120,7 @@ new Cli(
     },
     debug: {
       description: "Enable debug mode",
-      aliases: ["-D", "--debug"],
+      aliases: ["D", "debug"],
       type: "boolean",
       default: false,
     },

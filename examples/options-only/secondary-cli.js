@@ -8,7 +8,7 @@ if (require.main === module) {
   new Cli(
     {
       debug: {
-        aliases: ["-d", "--debug"],
+        aliases: ["d", "debug"],
         type: "boolean",
         description: "Enable debug logs",
         default: false,

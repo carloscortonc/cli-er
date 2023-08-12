@@ -44,7 +44,7 @@ const definition = {
   },
   debug: {
     type: "boolean",
-    aliases: ["-D", "--debug"],
+    aliases: ["D", "debug"],
     default: false,
   },
 };

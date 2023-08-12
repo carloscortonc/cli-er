@@ -3,7 +3,7 @@ import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
-import { Definition } from "../src/types";
+import { Definition, Option } from "../src/types";
 const definition = _definition as Definition;
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
@@ -36,6 +36,28 @@ describe("Cli.constructor", () => {
       }),
     });
   });
+  it("Resulting definition calculates aliases dashes when not present", () => {
+    const c = new Cli(
+      { opt: { aliases: ["o", "-p", "opt", "--opt2"] } },
+      { help: { autoInclude: false }, version: { autoInclude: false } },
+    );
+    expect((c.definition.opt as Option).aliases).toStrictEqual(["-o", "-p", "--opt", "--opt2"]);
+  });
+  it("Resulting definition includes negated boolean option if enabled", () => {
+    const c = new Cli(
+      { opt: { aliases: ["o", "opt", "--opt2", "opt3"], type: "boolean" } },
+      { help: { autoInclude: false }, version: { autoInclude: false } },
+    );
+    expect(c.definition.optNegated).toStrictEqual(
+      expect.objectContaining({
+        aliases: ["--noopt", "--no-opt", "--noopt3", "--no-opt3"],
+        hidden: true,
+        key: "opt",
+        kind: "option",
+        type: "boolean",
+      }),
+    );
+  });
   it("Resulting definition is an empty object when provided with empty definition and all auto-included options are disabled", () => {
     const c = new Cli({}, { help: { autoInclude: false }, version: { autoInclude: false } });
     expect(c.definition).toStrictEqual({});
@@ -59,15 +81,17 @@ describe("Cli.constructor", () => {
       help: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["-h", "--help"],
+        aliases: ["h", "help"],
         description: "Display global help, or scoped to a namespace/command",
+        negatable: false,
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["-v", "--version"],
+        aliases: ["v", "version"],
         description: "Display version",
+        negatable: false,
         hidden: true,
       },
       rootCommand: true,
@@ -81,9 +105,9 @@ describe("Cli.constructor", () => {
     const overwrites = {
       baseLocation: "..",
       baseScriptLocation: "./",
-      help: { autoInclude: false, aliases: ["--help"], description: "", template: "template" },
+      help: { autoInclude: false, aliases: ["help"], description: "", template: "template" },
       errors: { onExecuteCommand: [] },
-      version: { aliases: ["--version"], description: "", hidden: false },
+      version: { aliases: ["version"], description: "", hidden: false },
       cliName: "custom-name",
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
@@ -100,15 +124,17 @@ describe("Cli.constructor", () => {
       help: {
         autoInclude: overwrites.help.autoInclude,
         type: "boolean",
-        aliases: ["--help"],
+        aliases: ["help"],
         description: "",
+        negatable: false,
         template: "template",
       },
       version: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["--version"],
+        aliases: ["version"],
         description: "",
+        negatable: false,
         hidden: false,
       },
       rootCommand: true,
@@ -166,6 +192,13 @@ describe("Cli.parse", () => {
       options: { globalOption: "globalvalue", _: [] },
       errors: [],
     });
+  });
+  it("Parsing boolean option supports negated aliases", () => {
+    const c = new Cli({ opt: { type: "boolean" } }, { help: { autoInclude: false }, version: { autoInclude: false } });
+    expect(c.parse(["--noopt"]).options.opt).toBe(false);
+    expect(c.parse(["--no-opt"]).options.opt).toBe(false);
+    expect(c.parse(["--no-opt", "true"]).options.opt).toBe(false);
+    expect(c.parse(["--no-opt", "false"]).options.opt).toBe(true);
   });
 });
 

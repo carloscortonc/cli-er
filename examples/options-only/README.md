@@ -24,4 +24,6 @@ echo $?
 
 # Print help from secondary cli-app: name is overwritten (CliOptions.cliName since v0.7.0)
 node secondary-cli.js -h
+# Negate alias (since 0.12.0)
+node secondary-cli.js --no-debug
 ```

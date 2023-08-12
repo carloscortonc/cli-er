@@ -48,14 +48,16 @@ type Option = BaseElement & {
   kind: "option";
   aliases?: string[];
   positional?: boolean | number;
+  negatable?: boolean;
   default?: any;
   required?: boolean;
   type?: "string" | "boolean" | "list" | "number" | "float";
   parser?: (input: ValueParserInput) => ValueParserOutput
 }
 ```
-- **aliases**: alternative names for the options, e.g. `["-h", "--help"]`. When not specified, the name of the option will be used preceded by "--".
+- **aliases**: alternative names for the options, e.g. `["h", "help"]`. They should be specified without dashes, and final alias value will be calculated depending on the provided alias length: `-` for single letters, and `--` in other cases. When not specified, the name of the option will be used.
 - **positional**: enables [positional options](#positional-options).
+- **negatable**: whether to include [negated aliases](#negated-aliases) in boolean options.
 - **default**: default value for the option.
 - **required**: specifies an option as required, generating an error if a value is not provided.
 - **type**: type of option, to load the correct parser.
@@ -77,6 +79,24 @@ new Cli({ files: { positional: true} }, { cliName: "format" });
 ```
 
 **Example**: [jest-cli](/examples/jest-cli/)
+
+### Negated aliases
+For options with `type:boolean`, negated aliases are included by default. These negated aliases are generated from original aliases, prefixing `no` and `no-`.
+To turn this feature off, specify `negatable:false`
+
+```js
+new Cli({ debug: { type: "boolean"}}, { cliName: "cli" })
+// $ cli --debug
+// => { options: { debug : true }}
+
+// $ cli --no-debug
+// => { options: { debug : false }}
+
+// $ cli --nodebug
+// => { options: { debug : false }}
+```
+
+**Example**: [secondary-cli](/examples/options-only/secondary-cli.js)
 
 ### Custom parser
 ```typescript

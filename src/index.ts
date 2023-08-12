@@ -51,14 +51,16 @@ export default class Cli {
       help: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["-h", "--help"],
+        negatable: false,
+        aliases: ["h", "help"],
         description: Cli.formatMessage("help.description"),
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["-v", "--version"],
+        negatable: false,
+        aliases: ["v", "version"],
         description: Cli.formatMessage("version.description"),
         hidden: true,
       },

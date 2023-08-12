@@ -1,4 +1,4 @@
-With positional arguments (since 0.11.0), isolated options can be group within an option.
+With positional arguments (since 0.11.0), isolated options can be grouped within an option.
 In the case of the oficial `jest-cli`, this is used for the list of files to test (https://jestjs.io/docs/cli#--testpathpatternregex)
 
 With `cli-er` you can define it with:
