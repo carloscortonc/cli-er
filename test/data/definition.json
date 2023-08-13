@@ -23,7 +23,7 @@
         "kind": "namespace",
         "options": {
           "cmd": {
-            "kind": "cmd"
+            "kind": "command"
           },
           "nested-nms-o": {
             "kind": "option"
@@ -41,7 +41,7 @@
   },
   "globalOption": {
     "kind": "option",
-    "aliases": ["-g", "--global"],
+    "aliases": ["-g", "global"],
     "default": "globalvalue",
     "description": "Option shared between all commands"
   }

@@ -683,7 +683,7 @@ describe("getDefinitionElement", () => {
           },
         },
         globalOption: {
-          aliases: ["-g", "--global"],
+          aliases: ["-g", "global"],
           default: "globalvalue",
           description: "Option shared between all commands",
           kind: "option",
@@ -701,7 +701,7 @@ describe("getDefinitionElement", () => {
   it("Includes all inherited options", () => {
     const de = getDefinitionElement(definition, ["nmsi", "nested-nms", "cmd"], cliOptions);
     expect(de).toStrictEqual({
-      kind: "cmd",
+      kind: "command",
       options: {
         "nested-nms-o": expect.anything(),
         "nmsi-o": expect.anything(),

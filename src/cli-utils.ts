@@ -39,10 +39,17 @@ export function getEntryPoint() {
 function getAliases(key: string, element: DefinitionElement) {
   if ([Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
     return [key];
-  } else if (!element.aliases) {
-    return [`--${key}`];
   }
-  return element.aliases;
+  return element.aliases!.map((alias) => {
+    if (!alias.startsWith("-")) {
+      return (alias.length > 1 ? "--" : "-").concat(alias);
+    }
+    deprecationWarning({
+      property: "Option.aliases with dashes",
+      description: "Aliases should be specified without dashes",
+    });
+    return alias;
+  });
 }
 
 /** Process definition and complete any missing fields */
@@ -59,7 +66,7 @@ export function completeDefinition(definition: Definition<DefinitionElement>, cl
   }
   const validationContext = { positional: [] };
   for (const element in definition) {
-    completeElementDefinition(element, definition[element], validationContext);
+    completeElementDefinition(element, definition, validationContext);
   }
   // validate positional arguments for current definition
   validatePositional(validationContext.positional);
@@ -72,7 +79,12 @@ const isCommand = (element: DefinitionElement) =>
   typeof element.action === "function" ||
   (element.options !== undefined && !Object.values(element.options).some(isCommand));
 
-function completeElementDefinition(name: string, element: DefinitionElement, validationContext: ValidationContext) {
+function completeElementDefinition(
+  name: string,
+  definition: Definition<DefinitionElement>,
+  validationContext: ValidationContext,
+) {
+  const element = definition[name];
   // Infer kind when not specified
   if (!element.kind) {
     element.kind = Object.values(element.options || {}).some(isCommand)
@@ -81,8 +93,7 @@ function completeElementDefinition(name: string, element: DefinitionElement, val
       ? Kind.COMMAND
       : Kind.OPTION;
   }
-  // Complete aliases
-  element.aliases = getAliases(name, element);
+
   if (element.kind === Kind.OPTION) {
     // Set positional arguments configured as "true" with type=list
     if (element.positional === true) {
@@ -92,9 +103,41 @@ function completeElementDefinition(name: string, element: DefinitionElement, val
     else if (!element.type) {
       element.type = Type.STRING;
     }
-    // update validation context
+    // Update validation context
     ![undefined, false].includes(element.positional as any) && validationContext.positional.push(element as Option);
+
+    // Initialize aliases before negated-boolean processing
+    element.aliases = element.aliases || [name];
+
+    // Include negated version for boolean options
+    if (
+      element.type === Type.BOOLEAN &&
+      element.negatable === true &&
+      element.aliases?.some((a) => !a.startsWith("-") && a.length > 1)
+    ) {
+      definition[name.concat("Negated")] = {
+        kind: Kind.OPTION,
+        type: Type.BOOLEAN,
+        // Will only work when aliases are defined without dashes
+        aliases: element.aliases
+          .filter((a) => !a.startsWith("-") && a.length > 1)
+          .reduce((acc, a) => [...acc, ...["no", "no-"].map((e) => `--${e}`.concat(a))], [] as string[]),
+        parser: (input) => {
+          const o = parseOptionValue(input);
+          return { ...o, value: !o.value };
+        },
+        hidden: true,
+        key: name,
+      };
+    } else if (element.type === Type.BOOLEAN && element.negatable === true) {
+      debug(
+        `Boolean option <${name}> will be included without negated aliases.` +
+          " To change this, provide long aliases without dashes",
+      );
+    }
   }
+  // Complete aliases
+  element.aliases = getAliases(name, element);
   // Add name as key
   element.key = name;
   // Print deprecations
@@ -111,7 +154,7 @@ function completeElementDefinition(name: string, element: DefinitionElement, val
   });
   const deValidationContext = { positional: [] };
   for (const optionKey in element.options ?? {}) {
-    completeElementDefinition(optionKey, element.options![optionKey], deValidationContext);
+    completeElementDefinition(optionKey, element.options!, deValidationContext);
   }
   // validate positional arguments for nested options
   validatePositional(deValidationContext.positional);

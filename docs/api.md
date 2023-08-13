@@ -78,7 +78,7 @@ const definition = {
     description: "Description for global command",
   },
   globalOption: {
-    aliases: ["-g", "--global"],
+    aliases: ["g", "global"],
     default: "globalvalue",
     description: "Option shared between all commands",
   },
