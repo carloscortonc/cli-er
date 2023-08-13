@@ -55,7 +55,7 @@ type Option = BaseElement & {
   parser?: (input: ValueParserInput) => ValueParserOutput
 }
 ```
-- **aliases**: alternative names for the options, e.g. `["h", "help"]`. They should be specified without dashes, and final alias value will be calculated depending on the provided alias length: `-` for single letters, and `--` in other cases. When not specified, the name of the option will be used.
+- **aliases**: alternative names for the options, e.g. `["h", "help"]`. They should be specified without dashes, and final alias value will be calculated depending on the provided alias length: prefixed with `-` for single letters, and `--` in other cases. When not specified, the name of the option will be used.
 - **positional**: enables [positional options](#positional-options).
 - **negatable**: whether to include [negated aliases](#negated-aliases) in boolean options.
 - **default**: default value for the option.
