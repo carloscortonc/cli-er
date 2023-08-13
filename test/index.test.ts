@@ -231,6 +231,13 @@ describe("Cli.run", () => {
     c.run(["--global", "overwritten"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
+  it("Calling run with no namespace/command: typeof CliOptions.rootCommand=string", () => {
+    const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
+    const c = new Cli(definition, { rootCommand: "gcmd" });
+    c.run([]);
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ location: ["gcmd"] }), expect.anything());
+    spy.mockClear();
+  });
   it("Calling run on element with action invokes such action", () => {
     const action = jest.fn();
     const c = new Cli({
