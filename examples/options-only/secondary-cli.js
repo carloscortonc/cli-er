@@ -10,6 +10,7 @@ if (require.main === module) {
       debug: {
         aliases: ["d", "debug"],
         type: "boolean",
+        negatable: true,
         description: "Enable debug logs",
         default: false,
       },

@@ -112,7 +112,7 @@ function completeElementDefinition(
     // Include negated version for boolean options
     if (
       element.type === Type.BOOLEAN &&
-      element.negatable !== false &&
+      element.negatable === true &&
       element.aliases?.some((a) => !a.startsWith("-") && a.length > 1)
     ) {
       definition[name.concat("Negated")] = {
@@ -129,7 +129,7 @@ function completeElementDefinition(
         hidden: true,
         key: name,
       };
-    } else if (element.type === Type.BOOLEAN && element.negatable !== false) {
+    } else if (element.type === Type.BOOLEAN && element.negatable === true) {
       debug(
         `Boolean option <${name}> will be included without negated aliases.` +
           " To change this, provide long aliases without dashes",

@@ -51,7 +51,6 @@ export default class Cli {
       help: {
         autoInclude: true,
         type: "boolean",
-        negatable: false,
         aliases: ["h", "help"],
         description: Cli.formatMessage("help.description"),
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
@@ -59,7 +58,6 @@ export default class Cli {
       version: {
         autoInclude: true,
         type: "boolean",
-        negatable: false,
         aliases: ["v", "version"],
         description: Cli.formatMessage("version.description"),
         hidden: true,

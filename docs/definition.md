@@ -81,11 +81,10 @@ new Cli({ files: { positional: true} }, { cliName: "format" });
 **Example**: [jest-cli](/examples/jest-cli/)
 
 ### Negated aliases
-For options with `type:boolean`, negated aliases are included by default. These negated aliases are generated from original aliases, prefixing `no` and `no-`.
-To turn this feature off, specify `negatable:false`
+For options with `type:boolean`, negated aliases can be included specifying `negatable:true`. These negated aliases are generated from original aliases, prefixing `no` and `no-`.
 
 ```js
-new Cli({ debug: { type: "boolean"}}, { cliName: "cli" })
+new Cli({ debug: { type: "boolean", negatable: true }}, { cliName: "cli" })
 // $ cli --debug
 // => { options: { debug : true }}
 

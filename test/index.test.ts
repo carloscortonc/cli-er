@@ -45,7 +45,7 @@ describe("Cli.constructor", () => {
   });
   it("Resulting definition includes negated boolean option if enabled", () => {
     const c = new Cli(
-      { opt: { aliases: ["o", "opt", "--opt2", "opt3"], type: "boolean" } },
+      { opt: { aliases: ["o", "opt", "--opt2", "opt3"], type: "boolean", negatable: true } },
       { help: { autoInclude: false }, version: { autoInclude: false } },
     );
     expect(c.definition.optNegated).toStrictEqual(
@@ -83,7 +83,6 @@ describe("Cli.constructor", () => {
         type: "boolean",
         aliases: ["h", "help"],
         description: "Display global help, or scoped to a namespace/command",
-        negatable: false,
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
@@ -91,7 +90,6 @@ describe("Cli.constructor", () => {
         type: "boolean",
         aliases: ["v", "version"],
         description: "Display version",
-        negatable: false,
         hidden: true,
       },
       rootCommand: true,
@@ -126,7 +124,6 @@ describe("Cli.constructor", () => {
         type: "boolean",
         aliases: ["help"],
         description: "",
-        negatable: false,
         template: "template",
       },
       version: {
@@ -134,7 +131,6 @@ describe("Cli.constructor", () => {
         type: "boolean",
         aliases: ["version"],
         description: "",
-        negatable: false,
         hidden: false,
       },
       rootCommand: true,
@@ -194,7 +190,10 @@ describe("Cli.parse", () => {
     });
   });
   it("Parsing boolean option supports negated aliases", () => {
-    const c = new Cli({ opt: { type: "boolean" } }, { help: { autoInclude: false }, version: { autoInclude: false } });
+    const c = new Cli(
+      { opt: { type: "boolean", negatable: true } },
+      { help: { autoInclude: false }, version: { autoInclude: false } },
+    );
     expect(c.parse(["--noopt"]).options.opt).toBe(false);
     expect(c.parse(["--no-opt"]).options.opt).toBe(false);
     expect(c.parse(["--no-opt", "true"]).options.opt).toBe(false);

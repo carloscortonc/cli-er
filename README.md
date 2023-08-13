@@ -29,6 +29,7 @@ Given the following definition (docker.js):
 ```js
 const definition = {
   builder: {
+    description: "Manage builds",
     options: {
       build: {
         description: "Build an image from a Dockerfile",

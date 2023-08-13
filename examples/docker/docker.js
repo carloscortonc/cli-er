@@ -122,6 +122,7 @@ new Cli(
       description: "Enable debug mode",
       aliases: ["D", "debug"],
       type: "boolean",
+      negatable: true,
       default: false,
     },
   },
