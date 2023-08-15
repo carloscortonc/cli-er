@@ -140,7 +140,7 @@ export default class Cli {
     if (typeof command.action === "function") {
       return command.action(opts);
     }
-    return executeScript(opts, this.options);
+    return executeScript({ ...opts, location: elementLocation }, this.options);
   }
   /**
    * Generate and output help documentation
