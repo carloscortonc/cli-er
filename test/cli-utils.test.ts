@@ -714,10 +714,17 @@ describe("getDefinitionElement", () => {
 });
 
 describe("formatVersion", () => {
-  const cliOptions = new Cli({}).options;
-  it("Prints formatted version", () => {
+  it("Prints default formatted version", () => {
+    const cliOptions = new Cli({}).options;
     const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
     formatVersion({ ...cliOptions, cliName: "cli-app", cliVersion: "1.0.0" });
     expect(logger).toHaveBeenCalledWith("  cli-app version: 1.0.0\n");
+  });
+  it("Override version-template", () => {
+    const cliOptions = new Cli({}, { messages: { "generate-version.template": "{cliName} version {cliVersion}" } })
+      .options;
+    const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
+    formatVersion({ ...cliOptions, cliName: "cli-app", cliVersion: "1.0.0" });
+    expect(logger).toHaveBeenCalledWith("cli-app version 1.0.0");
   });
 });

@@ -550,7 +550,7 @@ function generateHelp(
   });
   const templateKey = (key: string) => `{${key}}`;
   const formattedHelp = Object.entries(sections).reduce((acc, [sectionKey, sectionContent]) => {
-    const regexp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
+    const regexp: RegExp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
     return acc.replace(regexp, sectionContent || "");
   }, cliOptions.help.template!);
   Cli.logger.log(formattedHelp);
@@ -597,7 +597,8 @@ export function getDefinitionElement(
 
 /** Find and format the version of the application that is using this library */
 export function formatVersion(cliOptions: CliOptions) {
-  Cli.logger.log(`${" ".repeat(2)}${cliOptions.cliName} version: ${cliOptions.cliVersion}\n`);
+  const { cliName, cliVersion } = cliOptions;
+  Cli.logger.log(Cli.formatMessage("generate-version.template", { cliName, cliVersion }));
 }
 
 /** Find the closest namespace/command based on the given target and location */
