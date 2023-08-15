@@ -11,6 +11,7 @@ export const CLI_MESSAGES = {
   "generate-help.namespaces-title": "Namespaces",
   "generate-help.commands-title": "Commands",
   "generate-help.options-title": "Options",
+  "generate-version.template": "  {cliName} version: {cliVersion}\n",
   "help.description": "Display global help, or scoped to a namespace/command",
   "version.description": "Display version",
 };
