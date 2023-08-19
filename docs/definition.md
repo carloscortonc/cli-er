@@ -18,7 +18,7 @@ type BaseElement = {
 }
 ```
 - **kind**: describes the type of element.
-- **description**: description of the element, to be used when generating help.
+- **description**: description of the element, to be used when generating help. The library will search first in `CliOptions.messages` with an id generated from element's location and name, followed by `.description`. So for example, for a nested option `opt` inside a command `cmd`, the id will be `cmd.opt.description`.
 - **hidden**: hide an element when generating help.
 
 ## Namespace

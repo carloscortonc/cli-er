@@ -18,8 +18,9 @@ export type DefinitionElement = F<Namespace> &
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
   };
-type ValidationContext = {
+type CompletionContext = {
   positional: Option[];
+  location: string[];
 };
 
 /** Check whether the program using this library is running in cjs */
@@ -64,12 +65,12 @@ export function completeDefinition(definition: Definition<DefinitionElement>, cl
   if (versionAutoInclude) {
     definition.version = versionOption;
   }
-  const validationContext = { positional: [] };
+  const context = { positional: [], location: [] };
   for (const element in definition) {
-    completeElementDefinition(element, definition, validationContext);
+    completeElementDefinition(element, definition, context);
   }
   // validate positional arguments for current definition
-  validatePositional(validationContext.positional);
+  validatePositional(context.positional);
   return definition;
 }
 
@@ -82,7 +83,7 @@ const isCommand = (element: DefinitionElement) =>
 function completeElementDefinition(
   name: string,
   definition: Definition<DefinitionElement>,
-  validationContext: ValidationContext,
+  context: CompletionContext,
 ) {
   const element = definition[name];
   // Infer kind when not specified
@@ -104,7 +105,7 @@ function completeElementDefinition(
       element.type = Type.STRING;
     }
     // Update validation context
-    ![undefined, false].includes(element.positional as any) && validationContext.positional.push(element as Option);
+    ![undefined, false].includes(element.positional as any) && context.positional.push(element as Option);
 
     // Initialize aliases before negated-boolean processing
     element.aliases = element.aliases || [name];
@@ -140,6 +141,9 @@ function completeElementDefinition(
   element.aliases = getAliases(name, element);
   // Add name as key
   element.key = name;
+  // Look for description inside `messages`, otherwise use element's description
+  const descriptionIntlPrefix = context.location.length > 0 ? context.location.join(".").concat(".") : "";
+  element.description = Cli.formatMessage(descriptionIntlPrefix.concat(name, ".description")) || element.description;
   // Print deprecations
   deprecationWarning({
     property: "Command.type",
@@ -152,12 +156,16 @@ function completeElementDefinition(
     version: "0.12.0",
     alternative: "Option.parser",
   });
-  const deValidationContext = { positional: [] };
+  const deContext = { ...context, positional: [] };
   for (const optionKey in element.options ?? {}) {
-    completeElementDefinition(optionKey, element.options!, deValidationContext);
+    completeElementDefinition(
+      optionKey,
+      element.options!,
+      Object.assign(deContext, { location: context.location.concat(name) }),
+    );
   }
   // validate positional arguments for nested options
-  validatePositional(deValidationContext.positional);
+  validatePositional(deContext.positional);
 }
 
 /** Process incoming args based on provided definition */

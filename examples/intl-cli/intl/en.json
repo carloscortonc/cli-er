@@ -1,3 +1,5 @@
 {
-  "greetings": "Welcome"
+  "greetings": "Welcome",
+  "cmd.description": "This is a command",
+  "cmd.opt.description": "This an option for 'cmd'"
 }

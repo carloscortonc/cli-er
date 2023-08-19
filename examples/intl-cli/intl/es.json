@@ -18,5 +18,7 @@
   "option_missing_value": "Se esperaba un valor de tipo <{0}> para la opción \"{1}\"",
   "option_required": "Se esperaba una opción obligatoria \"{0}\"",
 
-  "greetings": "Bienvenido"
+  "greetings": "Bienvenido",
+  "cmd.description": "Esto es un comando",
+  "cmd.opt.description": "Esto es una opcion para 'cmd'"
 }
