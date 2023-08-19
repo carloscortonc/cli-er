@@ -95,7 +95,7 @@ describe("completeDefinition", () => {
       help: {
         type: "boolean",
         aliases: ["-h"],
-        description: "",
+        description: "Display global help, or scoped to a namespace/command",
       },
     });
   });
@@ -114,7 +114,7 @@ describe("completeDefinition", () => {
       version: {
         type: "boolean",
         aliases: ["-v"],
-        description: "",
+        description: "Display version",
       },
     });
   });

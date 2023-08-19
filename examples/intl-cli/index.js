@@ -11,5 +11,5 @@ module.exports = () => {
 };
 
 if (require.main === module) {
-  new Cli({}, { messages, version: { hidden: false } }).run();
+  new Cli({ cmd: { options: { opt: {} } } }, { messages, version: { hidden: false } }).run();
 }
