@@ -1,19 +1,8 @@
-import { CliError, ErrorType, ERROR_MESSAGES } from "../src/cli-errors";
+import { CliError, ERROR_MESSAGES } from "../src/cli-errors";
 import Cli from "../src";
 
 beforeAll(() => {
-  Cli.messages = ERROR_MESSAGES;
-});
-
-describe("CliErrors.format", () => {
-  it("Formats ErrorType with a single argument", () => {
-    expect(CliError.format(ErrorType.OPTION_NOT_FOUND, "option-name")).toEqual('Unknown option "option-name"');
-  });
-  it("Formats ErrorType with multiple arguments", () => {
-    expect(CliError.format(ErrorType.COMMAND_NOT_FOUND, "cmd", "alternative")).toEqual(
-      'Command "cmd" not found. Did you mean "alternative" ?',
-    );
-  });
+  Cli.messages = ERROR_MESSAGES as any;
 });
 
 describe("CliErrors.analize", () => {
@@ -24,6 +13,6 @@ describe("CliErrors.analize", () => {
     expect(CliError.analize("unknown-error")).toBe(undefined);
   });
   it("Returns the correct error type for a given existing error message", () => {
-    expect(CliError.analize('Unknown option "option-name"')).toBe(ErrorType.OPTION_NOT_FOUND);
+    expect(CliError.analize('Unknown option "option-name"')).toBe("option_not_found");
   });
 });

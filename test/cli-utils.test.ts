@@ -258,10 +258,10 @@ describe("parseArguments", () => {
   it("Option with parser property", () => {
     const d = new Cli({
       opt: {
-        parser: ({ value, format }) => {
+        parser: ({ value }) => {
           // return error if value is not a date
           if (isNaN(Date.parse(value || ""))) {
-            return { error: format("option_wrong_value", "x", "x", "x") };
+            return { error: Cli.formatMessage("option_wrong_value", { option: "x", expected: "x", found: "x" }) };
           }
           return { value: new Date(value!) };
         },

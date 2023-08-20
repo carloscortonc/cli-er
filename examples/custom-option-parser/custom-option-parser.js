@@ -10,9 +10,11 @@ module.exports = (options) => {
 
 /* Custom option-parser implementation */
 /** @param {ValueParserInput} */
-function dateParser({ value, format, option }) {
+function dateParser({ value, option }) {
   if (isNaN(Date.parse(value))) {
-    return { error: format("option_wrong_value", option.key, "yyyy/mm/dd", value) };
+    return {
+      error: Cli.formatMessage("option_wrong_value", { option: option.key, expected: "yyyy/mm/dd", found: value }),
+    };
   }
   return { value: new Date(value) };
 }
