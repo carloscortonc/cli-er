@@ -3,8 +3,17 @@ import fs from "fs";
 import url from "url";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
-import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
-import { CliError, ErrorType } from "./cli-errors";
+import {
+  Kind,
+  ParsingOutput,
+  Definition,
+  Type,
+  CliOptions,
+  Option,
+  Namespace,
+  Command,
+  ValueParserInput,
+} from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
 import Cli from ".";
@@ -143,7 +152,8 @@ function completeElementDefinition(
   element.key = name;
   // Look for description inside `messages`, otherwise use element's description
   const descriptionIntlPrefix = context.location.length > 0 ? context.location.join(".").concat(".") : "";
-  element.description = Cli.formatMessage(descriptionIntlPrefix.concat(name, ".description")) || element.description;
+  element.description =
+    Cli.formatMessage(descriptionIntlPrefix.concat(name, ".description") as any, {}) || element.description;
   // Print deprecations
   deprecationWarning({
     property: "Command.type",
@@ -228,7 +238,7 @@ export function parseArguments(
         // Only generate error when no root-command is registered
         if (!optsAliases.includes(arg) && (!cliOptions.rootCommand || output.location.length > 0)) {
           const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-          output.errors.push(CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion));
+          output.errors.push(Cli.formatMessage("command_not_found", { command: arg, suggestion }));
         }
         break argsLoop;
       }
@@ -299,8 +309,13 @@ export function parseArguments(
           ...(optionDefinition as Option),
           key: curr,
         },
-        format: CliError.format,
-      });
+        format: () =>
+          deprecationWarning({
+            property: "Option.parser::format",
+            version: "0.12.0",
+            alternative: "Cli.formatMessage",
+          }),
+      } as ValueParserInput & { format: (...any: any[]) => void });
       if (parserOutput.error) {
         output.errors.push(parserOutput.error);
       } else {
@@ -312,14 +327,14 @@ export function parseArguments(
     } else {
       // Include unknown arg inside "_" key, and add an error
       output.options._.push(curr);
-      output.errors.push(CliError.format(ErrorType.OPTION_NOT_FOUND, curr));
+      output.errors.push(Cli.formatMessage("option_not_found", { option: curr }));
     }
   }
 
   // Verify required options
   Object.values(defToProcess).some((opt) => {
     if (opt.required && output.options[opt.key!] === undefined) {
-      output.errors.push(CliError.format(ErrorType.OPTION_REQUIRED, opt.key!));
+      output.errors.push(Cli.formatMessage("option_required", { option: opt.key! }));
       return true;
     }
   });
@@ -509,11 +524,11 @@ function generateHelp(
     ].join("");
 
   // Initialize element-sections
-  const elementSectionsTemplate: ElementSections = {
+  const elementSectionsTemplate = {
     [HELP_SECTIONS.NAMESPACES]: [],
     [HELP_SECTIONS.COMMANDS]: [],
     [HELP_SECTIONS.OPTIONS]: [],
-  };
+  } as const;
 
   // Caculate all element-sections and process section values
   const { elementSections, formattedNames }: { elementSections: ElementSections; formattedNames: string[] } =
@@ -525,7 +540,7 @@ function generateHelp(
             [Kind.NAMESPACE]: HELP_SECTIONS.NAMESPACES,
             [Kind.COMMAND]: HELP_SECTIONS.COMMANDS,
             [Kind.OPTION]: HELP_SECTIONS.OPTIONS,
-          };
+          } as const;
           const sectionKey = sectionAdapter[element.kind as Kind],
             name = formatAliases(element.aliases);
           const completeElement = { ...element, name };
@@ -543,7 +558,9 @@ function generateHelp(
   Object.entries(elementSections)
     .filter(([_, content]) => content.length > 0)
     .forEach(([sectionKey, content]) => {
-      const sectionTitle = Cli.formatMessage(`generate-help.${sectionKey}-title`);
+      const sectionTitle = Cli.formatMessage(
+        `generate-help.${sectionKey as keyof typeof elementSectionsTemplate}-title`,
+      );
       let sectionContent = `${sectionTitle}:\n`;
       content.forEach((item: ExtendedDefinitionElement) => {
         sectionContent += formatElement(item, formatter, sectionIndentation);

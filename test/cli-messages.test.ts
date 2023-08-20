@@ -12,8 +12,8 @@ afterEach(() => {
 
 describe("format", () => {
   it("Format a message containing interpolations", () => {
-    Cli.messages = { test: "This is a {name}" };
-    expect(formatMessage("test")).toBe("This is a {name}");
-    expect(formatMessage("test", { name: "test" })).toBe("This is a test");
+    Cli.messages = { test: "This is a {name}" } as any;
+    expect(formatMessage("test" as any, {})).toBe("This is a {name}");
+    expect(formatMessage("test" as any, { name: "test" })).toBe("This is a test");
   });
 });

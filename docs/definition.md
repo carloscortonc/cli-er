@@ -106,8 +106,6 @@ type ValueParserInput = {
   current: OptionValue;
   /** Option definition */
   option: Option & { key: string };
-  /** Method for formatting errors */
-  format: typeof CliError.format;
 }
 
 type ValueParserOutput = {

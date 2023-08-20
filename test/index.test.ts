@@ -290,7 +290,7 @@ describe("Cli.run", () => {
   });
   it("[onGenerateHelp] Prints error if configured", () => {
     const logger: any = { error: jest.fn() };
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
       .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"] }));
@@ -300,7 +300,7 @@ describe("Cli.run", () => {
   });
   it("[onGenerateHelp] Does not print error if not configured", () => {
     const logger: any = { error: jest.fn() };
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
       .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"] }));
@@ -309,7 +309,7 @@ describe("Cli.run", () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
   it("[onExecuteCommand] Prints error if configured", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
       .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"] }));
@@ -319,7 +319,7 @@ describe("Cli.run", () => {
     expect(errorlogger).toHaveBeenCalledWith("ERROR");
   });
   it("[onExecuteCommand] Does not print error if not configured", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
       .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"] }));
@@ -333,7 +333,7 @@ describe("Cli.run", () => {
     jest
       .spyOn(CliError, "analize")
       .mockImplementation(
-        (value) => ({ CMD_NOT_FOUND: ErrorType.COMMAND_NOT_FOUND, OPT_NOT_FOUND: ErrorType.OPTION_NOT_FOUND }[value!]),
+        (value) => ({ CMD_NOT_FOUND: "command_not_found", OPT_NOT_FOUND: "option_not_found" }[value!] as ErrorType),
       );
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
       location: [],

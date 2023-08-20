@@ -1,4 +1,4 @@
-import { CliError, ErrorType } from "./cli-errors";
+import { ErrorType } from "./cli-errors";
 
 export enum Kind {
   NAMESPACE = "namespace",
@@ -23,8 +23,6 @@ export type ValueParserInput = {
   current: OptionValue;
   /** Option definition */
   option: Option & { key: string };
-  /** Method for formatting errors, to be used in `Option.parser` */
-  format: typeof CliError.format;
 };
 
 export type ValueParserOutput = {
@@ -145,9 +143,9 @@ export type CliOptions = {
   /** Configuration related to when errors should be displayed */
   errors: {
     /** List of error-types that will be displayed before help */
-    onGenerateHelp: `${ErrorType}`[];
+    onGenerateHelp: ErrorType[];
     /** List of error-types that will cause to end execution with `exit(1)` */
-    onExecuteCommand: `${ErrorType}`[];
+    onExecuteCommand: ErrorType[];
   };
   /** Help-related configuration */
   help: Option & {

@@ -1,35 +1,22 @@
 import Cli from ".";
 
-/** Existing errors */
-export enum ErrorType {
-  COMMAND_NOT_FOUND = "command_not_found",
-  OPTION_NOT_FOUND = "option_not_found",
-  OPTION_WRONG_VALUE = "option_wrong_value",
-  OPTION_MISSING_VALUE = "option_missing_value",
-  OPTION_REQUIRED = "option_required",
-}
-
 /** Error messages for each error type */
-export const ERROR_MESSAGES: { [key in ErrorType]: string } = {
-  [ErrorType.COMMAND_NOT_FOUND]: 'Command "{0}" not found. Did you mean "{1}" ?',
-  [ErrorType.OPTION_NOT_FOUND]: 'Unknown option "{0}"',
-  [ErrorType.OPTION_WRONG_VALUE]: 'Wrong value for option "{0}". Expected <{1}> but found "{2}"',
-  [ErrorType.OPTION_MISSING_VALUE]: 'Missing value of type <{0}> for option "{1}"',
-  [ErrorType.OPTION_REQUIRED]: 'Missing required option "{0}"',
-};
+export const ERROR_MESSAGES = {
+  command_not_found: 'Command "{command}" not found. Did you mean "{suggestion}" ?',
+  option_not_found: 'Unknown option "{option}"',
+  option_wrong_value: 'Wrong value for option "{option}". Expected <{expected}> but found "{found}"',
+  option_missing_value: 'Missing value of type <{type}> for option "{option}"',
+  option_required: 'Missing required option "{option}"',
+} as const;
 
-/** Utility class to format and identify error messages */
+/** Existing errors */
+export type ErrorType = keyof typeof ERROR_MESSAGES;
+
+/** Utility class to identify error messages */
 export class CliError {
-  /** Format a given error type with the supplied arguments */
-  static format(error: `${ErrorType}`, ...args: string[]) {
-    return args.reduce(
-      (acc, value: string, index: number) => acc.replace(new RegExp(`\\{${index}\\}`, "g"), value),
-      Cli.messages[error],
-    );
-  }
   /** Test if the given error message matches an error type */
   private static test(value: string, error: string) {
-    return new RegExp(error.replace(/\{\d\}/g, "[a-zA-Z-0-9/\\.]+")).test(value);
+    return new RegExp(error.replace(/\{\w+\}/g, "[a-zA-Z-0-9/\\.]+")).test(value);
   }
   /** Analize the given error message to identify its type */
   static analize(value: string | undefined): ErrorType | undefined {
