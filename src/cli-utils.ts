@@ -3,7 +3,17 @@ import fs from "fs";
 import url from "url";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
-import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
+import {
+  Kind,
+  ParsingOutput,
+  Definition,
+  Type,
+  CliOptions,
+  Option,
+  Namespace,
+  Command,
+  ValueParserInput,
+} from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
 import Cli from ".";
@@ -299,7 +309,13 @@ export function parseArguments(
           ...(optionDefinition as Option),
           key: curr,
         },
-      });
+        format: () =>
+          deprecationWarning({
+            property: "Option.parser::format",
+            version: "0.12.0",
+            alternative: "Cli.formatMessage",
+          }),
+      } as ValueParserInput & { format: (...any: any[]) => void });
       if (parserOutput.error) {
         output.errors.push(parserOutput.error);
       } else {
