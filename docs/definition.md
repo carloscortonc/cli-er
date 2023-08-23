@@ -60,7 +60,7 @@ type Option = BaseElement & {
 - **negatable**: whether to include [negated aliases](#negated-aliases) in boolean options.
 - **default**: default value for the option.
 - **required**: specifies an option as required, generating an error if a value is not provided.
-- **type**: type of option, to load the correct parser.
+- **type**: type of option, to load the appropriate parser.
 - **parser**: allows defining [custom parser](#custom-parser) for an option, instead of using the supported types.
 
 ### Positional options
