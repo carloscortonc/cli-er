@@ -23,6 +23,10 @@ export type ValueParserInput = {
   current: OptionValue;
   /** Option definition */
   option: Option & { key: string };
+  /** Method for formatting errors, to be used in `Option.parser`
+   * @deprecated since 0.12.0. Use Cli.formatMessage instead
+   */
+  format: (...params: any[]) => void;
 };
 
 export type ValueParserOutput = {

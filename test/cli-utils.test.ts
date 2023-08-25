@@ -477,6 +477,22 @@ describe("parseArguments", () => {
       errors: [],
     });
   });
+  it("Parse {long-alias}={value}", () => {
+    const { definition, options } = new Cli({ opt: {}, opt2: {} }, baseConfig);
+    expect(parseArguments(["--opt=optvalue", "--opt2", "opt2value"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], opt: "optvalue", opt2: "opt2value" },
+      location: [],
+      errors: [],
+    });
+  });
+  it("Parse {short-alias}{value}", () => {
+    const { definition, options } = new Cli({ opt: { aliases: ["o"] }, opt2: {} }, baseConfig);
+    expect(parseArguments(["-ooptvalue", "--opt2", "opt2value"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], opt: "optvalue", opt2: "opt2value" },
+      location: [],
+      errors: [],
+    });
+  });
 });
 
 describe("executeScript", () => {

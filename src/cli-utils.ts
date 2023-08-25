@@ -3,17 +3,7 @@ import fs from "fs";
 import url from "url";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
-import {
-  Kind,
-  ParsingOutput,
-  Definition,
-  Type,
-  CliOptions,
-  Option,
-  Namespace,
-  Command,
-  ValueParserInput,
-} from "./types";
+import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
 import Cli from ".";
@@ -280,10 +270,28 @@ export function parseArguments(
   // Flag to ignore all positional options if the first one is misplaced (missing)
   let ignorePositional = false;
 
+  /** Method to extract [alias, value, index] based on the given arguments. Currently supports:
+   * - regular aliases followed by values (separate arguments)
+   * - {long-alias}={value}
+   * - {short-alias}{value}
+   */
+  const nextTwo = (first: string, second: string, index: number): [string, string, number] => {
+    const aliasWithValueRegexp = (a: string) =>
+      new RegExp(`^(?<alias>${a})${a.replace(/^-+/, "").length > 1 ? "=" : ""}(?<value>.+)`);
+    const aliasWithValue = Object.keys(aliases).find((a) => aliasWithValueRegexp(a).test(first));
+    if (aliasWithValue) {
+      const { alias, value } = aliasWithValueRegexp(aliasWithValue).exec(first)?.groups!;
+      // Also update index, since only one arg was consumed
+      return [alias, value, index - 1];
+    }
+    return [first, second, index];
+  };
+
   // Process args
   for (let i = 0; i < argsToProcess.length; i++) {
-    const curr = argsToProcess[i],
-      next = argsToProcess[i + 1];
+    const [curr, next, index] = nextTwo(argsToProcess[i], argsToProcess[i + 1], i);
+    // Update `i` with what was returned from method
+    i = index;
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const strictPositional = positionalOptions[i];
     // If an option-alias is found where a numeric-positional option was expected, discard all remaining numeric-positional options
@@ -312,10 +320,9 @@ export function parseArguments(
         format: () =>
           deprecationWarning({
             property: "Option.parser::format",
-            version: "0.12.0",
             alternative: "Cli.formatMessage",
           }),
-      } as ValueParserInput & { format: (...any: any[]) => void });
+      });
       if (parserOutput.error) {
         output.errors.push(parserOutput.error);
       } else {
@@ -339,7 +346,7 @@ export function parseArguments(
     }
   });
 
-  // Process value-transformations. Remove in 0.11.0 in favor of Option.parser
+  // Process value-transformations. Removed in 0.11.0 in favor of Option.parser
   Object.values(aliases)
     .filter((v) => typeof v !== "string" && typeof v.value === "function")
     .forEach((v) => {
