@@ -6,6 +6,7 @@ import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./u
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
+import flattenArguments from "./option-syntax";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
@@ -51,6 +52,9 @@ function getAliases(key: string, element: DefinitionElement) {
     return alias;
   });
 }
+
+/** Check if a given alias is considered short alias */
+export const isShortAlias = (alias: string) => /^-.$/.test(alias);
 
 /** Process definition and complete any missing fields */
 export function completeDefinition(definition: Definition<DefinitionElement>, cliOptions: CliOptions) {
@@ -270,28 +274,12 @@ export function parseArguments(
   // Flag to ignore all positional options if the first one is misplaced (missing)
   let ignorePositional = false;
 
-  /** Method to extract [alias, value, index] based on the given arguments. Currently supports:
-   * - regular aliases followed by values (separate arguments)
-   * - {long-alias}={value}
-   * - {short-alias}{value}
-   */
-  const nextTwo = (first: string, second: string, index: number): [string, string, number] => {
-    const aliasWithValueRegexp = (a: string) =>
-      new RegExp(`^(?<alias>${a})${a.replace(/^-+/, "").length > 1 ? "=" : ""}(?<value>.+)`);
-    const aliasWithValue = Object.keys(aliases).find((a) => aliasWithValueRegexp(a).test(first));
-    if (aliasWithValue) {
-      const { alias, value } = aliasWithValueRegexp(aliasWithValue).exec(first)?.groups!;
-      // Also update index, since only one arg was consumed
-      return [alias, value, index - 1];
-    }
-    return [first, second, index];
-  };
+  const finalArgs = flattenArguments(argsToProcess, defToProcess);
 
   // Process args
-  for (let i = 0; i < argsToProcess.length; i++) {
-    const [curr, next, index] = nextTwo(argsToProcess[i], argsToProcess[i + 1], i);
-    // Update `i` with what was returned from method
-    i = index;
+  for (let i = 0; i < finalArgs.length; i++) {
+    const curr = finalArgs[i],
+      next = finalArgs[i + 1];
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const strictPositional = positionalOptions[i];
     // If an option-alias is found where a numeric-positional option was expected, discard all remaining numeric-positional options

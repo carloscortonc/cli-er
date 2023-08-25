@@ -10,12 +10,6 @@ _**TIP**: You can define an option as required (`required: true`), which will ve
 
 This library also interprets the delimiter `--` to stop parsing, including the remaning arguments as an array inside `ParsingOutput.options.__`
 
-### option-value syntax
-
-The library support three ways for specifying the value of an option:
-- `{alias} {value}` as separate arguments (e.g `--delay 10`)
-- `{alias}={value}` for long aliases (more than one letter, e.g. `--delay=10`)
-- `{alias}{value}` for short aliases (a single letter, e.g. `-d10`)
 
 The execution of [this example](/README.md#example) would be:
 
@@ -26,6 +20,19 @@ The execution of [this example](/README.md#example) would be:
   },
   "location": ["builder", "build"]
 }
+```
+
+### option-value syntax
+
+The library support three ways for specifying the value of an option:
+- `{alias} {value}` as separate arguments (e.g `--delay 10`)
+- `{alias}={value}` for long aliases (more than one letter, e.g. `--delay=10`)
+- `{alias}{value}` for short aliases (a single letter, e.g. `-d10`)
+
+Boolean options with short aliases can also be concatenated with a single leading `-`, e.g:
+```bash
+$ ls -la   # list also hidden files, in long format
+$ ls -l -a # same as above
 ```
 
 ## run(args?)
