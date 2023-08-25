@@ -493,6 +493,28 @@ describe("parseArguments", () => {
       errors: [],
     });
   });
+  it("Parse multiple boolean short flags", () => {
+    const { definition, options } = new Cli(
+      { a: { type: "boolean" }, b: { type: "boolean" }, c: { type: "boolean" } },
+      baseConfig,
+    );
+    expect(parseArguments(["-abc"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], a: true, b: true, c: true },
+      location: [],
+      errors: [],
+    });
+    expect(parseArguments(["-cbac"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], a: true, b: true, c: true },
+      location: [],
+      errors: [],
+    });
+    // Repeated aliases
+    expect(parseArguments(["-abca"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], a: true, b: true, c: true },
+      location: [],
+      errors: [],
+    });
+  });
 });
 
 describe("executeScript", () => {
