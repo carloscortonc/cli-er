@@ -15,11 +15,11 @@
 </p>
 
 <h4 align="center">
+  <a href="#features">Features</a>
+  <span>&nbsp;·&nbsp;</span>
   <a href="#installation">Installation</a>
   <span>&nbsp;·&nbsp;</span>
   <a href="#usage">Usage</a>
-  <span>&nbsp;·&nbsp;</span>
-  <a href="#features">Features</a>
   <span>&nbsp;·&nbsp;</span>
   <a href="./docs/definition.md">Definition</a>
   <span>&nbsp;·&nbsp;</span>
@@ -99,6 +99,14 @@ This allows us to organize and structure the logic nicely.
 
 You can check the full [docker-based example](./examples/docker) for a more in-depth demo.
 
+
+## Features
+- [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
+- [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
+- [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
+- [**Typescript support**](./docs/features.md#typescript-support): build the cli with typescript.
+
+
 ## Installation
 
 ```sh
@@ -118,10 +126,3 @@ npm install cli-er
 - **Namespace**: is used to group commands, but cannot be invoked. Can contain other namespaces, commands or options.
 - **Command**: Is the final invocable element. Can only contain options.
 - **Option**: arguments that hold values of different types, like string, boolean, list...
-
-
-## Features
-- [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
-- [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
-- [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
-- [**Typescript support**](./docs/features.md#typescript-support): build the cli with typescript.
