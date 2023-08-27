@@ -44,7 +44,7 @@ const flagsProcessor: ArgumentProcessor = (args, definition) => {
   }, [] as string[]);
 };
 
-/** Apply supported syntaxis to generate the final flatten list of arguments */
+/** Apply supported syntaxis to generate the final flattened list of arguments */
 const flattenArguments: ArgumentProcessor = (args, definition) => {
   return [flagsProcessor, equalsSymbolProcessor].reduce((acc, processor) => processor(acc, definition), args);
 };
