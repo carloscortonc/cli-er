@@ -104,9 +104,13 @@ export function findPackageJson(baseLocation: string) {
 
 export const isDebugActive = () => process.env[CLIER_DEBUG_KEY];
 
-/** Utility to print messages only when debug mode is active */
+/** Utility to print messages only when debug mode is active
+ * This will set the process exitcode to 1 */
 export function debug(message: string) {
-  isDebugActive() && process.stderr.write("[CLIER_DEBUG] ".concat(message, "\n"));
+  if (isDebugActive()) {
+    process.stderr.write("[CLIER_DEBUG] ".concat(message, "\n"));
+    process.exitCode = 1;
+  }
 }
 
 /** Class containing the logic for logging deprecations. It holds the list of deprecation-messages already
