@@ -356,8 +356,6 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
   const finalLocation = [
     // Apply CliOptions.commandsPath configuration for single commands
     ...(location.length === 1 && cliOptions.commandsPath !== "." ? [cliOptions.commandsPath] : []),
-    // Include CliOptions.rootCommand if empty location provided
-    ...(location.length === 0 && typeof cliOptions.rootCommand === "string" ? [cliOptions.rootCommand] : []),
   ].concat(location);
 
   const scriptPaths = [".", ...finalLocation]
