@@ -97,6 +97,7 @@ export default class Cli {
   run(args?: string[]): void | Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
+    // Include CliOptions.rootCommand if empty location provided
     const elementLocation =
       opts.location.length === 0 && typeof this.options.rootCommand === "string"
         ? [this.options.rootCommand]
