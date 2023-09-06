@@ -2,7 +2,18 @@ The available methods are described here:
 
 ## parse(args)
 
-Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If any error is generated during the process, they will be registered inside an `errors` field.
+Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If any error is generated during the process, they will be registered inside an `errors` field. The form is:
+
+```typescript
+type ParsingOutput = {
+  /** Location based solely on supplied namespaces/commands */
+  location: string[];
+  /** Calculated options */
+  options: { _: string[]; [key: string]: any };
+  /** Errors originated while parsing */
+  errors: string[];
+}
+```
 
 If no command is found in the parsing process, an error with a suggestion (the closest to the one suplied) will be returned.
 
