@@ -92,7 +92,7 @@ export type Namespace = BaseElement & {
   options?: Definition;
 };
 
-export type Command = Omit<Option, "kind" | "aliases"> & {
+export type Command = Omit<Option, "kind"> & {
   kind: `${Kind.COMMAND}`;
   /** Nested options definition */
   options?: Definition<Option>;

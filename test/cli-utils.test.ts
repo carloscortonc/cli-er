@@ -36,7 +36,7 @@ describe("completeDefinition", () => {
         },
       },
     },
-    opt: {},
+    opt: { aliases: ["opt", "o"] },
   };
   const cliOptions: CliOptions = {
     baseLocation: "",
@@ -78,7 +78,21 @@ describe("completeDefinition", () => {
           },
         },
       },
-      opt: { type: "string" },
+      opt: { type: "string", aliases: ["--opt", "-o"] },
+    });
+  });
+  it("Complete aliases for command", () => {
+    const cmdDef: Definition<DefinitionElement> = {
+      cmd: {
+        kind: "command",
+        aliases: ["cmd2"],
+      },
+    };
+    const completedDefinition = completeDefinition(cmdDef, cliOptions);
+    expect(completedDefinition).toMatchObject({
+      cmd: {
+        aliases: ["cmd", "cmd2"],
+      },
     });
   });
   it("Includes help option if auto-include help is enabled", () => {

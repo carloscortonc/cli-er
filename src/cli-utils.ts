@@ -38,6 +38,12 @@ export function getEntryPoint() {
 
 /** Determine the correct aliases depending on the kind of element */
 function getAliases(key: string, element: DefinitionElement) {
+  if (element.kind === Kind.NAMESPACE || !element.aliases) {
+    return [key];
+  }
+  if (element.kind === Kind.COMMAND) {
+    return [key].concat(element.aliases);
+  }
   if ([Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
     return [key];
   }
