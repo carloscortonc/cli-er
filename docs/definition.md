@@ -19,7 +19,7 @@ type BaseElement = {
 ```
 - **kind**: describes the type of element.
 - **description**: description of the element, to be used when generating help. The library will search first in `CliOptions.messages` with an id generated from element's location and name, followed by `.description`. So for example, for a nested option `opt` inside a command `cmd`, the id will be `cmd.opt.description`.
-- **hidden**: hide an element when generating help.
+- **hidden**: hide an element when generating help. Default: `false`
 
 ## Namespace
 An element with `kind: "namespace"`, or since 0.11.0, when its kind is inferred to this one.
@@ -35,10 +35,12 @@ An element with `kind: "command"`, or since 0.11.0, when its kind is inferred to
 ```typescript
 type Command = BaseElement & {
   kind: "command";
+  aliases?: string[];
   options?: Definition<Option>;
   action?: (out: ParsingOutput) => void;
 }
 ```
+- **aliases**: alternative names for the command. If specified, the will added on top of command key. Default `[key]`
 - **action**: method that will be called when the command is matched, receiving the output of the parsing process.
 
 ## Option
@@ -55,12 +57,12 @@ type Option = BaseElement & {
   parser?: (input: ValueParserInput) => ValueParserOutput
 }
 ```
-- **aliases**: alternative names for the options, e.g. `["h", "help"]`. They should be specified without dashes, and final alias value will be calculated depending on the provided alias length: prefixed with `-` for single letters, and `--` in other cases. When not specified, the name of the option will be used.
-- **positional**: enables [positional options](#positional-options).
-- **negatable**: whether to include [negated aliases](#negated-aliases) in boolean options.
+- **aliases**: alternative names for the options, e.g. `["h", "help"]`. They should be specified without dashes, and final alias value will be calculated depending on the provided alias length: prefixed with `-` for single letters, and `--` in other cases. When not specified, the name of the option will be used. Default: `[key]`
+- **positional**: enables [positional options](#positional-options). Default: `false`
+- **negatable**: whether to include [negated aliases](#negated-aliases) in boolean options. Default: `false`
 - **default**: default value for the option.
-- **required**: specifies an option as required, generating an error if a value is not provided.
-- **type**: type of option, to load the appropriate parser.
+- **required**: specifies an option as required, generating an error if a value is not provided. Default: `false`
+- **type**: type of option, to load the appropriate parser. Default: `string`
 - **parser**: allows defining [custom parser](#custom-parser) for an option, instead of using the supported types.
 
 ### Positional options
