@@ -1,3 +1,22 @@
+# [0.12.0](https://github.com/carloscortonc/cli-er/compare/v0.11.0...v0.12.0) (2023-09-08)
+
+
+### Features
+
+* allow overwriting version implementation ([#53](https://github.com/carloscortonc/cli-er/issues/53)) ([6eef720](https://github.com/carloscortonc/cli-er/commit/6eef7208746809e59aa8acd9cae00c5376757bc9))
+* command may define aliases ([#59](https://github.com/carloscortonc/cli-er/issues/59)) ([2c88183](https://github.com/carloscortonc/cli-er/commit/2c88183ab04c8733588fd8fc8831f92fb87cd492))
+* implement negated boolean options ([#51](https://github.com/carloscortonc/cli-er/issues/51)) ([7255686](https://github.com/carloscortonc/cli-er/commit/7255686b2d1223b437166b00814493a0f617da25))
+* improve message-formatting api ([#55](https://github.com/carloscortonc/cli-er/issues/55)) ([ce8c852](https://github.com/carloscortonc/cli-er/commit/ce8c852ff221e58d36cdbdf741d2f6822805d91e))
+* lookup elements descriptions inside messages ([#54](https://github.com/carloscortonc/cli-er/issues/54)) ([e69c95d](https://github.com/carloscortonc/cli-er/commit/e69c95d59a276dd3edeebd1d7451b42a14bc3656))
+* set exitCode when debug-logs are generated ([#58](https://github.com/carloscortonc/cli-er/issues/58)) ([485b878](https://github.com/carloscortonc/cli-er/commit/485b878e8118202346eed99fa96c068b65cd54cd))
+* support new option-value syntax ([#56](https://github.com/carloscortonc/cli-er/issues/56)) ([47b64a6](https://github.com/carloscortonc/cli-er/commit/47b64a64c1861786b0c5efe8820a03eef30a5082))
+* support short alias boolean concatenation ([#57](https://github.com/carloscortonc/cli-er/issues/57)) ([f9f5a27](https://github.com/carloscortonc/cli-er/commit/f9f5a27fefe14d2e083f0f8d87876a6bd0787fbb))
+
+
+### Bug Fixes
+
+* preserve string rootCommand in executeScript ([#52](https://github.com/carloscortonc/cli-er/issues/52)) ([0d96f6f](https://github.com/carloscortonc/cli-er/commit/0d96f6f6a3cdda3dd77fb33451f444f1b26da8eb))
+
 # [0.11.0](https://github.com/carloscortonc/cli-er/compare/v0.10.1...v0.11.0) (2023-08-06)
 
 
