@@ -4,9 +4,9 @@ import url from "url";
 import { closest } from "fastest-levenshtein";
 import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
-import { CliError, ErrorType } from "./cli-errors";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
+import flattenArguments from "./option-syntax";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
@@ -18,8 +18,9 @@ export type DefinitionElement = F<Namespace> &
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
   };
-type ValidationContext = {
+type CompletionContext = {
   positional: Option[];
+  location: string[];
 };
 
 /** Check whether the program using this library is running in cjs */
@@ -37,13 +38,29 @@ export function getEntryPoint() {
 
 /** Determine the correct aliases depending on the kind of element */
 function getAliases(key: string, element: DefinitionElement) {
+  if (element.kind === Kind.NAMESPACE || !element.aliases) {
+    return [key];
+  }
+  if (element.kind === Kind.COMMAND) {
+    return [key].concat(element.aliases);
+  }
   if ([Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
     return [key];
-  } else if (!element.aliases) {
-    return [`--${key}`];
   }
-  return element.aliases;
+  return element.aliases!.map((alias) => {
+    if (!alias.startsWith("-")) {
+      return (alias.length > 1 ? "--" : "-").concat(alias);
+    }
+    deprecationWarning({
+      property: "Option.aliases with dashes",
+      description: "Aliases should be specified without dashes",
+    });
+    return alias;
+  });
 }
+
+/** Check if a given alias is considered short alias */
+export const isShortAlias = (alias: string) => /^-.$/.test(alias);
 
 /** Process definition and complete any missing fields */
 export function completeDefinition(definition: Definition<DefinitionElement>, cliOptions: CliOptions) {
@@ -57,12 +74,12 @@ export function completeDefinition(definition: Definition<DefinitionElement>, cl
   if (versionAutoInclude) {
     definition.version = versionOption;
   }
-  const validationContext = { positional: [] };
+  const context = { positional: [], location: [] };
   for (const element in definition) {
-    completeElementDefinition(element, definition[element], validationContext);
+    completeElementDefinition(element, definition, context);
   }
   // validate positional arguments for current definition
-  validatePositional(validationContext.positional);
+  validatePositional(context.positional);
   return definition;
 }
 
@@ -72,7 +89,12 @@ const isCommand = (element: DefinitionElement) =>
   typeof element.action === "function" ||
   (element.options !== undefined && !Object.values(element.options).some(isCommand));
 
-function completeElementDefinition(name: string, element: DefinitionElement, validationContext: ValidationContext) {
+function completeElementDefinition(
+  name: string,
+  definition: Definition<DefinitionElement>,
+  context: CompletionContext,
+) {
+  const element = definition[name];
   // Infer kind when not specified
   if (!element.kind) {
     element.kind = Object.values(element.options || {}).some(isCommand)
@@ -81,8 +103,7 @@ function completeElementDefinition(name: string, element: DefinitionElement, val
       ? Kind.COMMAND
       : Kind.OPTION;
   }
-  // Complete aliases
-  element.aliases = getAliases(name, element);
+
   if (element.kind === Kind.OPTION) {
     // Set positional arguments configured as "true" with type=list
     if (element.positional === true) {
@@ -92,11 +113,47 @@ function completeElementDefinition(name: string, element: DefinitionElement, val
     else if (!element.type) {
       element.type = Type.STRING;
     }
-    // update validation context
-    ![undefined, false].includes(element.positional as any) && validationContext.positional.push(element as Option);
+    // Update validation context
+    ![undefined, false].includes(element.positional as any) && context.positional.push(element as Option);
+
+    // Initialize aliases before negated-boolean processing
+    element.aliases = element.aliases || [name];
+
+    // Include negated version for boolean options
+    if (
+      element.type === Type.BOOLEAN &&
+      element.negatable === true &&
+      element.aliases?.some((a) => !a.startsWith("-") && a.length > 1)
+    ) {
+      definition[name.concat("Negated")] = {
+        kind: Kind.OPTION,
+        type: Type.BOOLEAN,
+        // Will only work when aliases are defined without dashes
+        aliases: element.aliases
+          .filter((a) => !a.startsWith("-") && a.length > 1)
+          .reduce((acc, a) => [...acc, ...["no", "no-"].map((e) => `--${e}`.concat(a))], [] as string[]),
+        parser: (input) => {
+          const o = parseOptionValue(input);
+          return { ...o, value: !o.value };
+        },
+        hidden: true,
+        key: name,
+      };
+    } else if (element.type === Type.BOOLEAN && element.negatable === true) {
+      debug(
+        `Boolean option <${name}> will be included without negated aliases.` +
+          " To change this, provide long aliases without dashes",
+      );
+    }
   }
+  // Complete aliases
+  element.aliases = getAliases(name, element);
   // Add name as key
   element.key = name;
+  // Look for description inside `messages`, otherwise use element's description
+  const descriptionIntlPrefix = context.location.length > 0 ? context.location.join(".").concat(".") : "";
+  element.description =
+    Cli.formatMessage(descriptionIntlPrefix.concat(name, ".description") as any, {}) || element.description;
   // Print deprecations
   deprecationWarning({
     property: "Command.type",
@@ -109,12 +166,16 @@ function completeElementDefinition(name: string, element: DefinitionElement, val
     version: "0.12.0",
     alternative: "Option.parser",
   });
-  const deValidationContext = { positional: [] };
+  const deContext = { ...context, positional: [] };
   for (const optionKey in element.options ?? {}) {
-    completeElementDefinition(optionKey, element.options![optionKey], deValidationContext);
+    completeElementDefinition(
+      optionKey,
+      element.options!,
+      Object.assign(deContext, { location: context.location.concat(name) }),
+    );
   }
   // validate positional arguments for nested options
-  validatePositional(deValidationContext.positional);
+  validatePositional(deContext.positional);
 }
 
 /** Process incoming args based on provided definition */
@@ -177,7 +238,7 @@ export function parseArguments(
         // Only generate error when no root-command is registered
         if (!optsAliases.includes(arg) && (!cliOptions.rootCommand || output.location.length > 0)) {
           const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-          output.errors.push(CliError.format(ErrorType.COMMAND_NOT_FOUND, arg, suggestion));
+          output.errors.push(Cli.formatMessage("command_not_found", { command: arg, suggestion }));
         }
         break argsLoop;
       }
@@ -219,10 +280,12 @@ export function parseArguments(
   // Flag to ignore all positional options if the first one is misplaced (missing)
   let ignorePositional = false;
 
+  const finalArgs = flattenArguments(argsToProcess, defToProcess);
+
   // Process args
-  for (let i = 0; i < argsToProcess.length; i++) {
-    const curr = argsToProcess[i],
-      next = argsToProcess[i + 1];
+  for (let i = 0; i < finalArgs.length; i++) {
+    const curr = finalArgs[i],
+      next = finalArgs[i + 1];
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
     const strictPositional = positionalOptions[i];
     // If an option-alias is found where a numeric-positional option was expected, discard all remaining numeric-positional options
@@ -248,7 +311,11 @@ export function parseArguments(
           ...(optionDefinition as Option),
           key: curr,
         },
-        format: CliError.format,
+        format: () =>
+          deprecationWarning({
+            property: "Option.parser::format",
+            alternative: "Cli.formatMessage",
+          }),
       });
       if (parserOutput.error) {
         output.errors.push(parserOutput.error);
@@ -261,19 +328,19 @@ export function parseArguments(
     } else {
       // Include unknown arg inside "_" key, and add an error
       output.options._.push(curr);
-      output.errors.push(CliError.format(ErrorType.OPTION_NOT_FOUND, curr));
+      output.errors.push(Cli.formatMessage("option_not_found", { option: curr }));
     }
   }
 
   // Verify required options
   Object.values(defToProcess).some((opt) => {
     if (opt.required && output.options[opt.key!] === undefined) {
-      output.errors.push(CliError.format(ErrorType.OPTION_REQUIRED, opt.key!));
+      output.errors.push(Cli.formatMessage("option_required", { option: opt.key! }));
       return true;
     }
   });
 
-  // Process value-transformations. Remove in 0.11.0 in favor of Option.parser
+  // Process value-transformations. Removed in 0.11.0 in favor of Option.parser
   Object.values(aliases)
     .filter((v) => typeof v !== "string" && typeof v.value === "function")
     .forEach((v) => {
@@ -295,8 +362,6 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
   const finalLocation = [
     // Apply CliOptions.commandsPath configuration for single commands
     ...(location.length === 1 && cliOptions.commandsPath !== "." ? [cliOptions.commandsPath] : []),
-    // Include CliOptions.rootCommand if empty location provided
-    ...(location.length === 0 && typeof cliOptions.rootCommand === "string" ? [cliOptions.rootCommand] : []),
   ].concat(location);
 
   const scriptPaths = [".", ...finalLocation]
@@ -458,11 +523,11 @@ function generateHelp(
     ].join("");
 
   // Initialize element-sections
-  const elementSectionsTemplate: ElementSections = {
+  const elementSectionsTemplate = {
     [HELP_SECTIONS.NAMESPACES]: [],
     [HELP_SECTIONS.COMMANDS]: [],
     [HELP_SECTIONS.OPTIONS]: [],
-  };
+  } as const;
 
   // Caculate all element-sections and process section values
   const { elementSections, formattedNames }: { elementSections: ElementSections; formattedNames: string[] } =
@@ -474,7 +539,7 @@ function generateHelp(
             [Kind.NAMESPACE]: HELP_SECTIONS.NAMESPACES,
             [Kind.COMMAND]: HELP_SECTIONS.COMMANDS,
             [Kind.OPTION]: HELP_SECTIONS.OPTIONS,
-          };
+          } as const;
           const sectionKey = sectionAdapter[element.kind as Kind],
             name = formatAliases(element.aliases);
           const completeElement = { ...element, name };
@@ -492,7 +557,9 @@ function generateHelp(
   Object.entries(elementSections)
     .filter(([_, content]) => content.length > 0)
     .forEach(([sectionKey, content]) => {
-      const sectionTitle = Cli.formatMessage(`generate-help.${sectionKey}-title`);
+      const sectionTitle = Cli.formatMessage(
+        `generate-help.${sectionKey as keyof typeof elementSectionsTemplate}-title`,
+      );
       let sectionContent = `${sectionTitle}:\n`;
       content.forEach((item: ExtendedDefinitionElement) => {
         sectionContent += formatElement(item, formatter, sectionIndentation);
@@ -507,7 +574,7 @@ function generateHelp(
   });
   const templateKey = (key: string) => `{${key}}`;
   const formattedHelp = Object.entries(sections).reduce((acc, [sectionKey, sectionContent]) => {
-    const regexp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
+    const regexp: RegExp = new RegExp(`${templateKey(sectionKey)}${sectionContent ? "" : "\n*"}`);
     return acc.replace(regexp, sectionContent || "");
   }, cliOptions.help.template!);
   Cli.logger.log(formattedHelp);
@@ -554,7 +621,8 @@ export function getDefinitionElement(
 
 /** Find and format the version of the application that is using this library */
 export function formatVersion(cliOptions: CliOptions) {
-  Cli.logger.log(`${" ".repeat(2)}${cliOptions.cliName} version: ${cliOptions.cliVersion}\n`);
+  const { cliName, cliVersion } = cliOptions;
+  Cli.logger.log(Cli.formatMessage("generate-version.template", { cliName, cliVersion }));
 }
 
 /** Find the closest namespace/command based on the given target and location */

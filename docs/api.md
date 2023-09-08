@@ -2,13 +2,25 @@ The available methods are described here:
 
 ## parse(args)
 
-Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If any error is generated during the process, they will be registered inside an `errors` field.
+Parses the given list of arguments based on the provided definition, and returns an object containing the resulting options, and the calculated location where the script is expected to be found. If any error is generated during the process, they will be registered inside an `errors` field. The form is:
+
+```typescript
+type ParsingOutput = {
+  /** Location based solely on supplied namespaces/commands */
+  location: string[];
+  /** Calculated options */
+  options: { _: string[]; [key: string]: any };
+  /** Errors originated while parsing */
+  errors: string[];
+}
+```
 
 If no command is found in the parsing process, an error with a suggestion (the closest to the one suplied) will be returned.
 
 _**TIP**: You can define an option as required (`required: true`), which will verify that such option is present in the provided arguments, setting an error otherwise._
 
 This library also interprets the delimiter `--` to stop parsing, including the remaning arguments as an array inside `ParsingOutput.options.__`
+
 
 The execution of [this example](/README.md#example) would be:
 
@@ -19,6 +31,19 @@ The execution of [this example](/README.md#example) would be:
   },
   "location": ["builder", "build"]
 }
+```
+
+### option-value syntax
+
+The library support three ways for specifying the value of an option:
+- `{alias} {value}` as separate arguments (e.g `--delay 10`)
+- `{alias}={value}` for long aliases (more than one letter, e.g. `--delay=10`)
+- `{alias}{value}` for short aliases (a single letter, e.g. `-d10`)
+
+Boolean options with short aliases can also be concatenated with a single leading `-`, e.g:
+```bash
+$ ls -la   # list also hidden files, in long format
+$ ls -l -a # same as above
 ```
 
 ## run(args?)
@@ -78,7 +103,7 @@ const definition = {
     description: "Description for global command",
   },
   globalOption: {
-    aliases: ["-g", "--global"],
+    aliases: ["g", "global"],
     default: "globalvalue",
     description: "Option shared between all commands",
   },

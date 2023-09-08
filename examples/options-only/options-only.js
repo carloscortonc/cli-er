@@ -18,7 +18,7 @@ if (require.main === module) {
       },
     },
     opt: {
-      aliases: ["-o", "--opt"],
+      aliases: ["o", "opt"],
       type: "number",
       description: "Generic option",
     },

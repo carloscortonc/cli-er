@@ -37,7 +37,7 @@ Whether to generate help option</br>
 **Default**: `true`
 ##### `help.aliases`
 Aliases to be used for help option</br>
-**Default**: `["-h", "--help"]`
+**Default**: `["h", "help"]`
 ##### `help.description`
 Description for the option
 ##### `help.template`
@@ -51,7 +51,7 @@ Whether to generate version option</br>
 **Default**: `true`
 ##### `version.aliases`
 Aliases to be used for version option</br>
-**Default**: `["-v", "--version"]`
+**Default**: `["v", "version"]`
 ##### `version.description`
 Description for the option
 

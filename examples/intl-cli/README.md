@@ -1,4 +1,4 @@
-`cli-er` supports internalization (since v0.11.0) by acepting `CliOptions.messages` with overriden messages:
+`cli-er` supports internationalization (since v0.11.0) by acepting `CliOptions.messages` with overriden messages:
 
 This way, you can redefine all messages used internally. The default (en) are declared in these two files:
 - [cli-messages.ts](/src/cli-messages.ts)

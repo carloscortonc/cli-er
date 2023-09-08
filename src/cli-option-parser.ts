@@ -1,5 +1,5 @@
-import { CliError, ErrorType } from "./cli-errors";
 import { Kind, Type, ValueParserInput, ValueParserOutput } from "./types";
+import Cli from ".";
 
 /** Evaluate the value of an option */
 export default function parseOptionValue({ value, current, option }: ValueParserInput): ValueParserOutput {
@@ -12,10 +12,14 @@ export default function parseOptionValue({ value, current, option }: ValueParser
     /* Error found, if any */
     error:
       value === undefined && option.kind === Kind.OPTION
-        ? CliError.format(ErrorType.OPTION_MISSING_VALUE, type, option.key)
+        ? Cli.formatMessage("option_missing_value", { type, option: option.key })
         : undefined,
   };
-  const wrongValueError = CliError.format(ErrorType.OPTION_WRONG_VALUE, option.key, type, value!);
+  const wrongValueError = Cli.formatMessage("option_wrong_value", {
+    option: option.key,
+    expected: type,
+    found: value!,
+  });
 
   /** Implemented parsers */
   const valueParsers: { [key in Type]: Partial<ValueParserOutput> | (() => Partial<ValueParserOutput>) } = {

@@ -3,7 +3,7 @@ import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
-import { Definition } from "../src/types";
+import { Definition, Option } from "../src/types";
 const definition = _definition as Definition;
 
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
@@ -36,6 +36,28 @@ describe("Cli.constructor", () => {
       }),
     });
   });
+  it("Resulting definition calculates aliases dashes when not present", () => {
+    const c = new Cli(
+      { opt: { aliases: ["o", "-p", "opt", "--opt2"] } },
+      { help: { autoInclude: false }, version: { autoInclude: false } },
+    );
+    expect((c.definition.opt as Option).aliases).toStrictEqual(["-o", "-p", "--opt", "--opt2"]);
+  });
+  it("Resulting definition includes negated boolean option if enabled", () => {
+    const c = new Cli(
+      { opt: { aliases: ["o", "opt", "--opt2", "opt3"], type: "boolean", negatable: true } },
+      { help: { autoInclude: false }, version: { autoInclude: false } },
+    );
+    expect(c.definition.optNegated).toStrictEqual(
+      expect.objectContaining({
+        aliases: ["--noopt", "--no-opt", "--noopt3", "--no-opt3"],
+        hidden: true,
+        key: "opt",
+        kind: "option",
+        type: "boolean",
+      }),
+    );
+  });
   it("Resulting definition is an empty object when provided with empty definition and all auto-included options are disabled", () => {
     const c = new Cli({}, { help: { autoInclude: false }, version: { autoInclude: false } });
     expect(c.definition).toStrictEqual({});
@@ -59,14 +81,14 @@ describe("Cli.constructor", () => {
       help: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["-h", "--help"],
+        aliases: ["h", "help"],
         description: "Display global help, or scoped to a namespace/command",
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["-v", "--version"],
+        aliases: ["v", "version"],
         description: "Display version",
         hidden: true,
       },
@@ -81,9 +103,9 @@ describe("Cli.constructor", () => {
     const overwrites = {
       baseLocation: "..",
       baseScriptLocation: "./",
-      help: { autoInclude: false, aliases: ["--help"], description: "", template: "template" },
+      help: { autoInclude: false, aliases: ["help"], description: "", template: "template" },
       errors: { onExecuteCommand: [] },
-      version: { aliases: ["--version"], description: "", hidden: false },
+      version: { aliases: ["version"], description: "", hidden: false },
       cliName: "custom-name",
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
@@ -100,14 +122,14 @@ describe("Cli.constructor", () => {
       help: {
         autoInclude: overwrites.help.autoInclude,
         type: "boolean",
-        aliases: ["--help"],
+        aliases: ["help"],
         description: "",
         template: "template",
       },
       version: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["--version"],
+        aliases: ["version"],
         description: "",
         hidden: false,
       },
@@ -167,6 +189,16 @@ describe("Cli.parse", () => {
       errors: [],
     });
   });
+  it("Parsing boolean option supports negated aliases", () => {
+    const c = new Cli(
+      { opt: { type: "boolean", negatable: true } },
+      { help: { autoInclude: false }, version: { autoInclude: false } },
+    );
+    expect(c.parse(["--noopt"]).options.opt).toBe(false);
+    expect(c.parse(["--no-opt"]).options.opt).toBe(false);
+    expect(c.parse(["--no-opt", "true"]).options.opt).toBe(false);
+    expect(c.parse(["--no-opt", "false"]).options.opt).toBe(true);
+  });
 });
 
 describe("Cli.run", () => {
@@ -198,6 +230,13 @@ describe("Cli.run", () => {
     spy.mockClear();
     c.run(["--global", "overwritten"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
+  });
+  it("Calling run with no namespace/command: typeof CliOptions.rootCommand=string", () => {
+    const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
+    const c = new Cli(definition, { rootCommand: "gcmd" });
+    c.run([]);
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ location: ["gcmd"] }), expect.anything());
+    spy.mockClear();
   });
   it("Calling run on element with action invokes such action", () => {
     const action = jest.fn();
@@ -251,7 +290,7 @@ describe("Cli.run", () => {
   });
   it("[onGenerateHelp] Prints error if configured", () => {
     const logger: any = { error: jest.fn() };
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
       .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"] }));
@@ -261,7 +300,7 @@ describe("Cli.run", () => {
   });
   it("[onGenerateHelp] Does not print error if not configured", () => {
     const logger: any = { error: jest.fn() };
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
       .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"] }));
@@ -270,7 +309,7 @@ describe("Cli.run", () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
   it("[onExecuteCommand] Prints error if configured", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
       .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"] }));
@@ -280,7 +319,7 @@ describe("Cli.run", () => {
     expect(errorlogger).toHaveBeenCalledWith("ERROR");
   });
   it("[onExecuteCommand] Does not print error if not configured", () => {
-    jest.spyOn(CliError, "analize").mockImplementation(() => ErrorType.COMMAND_NOT_FOUND);
+    jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
       .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"] }));
@@ -294,7 +333,7 @@ describe("Cli.run", () => {
     jest
       .spyOn(CliError, "analize")
       .mockImplementation(
-        (value) => ({ CMD_NOT_FOUND: ErrorType.COMMAND_NOT_FOUND, OPT_NOT_FOUND: ErrorType.OPTION_NOT_FOUND }[value!]),
+        (value) => ({ CMD_NOT_FOUND: "command_not_found", OPT_NOT_FOUND: "option_not_found" }[value!] as ErrorType),
       );
     jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
       location: [],

@@ -11,7 +11,7 @@ new Cli(
           default: "./webpack.config.js",
         },
         configName: {
-          aliases: ["--config-name"],
+          aliases: ["config-name"],
           description: "Name of the configuration to use",
         },
         stats: {

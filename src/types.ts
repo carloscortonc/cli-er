@@ -1,4 +1,4 @@
-import { CliError, ErrorType } from "./cli-errors";
+import { ErrorType } from "./cli-errors";
 
 export enum Kind {
   NAMESPACE = "namespace",
@@ -23,8 +23,10 @@ export type ValueParserInput = {
   current: OptionValue;
   /** Option definition */
   option: Option & { key: string };
-  /** Method for formatting errors, to be used in `Option.parser` */
-  format: typeof CliError.format;
+  /** Method for formatting errors, to be used in `Option.parser`
+   * @deprecated since 0.12.0. Use Cli.formatMessage instead
+   */
+  format: (...params: any[]) => void;
 };
 
 export type ValueParserOutput = {
@@ -65,6 +67,11 @@ export type Option = BaseElement & {
    * @default false
    */
   positional?: boolean | number;
+  /** If type=boolean, whether to include negated aliases
+   * e.g. --debug => --no-debug/--nodebug
+   * @default false
+   */
+  negatable?: boolean;
   /** Default value for the option */
   default?: OptionValue;
   /** Whether is required or not
@@ -85,7 +92,7 @@ export type Namespace = BaseElement & {
   options?: Definition;
 };
 
-export type Command = Omit<Option, "kind" | "aliases"> & {
+export type Command = Omit<Option, "kind"> & {
   kind: `${Kind.COMMAND}`;
   /** Nested options definition */
   options?: Definition<Option>;
@@ -140,9 +147,9 @@ export type CliOptions = {
   /** Configuration related to when errors should be displayed */
   errors: {
     /** List of error-types that will be displayed before help */
-    onGenerateHelp: `${ErrorType}`[];
+    onGenerateHelp: ErrorType[];
     /** List of error-types that will cause to end execution with `exit(1)` */
-    onExecuteCommand: `${ErrorType}`[];
+    onExecuteCommand: ErrorType[];
   };
   /** Help-related configuration */
   help: Option & {

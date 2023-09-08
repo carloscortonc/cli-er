@@ -36,7 +36,7 @@ describe("completeDefinition", () => {
         },
       },
     },
-    opt: {},
+    opt: { aliases: ["opt", "o"] },
   };
   const cliOptions: CliOptions = {
     baseLocation: "",
@@ -78,7 +78,21 @@ describe("completeDefinition", () => {
           },
         },
       },
-      opt: { type: "string" },
+      opt: { type: "string", aliases: ["--opt", "-o"] },
+    });
+  });
+  it("Complete aliases for command", () => {
+    const cmdDef: Definition<DefinitionElement> = {
+      cmd: {
+        kind: "command",
+        aliases: ["cmd2"],
+      },
+    };
+    const completedDefinition = completeDefinition(cmdDef, cliOptions);
+    expect(completedDefinition).toMatchObject({
+      cmd: {
+        aliases: ["cmd", "cmd2"],
+      },
     });
   });
   it("Includes help option if auto-include help is enabled", () => {
@@ -95,7 +109,7 @@ describe("completeDefinition", () => {
       help: {
         type: "boolean",
         aliases: ["-h"],
-        description: "",
+        description: "Display global help, or scoped to a namespace/command",
       },
     });
   });
@@ -114,7 +128,7 @@ describe("completeDefinition", () => {
       version: {
         type: "boolean",
         aliases: ["-v"],
-        description: "",
+        description: "Display version",
       },
     });
   });
@@ -258,10 +272,10 @@ describe("parseArguments", () => {
   it("Option with parser property", () => {
     const d = new Cli({
       opt: {
-        parser: ({ value, format }) => {
+        parser: ({ value }) => {
           // return error if value is not a date
           if (isNaN(Date.parse(value || ""))) {
-            return { error: format("option_wrong_value", "x", "x", "x") };
+            return { error: Cli.formatMessage("option_wrong_value", { option: "x", expected: "x", found: "x" }) };
           }
           return { value: new Date(value!) };
         },
@@ -477,6 +491,44 @@ describe("parseArguments", () => {
       errors: [],
     });
   });
+  it("Parse {long-alias}={value}", () => {
+    const { definition, options } = new Cli({ opt: {}, opt2: {} }, baseConfig);
+    expect(parseArguments(["--opt=optvalue", "--opt2", "opt2value"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], opt: "optvalue", opt2: "opt2value" },
+      location: [],
+      errors: [],
+    });
+  });
+  it("Parse {short-alias}{value}", () => {
+    const { definition, options } = new Cli({ opt: { aliases: ["o"] }, opt2: {} }, baseConfig);
+    expect(parseArguments(["-ooptvalue", "--opt2", "opt2value"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], opt: "optvalue", opt2: "opt2value" },
+      location: [],
+      errors: [],
+    });
+  });
+  it("Parse multiple boolean short flags", () => {
+    const { definition, options } = new Cli(
+      { a: { type: "boolean" }, b: { type: "boolean" }, c: { type: "boolean" } },
+      baseConfig,
+    );
+    expect(parseArguments(["-abc"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], a: true, b: true, c: true },
+      location: [],
+      errors: [],
+    });
+    expect(parseArguments(["-cbac"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], a: true, b: true, c: true },
+      location: [],
+      errors: [],
+    });
+    // Repeated aliases
+    expect(parseArguments(["-abca"], definition as Definition, options)).toStrictEqual({
+      options: { _: [], a: true, b: true, c: true },
+      location: [],
+      errors: [],
+    });
+  });
 });
 
 describe("executeScript", () => {
@@ -683,7 +735,7 @@ describe("getDefinitionElement", () => {
           },
         },
         globalOption: {
-          aliases: ["-g", "--global"],
+          aliases: ["-g", "global"],
           default: "globalvalue",
           description: "Option shared between all commands",
           kind: "option",
@@ -701,7 +753,7 @@ describe("getDefinitionElement", () => {
   it("Includes all inherited options", () => {
     const de = getDefinitionElement(definition, ["nmsi", "nested-nms", "cmd"], cliOptions);
     expect(de).toStrictEqual({
-      kind: "cmd",
+      kind: "command",
       options: {
         "nested-nms-o": expect.anything(),
         "nmsi-o": expect.anything(),
@@ -714,10 +766,17 @@ describe("getDefinitionElement", () => {
 });
 
 describe("formatVersion", () => {
-  const cliOptions = new Cli({}).options;
-  it("Prints formatted version", () => {
+  it("Prints default formatted version", () => {
+    const cliOptions = new Cli({}).options;
     const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
     formatVersion({ ...cliOptions, cliName: "cli-app", cliVersion: "1.0.0" });
     expect(logger).toHaveBeenCalledWith("  cli-app version: 1.0.0\n");
+  });
+  it("Override version-template", () => {
+    const cliOptions = new Cli({}, { messages: { "generate-version.template": "{cliName} version {cliVersion}" } })
+      .options;
+    const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
+    formatVersion({ ...cliOptions, cliName: "cli-app", cliVersion: "1.0.0" });
+    expect(logger).toHaveBeenCalledWith("cli-app version 1.0.0");
   });
 });

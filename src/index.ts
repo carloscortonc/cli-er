@@ -8,9 +8,9 @@ import {
   getEntryPoint,
   getEntryFile,
 } from "./cli-utils";
-import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind, Messages } from "./types";
+import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
 import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY } from "./utils";
-import { CliError, ErrorType } from "./cli-errors";
+import { CliError } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import { ERROR_MESSAGES } from "./cli-errors";
 import { CLI_MESSAGES, formatMessage } from "./cli-messages";
@@ -18,7 +18,7 @@ import path from "path";
 
 export default class Cli {
   static logger: ICliLogger = new CliLogger();
-  static messages: Messages = { ...ERROR_MESSAGES, ...CLI_MESSAGES };
+  static messages = { ...ERROR_MESSAGES, ...CLI_MESSAGES } as const;
   static formatMessage = formatMessage;
   definition: Definition;
   options: CliOptions;
@@ -32,33 +32,33 @@ export default class Cli {
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
     // Allow to override messages
-    Object.assign(Cli.messages, options.messages || {});
+    Object.assign(Cli.messages, { ...(options.messages || {}) } as const);
 
     this.options = {
       baseLocation: getEntryPoint(),
       baseScriptLocation: getEntryPoint(),
       commandsPath: "commands",
       errors: {
-        onGenerateHelp: [ErrorType.COMMAND_NOT_FOUND],
+        onGenerateHelp: ["command_not_found"],
         onExecuteCommand: [
-          ErrorType.COMMAND_NOT_FOUND,
-          ErrorType.OPTION_WRONG_VALUE,
-          ErrorType.OPTION_REQUIRED,
-          ErrorType.OPTION_MISSING_VALUE,
-          ErrorType.OPTION_NOT_FOUND,
+          "command_not_found",
+          "option_wrong_value",
+          "option_required",
+          "option_missing_value",
+          "option_not_found",
         ],
       },
       help: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["-h", "--help"],
+        aliases: ["h", "help"],
         description: Cli.formatMessage("help.description"),
         template: "\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n",
       },
       version: {
         autoInclude: true,
         type: "boolean",
-        aliases: ["-v", "--version"],
+        aliases: ["v", "version"],
         description: Cli.formatMessage("version.description"),
         hidden: true,
       },
@@ -97,6 +97,7 @@ export default class Cli {
   run(args?: string[]): void | Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const opts = this.parse(args_);
+    // Include CliOptions.rootCommand if empty location provided
     const elementLocation =
       opts.location.length === 0 && typeof this.options.rootCommand === "string"
         ? [this.options.rootCommand]
@@ -140,7 +141,7 @@ export default class Cli {
     if (typeof command.action === "function") {
       return command.action(opts);
     }
-    return executeScript(opts, this.options);
+    return executeScript({ ...opts, location: elementLocation }, this.options);
   }
   /**
    * Generate and output help documentation
