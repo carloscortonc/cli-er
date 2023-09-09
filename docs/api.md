@@ -151,6 +151,8 @@ Options:
   -h, --help    Display global help, or scoped to a namespace/command
 ```
 
+The library also checks `process.stdout.columns` to format the help and line-breaks appropriately.
+
 _**TIP**: any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition._
 
 > **Note**
