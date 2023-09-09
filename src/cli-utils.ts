@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import url from "url";
 import { closest } from "fastest-levenshtein";
-import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
+import { addLineBreaks, ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
@@ -513,14 +513,13 @@ function generateHelp(
       ? " ".concat(Cli.formatMessage("generate-help.option-default", { default: option.default.toString() }))
       : "";
   // Format all the information relative to an element
-  const formatElement = (element: ExtendedDefinitionElement, formatter: ColumnFormatter, indentation: number) =>
-    [
-      " ".repeat(indentation),
-      formatter.format("name", element.name, 2),
-      element.description || "-",
-      defaultHint(element),
-      "\n",
+  const formatElement = (element: ExtendedDefinitionElement, formatter: ColumnFormatter, indentation: number) => {
+    const start = [" ".repeat(indentation), formatter.format("name", element.name, 2)].join("");
+    return [
+      start,
+      addLineBreaks([element.description || "-", defaultHint(element)].join(""), { start: start.length }),
     ].join("");
+  };
 
   // Initialize element-sections
   const elementSectionsTemplate = {
