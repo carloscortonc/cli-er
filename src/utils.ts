@@ -61,26 +61,22 @@ export function addLineBreaks(value: string, params: { start: number; rightMargi
     return value.concat("\n");
   }
   // prettier-ignore
-  let remaining = value, chunk, mod = 0, lines = [];
+  let remaining = value, extra = 0, lines = [];
   while (remaining.length > availableWidth) {
-    // Check if the cut is splitting a word
-    if (/[^ ]+/.test(remaining.slice(availableWidth - 1, availableWidth + 1))) {
-      // Cut but the last space, to avoid breaking a word
-      [chunk] =
-        /.+(?= )/.exec(remaining.slice(0, availableWidth)) ||
-        (() => {
-          mod = 1;
-          return [remaining.slice(0, availableWidth - 1).concat("-")];
-        })();
-    } else {
-      chunk = remaining.slice(0, availableWidth);
-    }
+    const chunk =
+      // Break by the last space present
+      /.+[ ]/.exec(remaining.slice(0, availableWidth))?.[0] ||
+      // If no spaces are present to split the word, use "-"
+      (() => {
+        extra = 1;
+        return remaining.slice(0, availableWidth - 1).concat("-");
+      })();
     lines.push(chunk);
-    remaining = remaining.slice(chunk.length - mod);
-    mod = 0;
+    remaining = remaining.slice(chunk.length - extra);
+    extra = 0;
   }
   lines.push(remaining);
-  return lines.join(`\n${" ".repeat(start + indent - 1)}`).concat("\n");
+  return lines.join(`\n${" ".repeat(start + indent)}`).concat("\n");
 }
 
 /** Shortened method for logging an error an exiting */

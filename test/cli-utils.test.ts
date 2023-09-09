@@ -712,6 +712,33 @@ Options:
 
 `);
   });
+  it("Takes tty columns into account when formatting options", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const { definition: def } = new Cli({
+      opt: { description: "long description for option" },
+      abc: { description: "abcdefghijklmnñopqrstuvwxyz" },
+    });
+    const actualColumns = process.stdout.columns;
+    process.stdout.columns = 40;
+    generateScopedHelp(def, [], cliOptions);
+    process.stdout.columns = actualColumns;
+    expect(output).toStrictEqual(`
+Usage:  cli-name [OPTIONS]
+
+cli-description
+
+Options:
+  --opt       long description for 
+               option
+  --abc       abcdefghijklmnñopqrstuv-
+               wxyz
+  -h, --help  Display global help, or 
+               scoped to a 
+               namespace/command
+
+`);
+  });
 });
 
 describe("getDefinitionElement", () => {
