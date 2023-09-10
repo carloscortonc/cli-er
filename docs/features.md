@@ -44,4 +44,4 @@ If any is generated, the `exitCode` will be set to `1`, so a simple validation-w
 To see how to enable it check [`CliOptions.debug`](./cli-options.md#debug).
 
 ## Typescript support
-You can check [this example](./examples/ts-cli) on how to write a full typescript cli application.
+You can check [this example](/examples/ts-cli) on how to write a full typescript cli application.
