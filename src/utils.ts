@@ -47,8 +47,36 @@ export class ColumnFormatter {
     return this;
   }
   format(id: string, value: string, additionalSpacing = 0) {
-    return value.concat(" ".repeat(this.maxLengths[id] + additionalSpacing - value.length));
+    return value.padEnd(this.maxLengths[id] + additionalSpacing, " ");
   }
+}
+
+/** Add line-breaks to the provided string, taking into account tty columns and start param */
+export function addLineBreaks(value: string, params: { start: number; rightMargin?: number; indent?: number }) {
+  const { start, rightMargin = 2, indent = 1 } = params;
+  const width = process.stdout.columns;
+  const availableWidth = width - start - rightMargin;
+  if (!width || availableWidth <= 0) {
+    // Nothing can be done
+    return value.concat("\n");
+  }
+  // prettier-ignore
+  let remaining = value, extra = 0, lines = [];
+  while (remaining.length > availableWidth) {
+    const chunk =
+      // Break by the last space present
+      /.+[ ]/.exec(remaining.slice(0, availableWidth))?.[0] ||
+      // If no spaces are present to split the word, use "-"
+      (() => {
+        extra = 1;
+        return remaining.slice(0, availableWidth - 1).concat("-");
+      })();
+    lines.push(chunk);
+    remaining = remaining.slice(chunk.length - extra);
+    extra = 0;
+  }
+  lines.push(remaining);
+  return lines.join(`\n${" ".repeat(start + indent)}`).concat("\n");
 }
 
 /** Shortened method for logging an error an exiting */
