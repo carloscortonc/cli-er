@@ -1,3 +1,10 @@
+## [0.12.1](https://github.com/carloscortonc/cli-er/compare/v0.12.0...v0.12.1) (2023-09-20)
+
+
+### Bug Fixes
+
+* wrong generated paths for root commands ([#65](https://github.com/carloscortonc/cli-er/issues/65)) ([ebe562a](https://github.com/carloscortonc/cli-er/commit/ebe562ae757254ab1390cea5c7a947513b00c81f))
+
 # [0.12.0](https://github.com/carloscortonc/cli-er/compare/v0.11.0...v0.12.0) (2023-09-08)
 
 

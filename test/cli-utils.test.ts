@@ -569,6 +569,21 @@ describe("executeScript", () => {
     ]);
     pathListSpy.mockRestore();
   });
+  it("Generates all valid paths with the corresponding named/default import - single command", () => {
+    const c = new Cli(definition, { baseScriptLocation: "/" });
+    const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
+    executeScript({ location: ["gcmd"], options: {} as any }, c.options);
+    const norm = (p: string) => p.replace(/\//g, path.sep);
+    expect(pathListSpy.mock.calls).toEqual([
+      [norm("/commands/gcmd/index.js")],
+      [norm("/commands/gcmd.js")],
+      [norm("/commands/index.js")],
+      [norm("/commands.js")],
+      [norm("/index.js")],
+      [norm("/script.js")],
+    ]);
+    pathListSpy.mockRestore();
+  });
   it("Script execution fails: logs error", () => {
     (gcmd as any).mockImplementation(() => {
       throw new Error("errormessage");
