@@ -371,10 +371,10 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
       const isDefaultImport = index === list.length - 1;
       const locationPaths = [];
       // Include index import
-      locationPaths.push(path.join(...location.slice(0, index), "index"));
+      locationPaths.push(path.join(...finalLocation.slice(0, index), "index"));
       if (index > 0) {
         // Include location-name import
-        locationPaths.push(path.join(...location.slice(0, index)));
+        locationPaths.push(path.join(...finalLocation.slice(0, index)));
       } else {
         // Include entryfile-name import
         locationPaths.push(entryFile.name);
