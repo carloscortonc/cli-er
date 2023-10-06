@@ -548,6 +548,7 @@ describe("executeScript", () => {
     process.env[utils.CLIER_DEBUG_KEY] = "1";
     executeScript({ location: ["non-existent"], options: {} as any }, { ...cliOptions, debug: true });
     expect(debugSpy).toHaveBeenCalledWith(
+      "WARN",
       expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"),
     );
     expect(exitlogger).toHaveBeenCalled();

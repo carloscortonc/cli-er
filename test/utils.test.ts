@@ -1,4 +1,4 @@
-import { CLIER_DEBUG_KEY, clone, debug, deprecationWarning, findPackageJson, merge } from "../src/utils";
+import { CLIER_DEBUG_KEY, DEBUG_TYPE, clone, debug, deprecationWarning, findPackageJson, merge } from "../src/utils";
 import path from "path";
 import fs from "fs";
 
@@ -17,6 +17,7 @@ const mockPath = path as { sep: string };
 
 beforeEach(() => {
   jest.clearAllMocks();
+  process.exitCode = 0;
 });
 
 describe("findPackageJson", () => {
@@ -66,35 +67,42 @@ describe("findPackageJson", () => {
 });
 
 describe("debug", () => {
-  const stderr = jest.spyOn(process.stderr, "write").mockImplementationOnce(jest.fn());
+  const stdout = jest.spyOn(process.stdout, "write").mockImplementation(jest.fn());
   beforeEach(() => {
-    stderr.mockClear();
+    stdout.mockClear();
   });
   afterAll(() => {
-    stderr.mockReset();
+    stdout.mockReset();
   });
-  it("Invokes process.stderr.write if debug is enabled", () => {
+  it("Invokes process.stdout.write if debug is enabled: WARN", () => {
     process.env[CLIER_DEBUG_KEY] = "1";
-    debug("debug-message");
-    expect(stderr).toHaveBeenCalledWith("[CLIER_DEBUG] debug-message\n");
+    debug(DEBUG_TYPE.WARN, "debug-message");
+    expect(stdout).toHaveBeenCalledWith("[CLIER_DEBUG::WARN] debug-message\n");
+    expect(process.exitCode).toBe(1);
+  });
+  it("Invokes process.stdout.write if debug is enabled: TRACE", () => {
+    process.env[CLIER_DEBUG_KEY] = "1";
+    debug(DEBUG_TYPE.TRACE, "trace-message");
+    expect(stdout).toHaveBeenCalledWith("[CLIER_DEBUG::TRACE] trace-message\n");
+    expect(process.exitCode).toBe(0);
   });
   it("Does nothing if debug is disabled", () => {
     process.env[CLIER_DEBUG_KEY] = "";
-    debug("debug-message");
-    expect(stderr).not.toHaveBeenCalled();
+    debug(DEBUG_TYPE.WARN, "debug-message");
+    expect(stdout).not.toHaveBeenCalled();
   });
 });
 
 describe("deprecationWarning", () => {
   it("Log a given deprecation if condition is true", () => {
     process.env[CLIER_DEBUG_KEY] = "1"; // enable debug mode
-    const stderr = jest.spyOn(process.stderr, "write").mockImplementation(jest.fn());
+    const stdout = jest.spyOn(process.stdout, "write").mockImplementation(jest.fn());
     deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
-    expect(stderr).toHaveBeenCalledWith(expect.stringContaining(`<P> is deprecated and will be removed in 1.0.0`));
+    expect(stdout).toHaveBeenCalledWith(expect.stringContaining(`<P> is deprecated and will be removed in 1.0.0`));
     // Repeated deprecation will not be logged again
-    stderr.mockClear();
+    stdout.mockClear();
     deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
-    expect(stderr).not.toHaveBeenCalled();
+    expect(stdout).not.toHaveBeenCalled();
   });
 });
 
