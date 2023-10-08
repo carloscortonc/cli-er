@@ -2,7 +2,7 @@ import Cli from ".";
 
 /** Error messages for each error type */
 export const ERROR_MESSAGES = {
-  command_not_found: 'Command "{command}" not found. Did you mean "{suggestion}" ?',
+  command_not_found: 'Command "{command}" not found',
   option_not_found: 'Unknown option "{option}"',
   option_wrong_value: 'Wrong value for option "{option}". Expected <{expected}> but found "{found}"',
   option_missing_value: 'Missing value of type <{type}> for option "{option}"',
