@@ -132,12 +132,21 @@ export function findPackageJson(baseLocation: string) {
 
 export const isDebugActive = () => process.env[CLIER_DEBUG_KEY];
 
+export enum DEBUG_TYPE {
+  /** Used for deprecations, definition warnings, etc */
+  WARN = "WARN",
+  /** Used for debugging execution */
+  TRACE = "TRACE",
+}
+
 /** Utility to print messages only when debug mode is active
  * This will set the process exitcode to 1 */
-export function debug(message: string) {
+export function debug(type: `${DEBUG_TYPE}`, message: string) {
+  //TODO implement as a singleton with strategy ptrn
   if (isDebugActive()) {
-    process.stderr.write("[CLIER_DEBUG] ".concat(message, "\n"));
-    process.exitCode = 1;
+    process.stdout.write(`[CLIER_DEBUG::${type}] `.concat(message, "\n"));
+    // Only set error exitcode with warn debug-messages
+    type === DEBUG_TYPE.WARN && (process.exitCode = 1);
   }
 }
 
@@ -163,7 +172,7 @@ class DeprecationWarning {
     );
     if (options.condition !== false && !this.list.has(depMessage)) {
       this.list.add(depMessage);
-      debug(depMessage);
+      debug(DEBUG_TYPE.WARN, depMessage);
     }
   };
 }

@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import url from "url";
 import { closest } from "fastest-levenshtein";
-import { addLineBreaks, ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
+import { addLineBreaks, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
@@ -141,6 +141,7 @@ function completeElementDefinition(
       };
     } else if (element.type === Type.BOOLEAN && element.negatable === true) {
       debug(
+        DEBUG_TYPE.WARN,
         `Boolean option <${name}> will be included without negated aliases.` +
           " To change this, provide long aliases without dashes",
       );
@@ -364,6 +365,8 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     ...(location.length === 1 && cliOptions.commandsPath !== "." ? [cliOptions.commandsPath] : []),
   ].concat(location);
 
+  debug(DEBUG_TYPE.TRACE, `[run:executeScript] Parameters: ${JSON.stringify({ location: finalLocation, options })}`);
+
   const scriptPaths = [".", ...finalLocation]
     .reduce((acc: { path: string; default: boolean }[], _, i: number, list) => {
       // Reverse index to consider the most specific paths first
@@ -386,10 +389,13 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     }, [])
     .map((p) => ({ ...p, path: path.join(base, p.path.concat(entryFile.ext)) }));
 
+  debug(DEBUG_TYPE.TRACE, `[run:executeScript] List of candidates: ${JSON.stringify(scriptPaths)}`);
+
   const validScriptPath = scriptPaths.find((p) => fs.existsSync(p.path));
 
   if (!validScriptPath) {
     debug(
+      DEBUG_TYPE.WARN,
       scriptPaths.reduce(
         (acc, sp) => "".concat(acc, "  ", sp.path, "\n"),
         "There was a problem finding the script to run. Considered paths were:\n",
@@ -397,6 +403,8 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     );
     return logErrorAndExit();
   }
+
+  debug(DEBUG_TYPE.TRACE, `[run:executeScript] Selected candidate: ${JSON.stringify(validScriptPath)}`);
 
   try {
     let m;
