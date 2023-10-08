@@ -39,8 +39,11 @@ If the location is `["nms", "cmd"]` for an entryfile `cli.js`, the list of candi
 6. `/cli.js` - named import  (`cmd`)
 
 ## Debug mode
-When active, the library will generate debug logs warning about problems, deprecations or suggestions.
-If any is generated, the `exitCode` will be set to `1`, so a simple validation-workflow can be built with this.
+When active, the library will generate debug logs warning about problems, deprecations or suggestions. Two types exist:
+- `WARN`: to indicated misused or deprecated options.
+- `TRACE`: information related to the execution (like the list of considered files to invoke).
+
+If any `WARN` log is generated, the `exitCode` will be set to `1`, so a simple validation-workflow can be built with this.
 To see how to enable it check [`CliOptions.debug`](/docs/cli-options.md#debug).
 
 ## Typescript support
