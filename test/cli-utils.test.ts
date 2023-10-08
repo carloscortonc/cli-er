@@ -359,11 +359,18 @@ describe("parseArguments", () => {
       errors: ['Command "non-existent" not found. Did you mean "cmd" ?', 'Unknown option "non-existent"'],
     });
   });
-  it("Returns error if unknown options are found", () => {
+  it("Returns error if unknown options are found - without suggestion", () => {
     expect(parseArguments(["nms", "cmd", "cmdvalue", "unknown-option"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
       errors: ['Unknown option "unknown-option"'],
+    });
+  });
+  it("Returns error if unknown options are found - with suggestion", () => {
+    expect(parseArguments(["nms", "cmd", "cmdvalue", "--opr"], def, cliOptions)).toStrictEqual({
+      options: expect.anything(),
+      location: expect.anything(),
+      errors: ['Unknown option "--opr". Did you mean "--opt" ?'],
     });
   });
   it("Returns error if option has incorrect value", () => {

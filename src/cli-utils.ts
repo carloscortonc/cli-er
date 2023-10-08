@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import url from "url";
-import { closest } from "fastest-levenshtein";
+import { closest, distance } from "fastest-levenshtein";
 import { addLineBreaks, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
@@ -238,8 +238,18 @@ export function parseArguments(
         }
         // Only generate error when no root-command is registered
         if (!optsAliases.includes(arg) && (!cliOptions.rootCommand || output.location.length > 0)) {
-          const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-          output.errors.push(Cli.formatMessage("command_not_found", { command: arg, suggestion }));
+          const suggestion = closestSuggestion({
+            target: arg,
+            kind: [Kind.NAMESPACE, Kind.COMMAND],
+            definition,
+            rawLocation: output.location,
+            cliOptions,
+          })!;
+          const msg = "".concat(
+            Cli.formatMessage("command_not_found", { command: arg }),
+            Cli.formatMessage("parse-arguments.suggestion", { suggestion }),
+          );
+          output.errors.push(msg);
         }
         break argsLoop;
       }
@@ -329,7 +339,19 @@ export function parseArguments(
     } else {
       // Include unknown arg inside "_" key, and add an error
       output.options._.push(curr);
-      output.errors.push(Cli.formatMessage("option_not_found", { option: curr }));
+      const suggestion = closestSuggestion({
+        target: curr,
+        kind: [Kind.OPTION],
+        rawLocation: output.location,
+        definition,
+        cliOptions,
+        maxDistance: 3,
+      });
+      const msg = "".concat(
+        Cli.formatMessage("option_not_found", { option: curr }),
+        suggestion ? Cli.formatMessage("parse-arguments.suggestion", { suggestion }) : "",
+      );
+      output.errors.push(msg);
     }
   }
 
@@ -633,18 +655,21 @@ export function formatVersion(cliOptions: CliOptions) {
 }
 
 /** Find the closest namespace/command based on the given target and location */
-export function closestSuggestion(
-  target: string,
-  definition: Definition<DefinitionElement>,
-  rawLocation: string[],
-  cliOptions: CliOptions,
-) {
-  let def = definition;
-  if (rawLocation.length > 0) {
-    def = getDefinitionElement(definition, rawLocation, cliOptions)!.options!;
+export function closestSuggestion(params: {
+  target: string;
+  definition: Definition<DefinitionElement>;
+  rawLocation: string[];
+  cliOptions: CliOptions;
+  kind: Kind[];
+  maxDistance?: number;
+}) {
+  let def = params.definition;
+  if (params.rawLocation.length > 0) {
+    def = getDefinitionElement(params.definition, params.rawLocation, params.cliOptions)!.options!;
   }
   const candidates = Object.values(def || {})
-    .filter((e) => e.kind !== Kind.OPTION)
+    .filter((e) => params.kind.includes(e.kind as Kind))
     .reduce((acc: string[], curr) => [...acc, ...curr.aliases!], []);
-  return closest(target, candidates);
+  const c = closest(params.target, candidates);
+  return !params.maxDistance || distance(params.target, c || "") <= params.maxDistance ? c : undefined;
 }
