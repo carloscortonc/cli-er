@@ -8,13 +8,14 @@ import {
   getDefinitionElement,
   formatVersion,
   DefinitionElement,
+  closestSuggestion,
 } from "../src/cli-utils";
 import Cli from "../src";
 import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
 //@ts-ignore
 import gcmd from "./data/gcmd";
-import { CliOptions, Definition, OptionValue, ParsingOutput } from "../src/types";
+import { CliOptions, Definition, Kind, OptionValue, ParsingOutput } from "../src/types";
 const definition = _definition as Definition;
 
 beforeEach(() => {
@@ -828,5 +829,32 @@ describe("formatVersion", () => {
     const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
     formatVersion({ ...cliOptions, cliName: "cli-app", cliVersion: "1.0.0" });
     expect(logger).toHaveBeenCalledWith("cli-app version 1.0.0");
+  });
+});
+
+describe("closesSuggestion", () => {
+  const c = new Cli(definition);
+  it("Returns closest suggestion for the given parameters", () => {
+    expect(
+      closestSuggestion({
+        target: "--opr",
+        definition: c.definition,
+        rawLocation: ["nms", "cmd"],
+        cliOptions: c.options,
+        kind: [Kind.OPTION],
+      }),
+    ).toBe("--opt");
+  });
+  it("Returns closest suggestion for the given parameters - maxDistance", () => {
+    expect(
+      closestSuggestion({
+        target: "--oor",
+        definition: c.definition,
+        rawLocation: ["nms", "cmd"],
+        cliOptions: c.options,
+        kind: [Kind.OPTION],
+        maxDistance: 1,
+      }),
+    ).toBe(undefined);
   });
 });

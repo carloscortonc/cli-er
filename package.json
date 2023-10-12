@@ -27,9 +27,7 @@
     "test": "yarn tsc && jest --silent && yarn smoke-test",
     "format": "prettier --write ."
   },
-  "dependencies": {
-    "fastest-levenshtein": "^1.0.16"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@saithodev/semantic-release-backmerge": "^2.1.2",
     "@semantic-release/changelog": "^6.0.1",
