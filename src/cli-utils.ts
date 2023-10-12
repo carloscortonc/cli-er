@@ -1,12 +1,12 @@
 import path from "path";
 import fs from "fs";
 import url from "url";
-import { closest, distance } from "fastest-levenshtein";
 import { addLineBreaks, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
 import flattenArguments from "./option-syntax";
+import { closest } from "./edit-distance";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
@@ -670,6 +670,6 @@ export function closestSuggestion(params: {
   const candidates = Object.values(def || {})
     .filter((e) => params.kind.includes(e.kind as Kind))
     .reduce((acc: string[], curr) => [...acc, ...curr.aliases!], []);
-  const c = closest(params.target, candidates);
-  return !params.maxDistance || distance(params.target, c || "") <= params.maxDistance ? c : undefined;
+  const { value, distance } = closest(params.target, candidates);
+  return !params.maxDistance || distance <= params.maxDistance ? value : undefined;
 }
