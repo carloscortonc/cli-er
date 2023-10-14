@@ -3,12 +3,14 @@
 A configuration object may be provided in the class constructor. The available options are:
 
 #### `baseLocation`
-Location of the main cli application.</br>
+Base path where the `ProcessingOutput.location` will start from.</br>
 **Default**: `path.dirname(entryFile)`
 
-#### `baseScriptLocation`
-Base path where the `ProcessingOutput.location` will start from</br>
+#### ~~`baseScriptLocation`~~
+Base path where the `ProcessingOutput.location` will start from.</br>
 **Default**: `path.dirname(entryFile)`
+> **Warning**
+> **Deprecated since 0.13.0 in favor of `CliOptions.baseLocation`**
 
 #### `commandsPath`
 Path where the single-command scripts (not contained in any namespace) are stored, starting from `CliOptions.baseScriptLocation`</br>

@@ -376,7 +376,7 @@ export function parseArguments(
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
 export async function executeScript({ location, options }: Omit<ParsingOutput, "errors">, cliOptions: CliOptions) {
-  const base = cliOptions.baseScriptLocation;
+  const base = cliOptions.baseLocation;
   if (!base) {
     return logErrorAndExit(Cli.formatMessage("execute.base-location-error"));
   }
