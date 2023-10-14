@@ -543,8 +543,8 @@ describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
   const debugSpy = jest.spyOn(utils, "debug").mockImplementation();
   const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-  it("Logs error if no baseScriptLocation configured", () => {
-    executeScript({ location: [], options: {} as any }, { ...cliOptions, baseScriptLocation: "" });
+  it("Logs error if no baseLocation configured", () => {
+    executeScript({ location: [], options: {} as any }, { ...cliOptions, baseLocation: "" });
     expect(exitlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
   it("[DEBUG-OFF] No valid script found: exits", () => {

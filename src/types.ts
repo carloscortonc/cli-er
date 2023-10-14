@@ -132,12 +132,12 @@ export interface ICliLogger {
 export type Messages = { [key in ErrorType | string]: string };
 
 export type CliOptions = {
-  /** Location of the main cli application
+  /** Base path where the `ProcessingOutput.location` will start from
    * @default path.dirname(require.main.filename)
    */
   baseLocation: string | undefined;
   /** Base path where the `ProcessingOutput.location` will start from
-   * @default path.dirname(require.main.filename)
+   * @deprecated since 0.13.0. Use `CliOptions.baseLocation` instead
    */
   baseScriptLocation: string | undefined;
   /** Path where the single-command scripts (not contained in any namespace) are stored
