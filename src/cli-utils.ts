@@ -382,10 +382,7 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
   }
   const entryFile = path.parse(getEntryFile());
 
-  const finalLocation = [
-    // Apply CliOptions.commandsPath configuration for single commands
-    ...(location.length === 1 && cliOptions.commandsPath !== "." ? [cliOptions.commandsPath] : []),
-  ].concat(location);
+  const finalLocation = location.length === 1 ? [cliOptions.commandsPath].concat(location) : location;
 
   debug(DEBUG_TYPE.TRACE, `[run:executeScript] Parameters: ${JSON.stringify({ location: finalLocation, options })}`);
 
