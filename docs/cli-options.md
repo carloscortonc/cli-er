@@ -13,7 +13,7 @@ Base path where the `ProcessingOutput.location` will start from.</br>
 > **Deprecated since 0.13.0 in favor of `CliOptions.baseLocation`**
 
 #### `commandsPath`
-Path where the single-command scripts (not contained in any namespace) are stored, starting from `CliOptions.baseScriptLocation`</br>
+Path where the single-command scripts (not contained in any namespace) are stored. A relative value can be provided, using `CliOptions.baseScriptLocation` as base path.</br>
 **Default**: `"commands"`
 
 #### `errors`

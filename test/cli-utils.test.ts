@@ -563,8 +563,8 @@ describe("executeScript", () => {
     //Restore debug value
     process.env[utils.CLIER_DEBUG_KEY] = "";
   });
-  it("Generates all valid paths with the corresponding named/default import", () => {
-    const c = new Cli(definition, { baseScriptLocation: "/" });
+  it("Generates all valid paths with the corresponding named/default import - namespace", () => {
+    const c = new Cli(definition, { baseLocation: "/" });
     const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
     executeScript({ location: ["nms", "cmd"], options: {} as any }, c.options);
     const norm = (p: string) => p.replace(/\//g, path.sep);
@@ -579,7 +579,7 @@ describe("executeScript", () => {
     pathListSpy.mockRestore();
   });
   it("Generates all valid paths with the corresponding named/default import - single command", () => {
-    const c = new Cli(definition, { baseScriptLocation: "/" });
+    const c = new Cli(definition, { baseLocation: "/base", commandsPath: "../commands" });
     const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
     executeScript({ location: ["gcmd"], options: {} as any }, c.options);
     const norm = (p: string) => p.replace(/\//g, path.sep);
@@ -588,8 +588,8 @@ describe("executeScript", () => {
       [norm("/commands/gcmd.js")],
       [norm("/commands/index.js")],
       [norm("/commands.js")],
-      [norm("/index.js")],
-      [norm("/script.js")],
+      [norm("/base/index.js")],
+      [norm("/base/script.js")],
     ]);
     pathListSpy.mockRestore();
   });

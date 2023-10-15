@@ -81,6 +81,10 @@ export default class Cli {
       this.options.baseLocation = this.options.baseScriptLocation;
       deprecationWarning({ property: "CliOptions.baseScriptLocation", alternative: "CliOptions.baseLocation" });
     }
+    // Regularize CliOptions.commandsPath into relative path to CliOptions.baseLocation
+    if (path.isAbsolute(this.options.commandsPath)) {
+      this.options.commandsPath = path.relative(this.options.baseLocation, this.options.commandsPath);
+    }
     // Store back at process.env.CLIER_DEBUG the final value of CliOptions.debug, to be accesible without requiring CliOptions
     process.env[CLIER_DEBUG_KEY] = this.options.debug ? "1" : "";
     this.definition = completeDefinition(clone(definition), this.options) as Definition;

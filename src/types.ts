@@ -135,12 +135,13 @@ export type CliOptions = {
   /** Base path where the `ProcessingOutput.location` will start from
    * @default path.dirname(require.main.filename)
    */
-  baseLocation: string | undefined;
+  baseLocation: string;
   /** Base path where the `ProcessingOutput.location` will start from
    * @deprecated since 0.13.0. Use `CliOptions.baseLocation` instead
    */
-  baseScriptLocation: string | undefined;
-  /** Path where the single-command scripts (not contained in any namespace) are stored
+  baseScriptLocation: string;
+  /** Path where the single-command scripts (not contained in any namespace) are stored.
+   * A relative value can be provided, using `CliOptions.baseLocation` as base path.
    * @default "commands"
    */
   commandsPath: string;
