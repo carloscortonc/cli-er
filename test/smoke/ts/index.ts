@@ -1,6 +1,5 @@
 import Cli from "../../../dist";
-import definition from "../definition.json";
-import options from "../options.json";
+import { definition, options } from "../load-test-params";
 
 //@ts-ignore
 new Cli(definition, options).run();
