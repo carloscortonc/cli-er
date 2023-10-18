@@ -431,11 +431,9 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     if (isCjs()) {
       m = require(validScriptPath.path);
     } else {
-      m = await import(url.pathToFileURL(validScriptPath.path).href).then((_m) =>
-        validScriptPath.default ? _m.default : _m,
-      );
+      m = await import(url.pathToFileURL(validScriptPath.path).href);
     }
-    const fn = validScriptPath.default ? m : m[location[location.length - 1]];
+    const fn = validScriptPath.default ? m.default || m : m[location[location.length - 1]];
     if (typeof fn !== "function") {
       logErrorAndExit(Cli.formatMessage("execute.handler-not-found", { path: validScriptPath.path }));
     }
