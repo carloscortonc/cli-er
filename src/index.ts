@@ -9,7 +9,7 @@ import {
   getEntryFile,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
-import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY } from "./utils";
+import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY, deprecationWarning } from "./utils";
 import { CliError } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import { ERROR_MESSAGES } from "./cli-errors";
@@ -76,6 +76,15 @@ export default class Cli {
         : {}),
     };
     merge(this.options, options, envOverwriteProperties);
+    // `CliOptions.baseScriptLocation` is deprecated and renamed to preexisting `CliOptions.baseLocation`
+    if (options.baseScriptLocation) {
+      this.options.baseLocation = this.options.baseScriptLocation;
+      deprecationWarning({ property: "CliOptions.baseScriptLocation", alternative: "CliOptions.baseLocation" });
+    }
+    // Regularize CliOptions.commandsPath into relative path to CliOptions.baseLocation
+    if (path.isAbsolute(this.options.commandsPath)) {
+      this.options.commandsPath = path.relative(this.options.baseLocation, this.options.commandsPath);
+    }
     // Store back at process.env.CLIER_DEBUG the final value of CliOptions.debug, to be accesible without requiring CliOptions
     process.env[CLIER_DEBUG_KEY] = this.options.debug ? "1" : "";
     this.definition = completeDefinition(clone(definition), this.options) as Definition;

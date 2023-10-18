@@ -8,13 +8,14 @@ import {
   getDefinitionElement,
   formatVersion,
   DefinitionElement,
+  closestSuggestion,
 } from "../src/cli-utils";
 import Cli from "../src";
 import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
 //@ts-ignore
 import gcmd from "./data/gcmd";
-import { CliOptions, Definition, OptionValue, ParsingOutput } from "../src/types";
+import { CliOptions, Definition, Kind, OptionValue, ParsingOutput } from "../src/types";
 const definition = _definition as Definition;
 
 beforeEach(() => {
@@ -359,11 +360,18 @@ describe("parseArguments", () => {
       errors: ['Command "non-existent" not found. Did you mean "cmd" ?', 'Unknown option "non-existent"'],
     });
   });
-  it("Returns error if unknown options are found", () => {
+  it("Returns error if unknown options are found - without suggestion", () => {
     expect(parseArguments(["nms", "cmd", "cmdvalue", "unknown-option"], def, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: expect.anything(),
       errors: ['Unknown option "unknown-option"'],
+    });
+  });
+  it("Returns error if unknown options are found - with suggestion", () => {
+    expect(parseArguments(["nms", "cmd", "cmdvalue", "--opr"], def, cliOptions)).toStrictEqual({
+      options: expect.anything(),
+      location: expect.anything(),
+      errors: ['Unknown option "--opr". Did you mean "--opt" ?'],
     });
   });
   it("Returns error if option has incorrect value", () => {
@@ -535,8 +543,8 @@ describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
   const debugSpy = jest.spyOn(utils, "debug").mockImplementation();
   const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
-  it("Logs error if no baseScriptLocation configured", () => {
-    executeScript({ location: [], options: {} as any }, { ...cliOptions, baseScriptLocation: "" });
+  it("Logs error if no baseLocation configured", () => {
+    executeScript({ location: [], options: {} as any }, { ...cliOptions, baseLocation: "" });
     expect(exitlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
   it("[DEBUG-OFF] No valid script found: exits", () => {
@@ -548,14 +556,15 @@ describe("executeScript", () => {
     process.env[utils.CLIER_DEBUG_KEY] = "1";
     executeScript({ location: ["non-existent"], options: {} as any }, { ...cliOptions, debug: true });
     expect(debugSpy).toHaveBeenCalledWith(
+      "WARN",
       expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"),
     );
     expect(exitlogger).toHaveBeenCalled();
     //Restore debug value
     process.env[utils.CLIER_DEBUG_KEY] = "";
   });
-  it("Generates all valid paths with the corresponding named/default import", () => {
-    const c = new Cli(definition, { baseScriptLocation: "/" });
+  it("Generates all valid paths with the corresponding named/default import - namespace", () => {
+    const c = new Cli(definition, { baseLocation: "/" });
     const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
     executeScript({ location: ["nms", "cmd"], options: {} as any }, c.options);
     const norm = (p: string) => p.replace(/\//g, path.sep);
@@ -570,7 +579,7 @@ describe("executeScript", () => {
     pathListSpy.mockRestore();
   });
   it("Generates all valid paths with the corresponding named/default import - single command", () => {
-    const c = new Cli(definition, { baseScriptLocation: "/" });
+    const c = new Cli(definition, { baseLocation: "/base", commandsPath: "../commands" });
     const pathListSpy = jest.spyOn(fs, "existsSync").mockImplementation(() => false);
     executeScript({ location: ["gcmd"], options: {} as any }, c.options);
     const norm = (p: string) => p.replace(/\//g, path.sep);
@@ -579,8 +588,8 @@ describe("executeScript", () => {
       [norm("/commands/gcmd.js")],
       [norm("/commands/index.js")],
       [norm("/commands.js")],
-      [norm("/index.js")],
-      [norm("/script.js")],
+      [norm("/base/index.js")],
+      [norm("/base/script.js")],
     ]);
     pathListSpy.mockRestore();
   });
@@ -727,6 +736,33 @@ Options:
 
 `);
   });
+  it("Takes tty columns into account when formatting options", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const { definition: def } = new Cli({
+      opt: { description: "long description for option" },
+      abc: { description: "abcdefghijklmnñopqrstuvwxyz" },
+    });
+    const actualColumns = process.stdout.columns;
+    process.stdout.columns = 40;
+    generateScopedHelp(def, [], cliOptions);
+    process.stdout.columns = actualColumns;
+    expect(output).toStrictEqual(`
+Usage:  cli-name [OPTIONS]
+
+cli-description
+
+Options:
+  --opt       long description for 
+               option
+  --abc       abcdefghijklmnñopqrstuv-
+               wxyz
+  -h, --help  Display global help, or 
+               scoped to a 
+               namespace/command
+
+`);
+  });
 });
 
 describe("getDefinitionElement", () => {
@@ -793,5 +829,32 @@ describe("formatVersion", () => {
     const logger = jest.spyOn(Cli.logger, "log").mockImplementation();
     formatVersion({ ...cliOptions, cliName: "cli-app", cliVersion: "1.0.0" });
     expect(logger).toHaveBeenCalledWith("cli-app version 1.0.0");
+  });
+});
+
+describe("closesSuggestion", () => {
+  const c = new Cli(definition);
+  it("Returns closest suggestion for the given parameters", () => {
+    expect(
+      closestSuggestion({
+        target: "--opr",
+        definition: c.definition,
+        rawLocation: ["nms", "cmd"],
+        cliOptions: c.options,
+        kind: [Kind.OPTION],
+      }),
+    ).toBe("--opt");
+  });
+  it("Returns closest suggestion for the given parameters - maxDistance", () => {
+    expect(
+      closestSuggestion({
+        target: "--oor",
+        definition: c.definition,
+        rawLocation: ["nms", "cmd"],
+        cliOptions: c.options,
+        kind: [Kind.OPTION],
+        maxDistance: 1,
+      }),
+    ).toBe(undefined);
   });
 });

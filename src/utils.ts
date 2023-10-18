@@ -47,8 +47,36 @@ export class ColumnFormatter {
     return this;
   }
   format(id: string, value: string, additionalSpacing = 0) {
-    return value.concat(" ".repeat(this.maxLengths[id] + additionalSpacing - value.length));
+    return value.padEnd(this.maxLengths[id] + additionalSpacing, " ");
   }
+}
+
+/** Add line-breaks to the provided string, taking into account tty columns and start param */
+export function addLineBreaks(value: string, params: { start: number; rightMargin?: number; indent?: number }) {
+  const { start, rightMargin = 2, indent = 1 } = params;
+  const width = process.stdout.columns;
+  const availableWidth = width - start - rightMargin;
+  if (!width || availableWidth <= 0) {
+    // Nothing can be done
+    return value.concat("\n");
+  }
+  // prettier-ignore
+  let remaining = value, extra = 0, lines = [];
+  while (remaining.length > availableWidth) {
+    const chunk =
+      // Break by the last space present
+      /.+[ ]/.exec(remaining.slice(0, availableWidth))?.[0] ||
+      // If no spaces are present to split the word, use "-"
+      (() => {
+        extra = 1;
+        return remaining.slice(0, availableWidth - 1).concat("-");
+      })();
+    lines.push(chunk);
+    remaining = remaining.slice(chunk.length - extra);
+    extra = 0;
+  }
+  lines.push(remaining);
+  return lines.join(`\n${" ".repeat(start + indent)}`).concat("\n");
 }
 
 /** Shortened method for logging an error an exiting */
@@ -104,12 +132,21 @@ export function findPackageJson(baseLocation: string) {
 
 export const isDebugActive = () => process.env[CLIER_DEBUG_KEY];
 
+export enum DEBUG_TYPE {
+  /** Used for deprecations, definition warnings, etc */
+  WARN = "WARN",
+  /** Used for debugging execution */
+  TRACE = "TRACE",
+}
+
 /** Utility to print messages only when debug mode is active
  * This will set the process exitcode to 1 */
-export function debug(message: string) {
+export function debug(type: `${DEBUG_TYPE}`, message: string) {
+  //TODO implement as a singleton with strategy ptrn
   if (isDebugActive()) {
-    process.stderr.write("[CLIER_DEBUG] ".concat(message, "\n"));
-    process.exitCode = 1;
+    process.stdout.write(`[CLIER_DEBUG::${type}] `.concat(message, "\n"));
+    // Only set error exitcode with warn debug-messages
+    type === DEBUG_TYPE.WARN && (process.exitCode = 1);
   }
 }
 
@@ -135,7 +172,7 @@ class DeprecationWarning {
     );
     if (options.condition !== false && !this.list.has(depMessage)) {
       this.list.add(depMessage);
-      debug(depMessage);
+      debug(DEBUG_TYPE.WARN, depMessage);
     }
   };
 }

@@ -12,6 +12,7 @@ export const CLI_MESSAGES = {
   "generate-help.commands-title": "Commands",
   "generate-help.options-title": "Options",
   "generate-version.template": "  {cliName} version: {cliVersion}\n",
+  "parse-arguments.suggestion": '. Did you mean "{suggestion}" ?',
   "help.description": "Display global help, or scoped to a namespace/command",
   "version.description": "Display version",
 } as const;

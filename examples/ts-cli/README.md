@@ -5,7 +5,7 @@ node -r ts-node/register ts-cli
 ```
 
 > **Note**
-> Some ts-node and tsconfig options can be used to improve transpilation/execution time (check [this example](./tsconfig.json))
+> Some ts-node and tsconfig options can be used to improve transpilation/execution time (check [this example](/examples/ts-cli/tsconfig.json))
 
 ## Example executions:
 

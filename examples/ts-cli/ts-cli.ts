@@ -19,7 +19,7 @@ new Cli(
     },
   },
   {
-    baseScriptLocation: path.join(__dirname, "scripts"),
+    baseLocation: path.join(__dirname, "scripts"),
     rootCommand: false,
   },
 ).run();

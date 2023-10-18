@@ -112,7 +112,7 @@ describe("Cli.constructor", () => {
     };
     const c = new Cli({}, overwrites);
     expect(c.options).toStrictEqual({
-      baseLocation: overwrites.baseLocation,
+      baseLocation: overwrites.baseScriptLocation,
       baseScriptLocation: overwrites.baseScriptLocation,
       commandsPath: "commands",
       errors: {

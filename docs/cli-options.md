@@ -3,15 +3,17 @@
 A configuration object may be provided in the class constructor. The available options are:
 
 #### `baseLocation`
-Location of the main cli application.</br>
+Base path where the `ProcessingOutput.location` will start from.</br>
 **Default**: `path.dirname(entryFile)`
 
-#### `baseScriptLocation`
-Base path where the `ProcessingOutput.location` will start from</br>
+#### ~~`baseScriptLocation`~~
+Base path where the `ProcessingOutput.location` will start from.</br>
 **Default**: `path.dirname(entryFile)`
+> **Warning**
+> **Deprecated since 0.13.0 in favor of `CliOptions.baseLocation`**
 
 #### `commandsPath`
-Path where the single-command scripts (not contained in any namespace) are stored, starting from `CliOptions.baseScriptLocation`</br>
+Path where the single-command scripts (not contained in any namespace) are stored. A relative value can be provided, using `CliOptions.baseScriptLocation` as base path.</br>
 **Default**: `"commands"`
 
 #### `errors`
@@ -78,7 +80,7 @@ Cli description to be used instead of the one defined in package.json</br>
 
 #### `debug`
 Enable debug mode. This is intended for the development phase of the cli. It will:
-- Print verbose errors when a script in not found in the expected path during [`Cli.run`](./api.md#runargs).
+- Print verbose errors when a script in not found in the expected path during [`Cli.run`](/docs/api.md#runargs).
 - **Print warnings for deprecated properties/methods**, useful for detecting and applying these changes before updating to the next version.
 
 Its value can also be configured using an enviroment variable:

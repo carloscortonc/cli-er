@@ -1,12 +1,12 @@
 import path from "path";
 import fs from "fs";
 import url from "url";
-import { closest } from "fastest-levenshtein";
-import { ColumnFormatter, debug, deprecationWarning, logErrorAndExit } from "./utils";
+import { addLineBreaks, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
 import flattenArguments from "./option-syntax";
+import { closest } from "./edit-distance";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
@@ -141,6 +141,7 @@ function completeElementDefinition(
       };
     } else if (element.type === Type.BOOLEAN && element.negatable === true) {
       debug(
+        DEBUG_TYPE.WARN,
         `Boolean option <${name}> will be included without negated aliases.` +
           " To change this, provide long aliases without dashes",
       );
@@ -237,8 +238,18 @@ export function parseArguments(
         }
         // Only generate error when no root-command is registered
         if (!optsAliases.includes(arg) && (!cliOptions.rootCommand || output.location.length > 0)) {
-          const suggestion = closestSuggestion(arg, definition, output.location, cliOptions);
-          output.errors.push(Cli.formatMessage("command_not_found", { command: arg, suggestion }));
+          const suggestion = closestSuggestion({
+            target: arg,
+            kind: [Kind.NAMESPACE, Kind.COMMAND],
+            definition,
+            rawLocation: output.location,
+            cliOptions,
+          })!;
+          const msg = "".concat(
+            Cli.formatMessage("command_not_found", { command: arg }),
+            Cli.formatMessage("parse-arguments.suggestion", { suggestion }),
+          );
+          output.errors.push(msg);
         }
         break argsLoop;
       }
@@ -328,7 +339,19 @@ export function parseArguments(
     } else {
       // Include unknown arg inside "_" key, and add an error
       output.options._.push(curr);
-      output.errors.push(Cli.formatMessage("option_not_found", { option: curr }));
+      const suggestion = closestSuggestion({
+        target: curr,
+        kind: [Kind.OPTION],
+        rawLocation: output.location,
+        definition,
+        cliOptions,
+        maxDistance: 3,
+      });
+      const msg = "".concat(
+        Cli.formatMessage("option_not_found", { option: curr }),
+        suggestion ? Cli.formatMessage("parse-arguments.suggestion", { suggestion }) : "",
+      );
+      output.errors.push(msg);
     }
   }
 
@@ -353,16 +376,15 @@ export function parseArguments(
 
 /** Given the processed options, determine the script location and invoke it with the processed options */
 export async function executeScript({ location, options }: Omit<ParsingOutput, "errors">, cliOptions: CliOptions) {
-  const base = cliOptions.baseScriptLocation;
+  const base = cliOptions.baseLocation;
   if (!base) {
     return logErrorAndExit(Cli.formatMessage("execute.base-location-error"));
   }
   const entryFile = path.parse(getEntryFile());
 
-  const finalLocation = [
-    // Apply CliOptions.commandsPath configuration for single commands
-    ...(location.length === 1 && cliOptions.commandsPath !== "." ? [cliOptions.commandsPath] : []),
-  ].concat(location);
+  const finalLocation = location.length === 1 ? [cliOptions.commandsPath].concat(location) : location;
+
+  debug(DEBUG_TYPE.TRACE, `[run:executeScript] Parameters: ${JSON.stringify({ location: finalLocation, options })}`);
 
   const scriptPaths = [".", ...finalLocation]
     .reduce((acc: { path: string; default: boolean }[], _, i: number, list) => {
@@ -386,10 +408,13 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     }, [])
     .map((p) => ({ ...p, path: path.join(base, p.path.concat(entryFile.ext)) }));
 
+  debug(DEBUG_TYPE.TRACE, `[run:executeScript] List of candidates: ${JSON.stringify(scriptPaths)}`);
+
   const validScriptPath = scriptPaths.find((p) => fs.existsSync(p.path));
 
   if (!validScriptPath) {
     debug(
+      DEBUG_TYPE.WARN,
       scriptPaths.reduce(
         (acc, sp) => "".concat(acc, "  ", sp.path, "\n"),
         "There was a problem finding the script to run. Considered paths were:\n",
@@ -398,17 +423,17 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     return logErrorAndExit();
   }
 
+  debug(DEBUG_TYPE.TRACE, `[run:executeScript] Selected candidate: ${JSON.stringify(validScriptPath)}`);
+
   try {
     let m;
     // Use "require" for cjs
     if (isCjs()) {
       m = require(validScriptPath.path);
     } else {
-      m = await import(url.pathToFileURL(validScriptPath.path).href).then((_m) =>
-        validScriptPath.default ? _m.default : _m,
-      );
+      m = await import(url.pathToFileURL(validScriptPath.path).href);
     }
-    const fn = validScriptPath.default ? m : m[location[location.length - 1]];
+    const fn = validScriptPath.default ? m.default || m : m[location[location.length - 1]];
     if (typeof fn !== "function") {
       logErrorAndExit(Cli.formatMessage("execute.handler-not-found", { path: validScriptPath.path }));
     }
@@ -513,14 +538,13 @@ function generateHelp(
       ? " ".concat(Cli.formatMessage("generate-help.option-default", { default: option.default.toString() }))
       : "";
   // Format all the information relative to an element
-  const formatElement = (element: ExtendedDefinitionElement, formatter: ColumnFormatter, indentation: number) =>
-    [
-      " ".repeat(indentation),
-      formatter.format("name", element.name, 2),
-      element.description || "-",
-      defaultHint(element),
-      "\n",
+  const formatElement = (element: ExtendedDefinitionElement, formatter: ColumnFormatter, indentation: number) => {
+    const start = [" ".repeat(indentation), formatter.format("name", element.name, 2)].join("");
+    return [
+      start,
+      addLineBreaks([element.description || "-", defaultHint(element)].join(""), { start: start.length }),
     ].join("");
+  };
 
   // Initialize element-sections
   const elementSectionsTemplate = {
@@ -626,18 +650,21 @@ export function formatVersion(cliOptions: CliOptions) {
 }
 
 /** Find the closest namespace/command based on the given target and location */
-export function closestSuggestion(
-  target: string,
-  definition: Definition<DefinitionElement>,
-  rawLocation: string[],
-  cliOptions: CliOptions,
-) {
-  let def = definition;
-  if (rawLocation.length > 0) {
-    def = getDefinitionElement(definition, rawLocation, cliOptions)!.options!;
+export function closestSuggestion(params: {
+  target: string;
+  definition: Definition<DefinitionElement>;
+  rawLocation: string[];
+  cliOptions: CliOptions;
+  kind: Kind[];
+  maxDistance?: number;
+}) {
+  let def = params.definition;
+  if (params.rawLocation.length > 0) {
+    def = getDefinitionElement(params.definition, params.rawLocation, params.cliOptions)!.options!;
   }
   const candidates = Object.values(def || {})
-    .filter((e) => e.kind !== Kind.OPTION)
+    .filter((e) => params.kind.includes(e.kind as Kind))
     .reduce((acc: string[], curr) => [...acc, ...curr.aliases!], []);
-  return closest(target, candidates);
+  const { value, distance } = closest(params.target, candidates);
+  return !params.maxDistance || distance <= params.maxDistance ? value : undefined;
 }
