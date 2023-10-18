@@ -1,3 +1,23 @@
+# [0.13.0](https://github.com/carloscortonc/cli-er/compare/v0.12.1...v0.13.0) (2023-10-18)
+
+
+### Bug Fixes
+
+* update script default-import logic ([#72](https://github.com/carloscortonc/cli-er/issues/72)) ([850bb6c](https://github.com/carloscortonc/cli-er/commit/850bb6c11f7de2e87e63db43908d2a7f29d62799))
+
+
+### Features
+
+* allow relative/absolute paths on `CliOptions.commandsPath` ([#71](https://github.com/carloscortonc/cli-er/issues/71)) ([173a230](https://github.com/carloscortonc/cli-er/commit/173a230d105b63acad143ce13808bb4efafc0760))
+* new debug trace-mode ([#67](https://github.com/carloscortonc/cli-er/issues/67)) ([5c92403](https://github.com/carloscortonc/cli-er/commit/5c9240331441c6f5a63fe401574272a755edca01))
+* show suggestions for unknown options ([#68](https://github.com/carloscortonc/cli-er/issues/68)) ([5b5a5cd](https://github.com/carloscortonc/cli-er/commit/5b5a5cd44775de2794356d906ce534eeb3a82890))
+* use tty columns when generating help ([#63](https://github.com/carloscortonc/cli-er/issues/63)) ([cc95ea9](https://github.com/carloscortonc/cli-er/commit/cc95ea9a1ce5cc9c98ae6796fe2d7f23af2fe175))
+
+
+### Performance Improvements
+
+* **dependencies:** remove fastest-levenshtein ([#69](https://github.com/carloscortonc/cli-er/issues/69)) ([f0b980a](https://github.com/carloscortonc/cli-er/commit/f0b980a21190dbb6d4b37ea38fb10d11fb7ed890))
+
 ## [0.12.1](https://github.com/carloscortonc/cli-er/compare/v0.12.0...v0.12.1) (2023-09-20)
 
 
