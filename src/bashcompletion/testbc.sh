@@ -23,12 +23,11 @@ _test() {
   # Obtain the location by removing the cli-name from the list of words
   local location=("${COMP_WORDS[@]:1:$COMP_CWORD-1}")
   # Initialize options with global values
-  local opts=(${o_// / })
+  local opts=(${o_//,/ })
   local initialized=false includeopts=false
-  while [ ${#location[@]} -gt 0 ];
-  do
-    curr=${location[0]}
-    ocurr="o_$curr"
+  while [ ${#location[@]} -gt 0 ]; do
+    local curr=${location[0]}
+    local ocurr="o_$curr"
     # Check for valid command/namespace
     if [[ " ${top_defs[@]} " =~ " ${curr} " ]] && [[ " ${all_locations[@]} " =~ " ${curr} " ]]; then
       top_defs=(${!curr//,/ })
