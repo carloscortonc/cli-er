@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+function indirect(){
+  if [[ -z $ZSH_VERSION ]]; then
+    echo ${!1}
+  else
+    echo ${(P)1}
+  fi
+}
+
 _test() {
   # declare nestings
   local nestings=(
@@ -17,22 +25,22 @@ _test() {
   # initialize top-level definitions
   local top_defs=("${nestings[@]%%=*}")
 
-  for d in "${nestings[@]}";do declare -a "$d";done
-  for o in "${opts_by_location[@]}";do declare -a "$o";done
+  for d in "${nestings[@]}";do declare "$d";done
+  for o in "${opts_by_location[@]}";do declare "$o";done
 
   # Obtain the location by removing the cli-name from the list of words
   local location=("${COMP_WORDS[@]:1:$COMP_CWORD-1}")
   # Initialize options with global values
-  local opts=(${o_//,/ })
+  local opts=($(echo "${o_}" | tr "," "\n"))
   local initialized=false includeopts=false
   while [ ${#location[@]} -gt 0 ]; do
-    local curr=${location[0]}
+    local curr="${location[@]:0:1}"
     local ocurr="o_$curr"
     # Check for valid command/namespace
     if [[ " ${top_defs[@]} " =~ " ${curr} " ]] && [[ " ${all_locations[@]} " =~ " ${curr} " ]]; then
-      top_defs=(${!curr//,/ })
+      top_defs=($(echo "$(indirect $curr)" | tr "," "\n"))
       location=(${location[@]:1})
-      opts+=(${!ocurr//,/ })
+      opts+=($(echo "$(indirect $ocurr)" | tr "," "\n"))
       initialized=true
       # Check if element is a command to include options
       [[ ! " ${nestings[@]%%=*} " =~ " ${curr} " ]] && includeopts=true || includeopts=false
