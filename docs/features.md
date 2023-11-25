@@ -39,9 +39,9 @@ If the location is `["nms", "cmd"]` for an entryfile `cli.js`, the list of candi
 6. `/cli.js` - named import  (`cmd`)
 
 ## Bash completion
-`cli-er` includes a command to generate bash-completions for the cli. This can be configured through [`CliOptions.completion`](/docs/cli-options.md#completion), to change the name of such command, or to disable this behaviour.
-The script was tested with `bash` version 3.2.57 and `zsh` version 5.9.
+`cli-er` includes a command to generate bash-completions for the cli. This can be configured through [`CliOptions.completion`](/docs/cli-options.md#completion), to change the name of such command, or to disable this behaviour.  
 You can check [here](/examples/docker/completions.sh) the generated script for docker example.
+> The script was tested with `bash` version 3.2.57 and `zsh` version 5.9.
 
 ## Debug mode
 When active, the library will generate debug logs warning about problems, deprecations or suggestions. Two types exist:
