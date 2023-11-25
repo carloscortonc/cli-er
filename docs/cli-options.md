@@ -90,6 +90,15 @@ $ CLIER_DEBUG=1 node cli.js
 
 **Default**: `process.env.CLIER_DEBUG`
 
+#### `completion`
+Configure bash-completion functionality
+##### `completion.enabled`
+Whether to create bash-completion command</br>
+**Default**: `true`
+##### `completion.command`
+Name of the completion command
+**Default**: `generate-completions`
+
 #### `messages`
 Object containing the messages to be used in the Cli, to override the default ones defined by this library. This enables internationalization and customization of cli-native messages. You can see a use-case in this [intl-cli example](/examples/intl-cli)</br>
 **Default**: defined in [/src/cli-messages](/src/cli-messages.ts) and [/src/cli-errors](/src/cli-errors.ts)

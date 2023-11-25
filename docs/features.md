@@ -46,5 +46,11 @@ When active, the library will generate debug logs warning about problems, deprec
 If any `WARN` log is generated, the `exitCode` will be set to `1`, so a simple validation-workflow can be built with this.
 To see how to enable it check [`CliOptions.debug`](/docs/cli-options.md#debug).
 
+## Bash completion
+`cli-er` includes a command to generate bash-completions for the cli. This can be configured through [`CliOptions.completion`](/docs/cli-options.md#completion), to change the name of such command, or to disable this behaviour.
+The script was tested with `bash` version 3.2.57 and `zsh` version 5.9.
+You can check [here](/examples/docker/completions.sh) the generated script for docker example.
+
+
 ## Typescript support
 You can check [this example](/examples/ts-cli) on how to write a full typescript cli application.
