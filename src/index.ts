@@ -67,6 +67,10 @@ export default class Cli {
       cliVersion: packagejson.version || "-",
       cliDescription: packagejson.description || "",
       debug: false,
+      completion: {
+        enabled: true,
+        command: "generate-completions",
+      },
     };
 
     // Environment variables should have the highest priority
@@ -87,7 +91,10 @@ export default class Cli {
     }
     // Store back at process.env.CLIER_DEBUG the final value of CliOptions.debug, to be accesible without requiring CliOptions
     process.env[CLIER_DEBUG_KEY] = this.options.debug ? "1" : "";
-    this.definition = completeDefinition(clone(definition), this.options) as Definition;
+    // Do this so we can provide "completeDefinition" with a reference to "this.definition"
+    this.definition = clone(definition);
+    this.definition = completeDefinition(this.definition, this.options) as Definition;
+
     return this;
   }
   /**

@@ -187,6 +187,17 @@ export type CliOptions = {
    * @default `process.env.CLIER_DEBUG`
    */
   debug: boolean;
+  /** bash-completion related config */
+  completion: {
+    /** Whether to generate the completion-command
+     * @default true
+     */
+    enabled: boolean;
+    /** The name of the completion command
+     * @default "generate-completions"
+     */
+    command: string;
+  };
   /** Messages to be used, overriding the ones defined by this library
    * This allows to include new translations, or tweak the current ones
    */

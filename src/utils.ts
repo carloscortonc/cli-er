@@ -130,6 +130,16 @@ export function findPackageJson(baseLocation: string) {
   return undefined;
 }
 
+/** Find the version of this library */
+export function getClierVersion() {
+  const location = path.join(__dirname, "..", "package.json");
+  try {
+    return JSON.parse(fs.readFileSync(location, "utf-8")).version;
+  } catch {
+    return undefined;
+  }
+}
+
 export const isDebugActive = () => process.env[CLIER_DEBUG_KEY];
 
 export enum DEBUG_TYPE {
