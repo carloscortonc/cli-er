@@ -1,3 +1,10 @@
+# [0.14.0](https://github.com/carloscortonc/cli-er/compare/v0.13.0...v0.14.0) (2023-12-24)
+
+
+### Features
+
+* integrate bash completion ([#74](https://github.com/carloscortonc/cli-er/issues/74)) ([73be8b2](https://github.com/carloscortonc/cli-er/commit/73be8b220fd2691581566f6e82b856b8df24f245))
+
 # [0.13.0](https://github.com/carloscortonc/cli-er/compare/v0.12.1...v0.13.0) (2023-10-18)
 
 
