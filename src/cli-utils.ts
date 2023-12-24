@@ -1,12 +1,13 @@
 import path from "path";
 import fs from "fs";
 import url from "url";
-import { addLineBreaks, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
+import { addLineBreaks, clone, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
 import flattenArguments from "./option-syntax";
 import { closest } from "./edit-distance";
+import { generateCompletions } from "./bash-completion";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
@@ -64,6 +65,13 @@ export const isShortAlias = (alias: string) => /^-.$/.test(alias);
 
 /** Process definition and complete any missing fields */
 export function completeDefinition(definition: Definition<DefinitionElement>, cliOptions: CliOptions) {
+  // Include completion command
+  if (cliOptions.completion.enabled) {
+    definition[cliOptions.completion.command] = {
+      action: () => generateCompletions({ definition, cliOptions }),
+      hidden: true,
+    };
+  }
   const { autoInclude: helpAutoInclude, template: _, ...helpOption } = cliOptions.help;
   // Auto-include help option
   if (helpAutoInclude) {
@@ -473,21 +481,23 @@ export function generateScopedHelp(
     sections[HELP_SECTIONS.DESCRIPTION] = cliOptions.cliDescription.concat("\n");
   }
   // Add usage section
-  const { existingKinds, hasOptions, positionalOptions } = Object.values(definitionRef || {}).reduce(
-    (acc, curr) => {
-      const { kind, positional, required, key } = curr;
-      if (kind === Kind.OPTION) {
-        acc.hasOptions = true;
-        if (positional === true || typeof positional === "number") {
-          acc.positionalOptions.push({ index: positional, key, required });
+  const { existingKinds, hasOptions, positionalOptions } = Object.values(definitionRef || {})
+    .filter((e) => !e.hidden)
+    .reduce(
+      (acc, curr) => {
+        const { kind, positional, required, key } = curr;
+        if (kind === Kind.OPTION) {
+          acc.hasOptions = true;
+          if (positional === true || typeof positional === "number") {
+            acc.positionalOptions.push({ index: positional, key, required });
+          }
+        } else if (acc.existingKinds.indexOf(kind as string) < 0) {
+          acc.existingKinds.push(kind as string);
         }
-      } else if (acc.existingKinds.indexOf(kind as string) < 0) {
-        acc.existingKinds.push(kind as string);
-      }
-      return acc;
-    },
-    { existingKinds: [] as string[], hasOptions: false, positionalOptions: [] as any[] },
-  );
+        return acc;
+      },
+      { existingKinds: [] as string[], hasOptions: false, positionalOptions: [] as any[] },
+    );
 
   const formatKinds = (kinds: string[]) =>
     kinds
@@ -610,7 +620,7 @@ export function getDefinitionElement(
   rawLocation: string[],
   cliOptions: CliOptions,
 ): DefinitionElement | undefined {
-  let definitionRef = definition;
+  let definitionRef = clone(definition);
   let inheritedOptions: Definition = {};
   const getOptions = (d: Definition<DefinitionElement>) =>
     Object.entries(d)

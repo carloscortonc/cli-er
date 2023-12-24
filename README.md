@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/cli-er" target="_blank">
-    <img src="https://img.shields.io/npm/v/cli-er.svg" alt="NPM version">
+    <img src="https://badgen.net/npm/v/cli-er" alt="NPM version">
   </a>
   <a href="https://github.com/carloscortonc/cli-er/actions/workflows/build.yml" target="_blank">
     <img src="https://github.com/carloscortonc/cli-er/actions/workflows/build.yml/badge.svg" alt="build">
@@ -99,10 +99,10 @@ This allows us to organize and structure the logic nicely.
 
 You can check the full [docker-based example](./examples/docker) for a more in-depth demo.
 
-
 ## Features
 - [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
 - [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
+- [**Bash completion**](./docs/features.md#bash-completion): a command is created to generate the `bash-completions` script for the cli.
 - [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
 - [**Typescript support**](./docs/features.md#typescript-support): build the cli with typescript.
 

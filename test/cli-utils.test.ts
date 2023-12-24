@@ -65,6 +65,10 @@ describe("completeDefinition", () => {
     cliVersion: "",
     cliDescription: "",
     debug: false,
+    completion: {
+      enabled: false,
+      command: "generate-completions",
+    },
   };
   it("Completes missing fields in definition with nested content ", () => {
     const completedDefinition = completeDefinition(d, cliOptions);
@@ -705,7 +709,7 @@ Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`),
       },
     });
     expect(output).toStrictEqual(`
-Usage:  cli-name NAMESPACE [OPTIONS]
+Usage:  cli-name NAMESPACE
 
 Namespaces:
   nms  -
@@ -720,7 +724,7 @@ This is a custom footer
       bool: { type: "boolean", default: true, description: "boolean option" },
       arg1: { positional: 0, required: true, description: "first positional mandatory option" },
       arg2: { positional: 1, description: "second positional option" },
-      arg3: { positional: true, hidden: true },
+      arg3: { positional: true, description: "catch-all positional option" },
     });
     generateScopedHelp(def, [], cliOptions);
     expect(output).toStrictEqual(`
@@ -732,6 +736,7 @@ Options:
   --bool      boolean option (default: true)
   --arg1      first positional mandatory option
   --arg2      second positional option
+  --arg3      catch-all positional option
   -h, --help  Display global help, or scoped to a namespace/command
 
 `);

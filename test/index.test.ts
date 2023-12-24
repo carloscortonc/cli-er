@@ -21,7 +21,7 @@ beforeEach(() => {
 });
 
 describe("Cli.constructor", () => {
-  it("Resulting definition contains only auto-included options when provided with empty definition", () => {
+  it("Resulting definition contains only auto-included options/commands when provided with empty definition", () => {
     const c = new Cli({});
     expect(c.definition).toStrictEqual({
       help: expect.objectContaining({
@@ -33,6 +33,10 @@ describe("Cli.constructor", () => {
         type: "boolean",
         aliases: ["-v", "--version"],
         description: "Display version",
+      }),
+      "generate-completions": expect.objectContaining({
+        aliases: ["generate-completions"],
+        hidden: true,
       }),
     });
   });
@@ -58,8 +62,11 @@ describe("Cli.constructor", () => {
       }),
     );
   });
-  it("Resulting definition is an empty object when provided with empty definition and all auto-included options are disabled", () => {
-    const c = new Cli({}, { help: { autoInclude: false }, version: { autoInclude: false } });
+  it("Resulting definition is an empty object when provided with empty definition and all auto-included options/commands are disabled", () => {
+    const c = new Cli(
+      {},
+      { help: { autoInclude: false }, version: { autoInclude: false }, completion: { enabled: false } },
+    );
     expect(c.definition).toStrictEqual({});
   });
   it("CliOptions are default when instantiating with no options", () => {
@@ -97,6 +104,10 @@ describe("Cli.constructor", () => {
       cliVersion: "1.0.0",
       cliDescription: "cli-description",
       debug: false,
+      completion: {
+        enabled: true,
+        command: "generate-completions",
+      },
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
@@ -138,6 +149,10 @@ describe("Cli.constructor", () => {
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
       debug: false,
+      completion: {
+        enabled: true,
+        command: "generate-completions",
+      },
     });
   });
   it("Overwrite default logger", () => {

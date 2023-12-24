@@ -30,4 +30,7 @@ node docker.js builder prune --all --filter until=24 -f true --keep-storage 100
 
 # Print error when unknown option is provided (since v0.5.0)
 node docker.js builder prune --test
+
+# Generate bash-completion script (since v0.14.0)
+node docker.js generate-completions > completions.sh
 ```
