@@ -8,6 +8,8 @@ type OptionsTypes<T extends Definition<Option>> = {
     ? boolean
     : T[K]["type"] extends "list"
     ? string[]
+    : T[K]["positional"] extends true
+    ? string[]
     : string;
 };
 
