@@ -45,10 +45,7 @@ function getAliases(key: string, element: DefinitionElement) {
   if (element.kind === Kind.COMMAND) {
     return [key].concat(element.aliases);
   }
-  if ([Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
-    return [key];
-  }
-  return element.aliases!.map((alias) => {
+  return element.aliases.map((alias) => {
     if (!alias.startsWith("-")) {
       return (alias.length > 1 ? "--" : "-").concat(alias);
     }
@@ -61,7 +58,7 @@ function getAliases(key: string, element: DefinitionElement) {
 }
 
 /** Check if a given alias is considered short alias */
-export const isShortAlias = (alias: string) => /^-.$/.test(alias);
+export const isShortAlias = (alias: string) => /^-\w$/.test(alias);
 
 /** Process definition and complete any missing fields */
 export function completeDefinition(definition: Definition<DefinitionElement>, cliOptions: CliOptions) {
