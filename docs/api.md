@@ -85,15 +85,15 @@ const definition = Cli.defineCommand({
   // ...
   options: {
     elements: { type: "list" },
-    value: { type: "float" },
-    files: { positional: true }
+    value: { type: "float", required: true },
+    files: { positional: true, required: true }
   }
 })
 ```
 - Get the type for the options by using `Cli.CommandOptions`:
 ```typescript
 function handler(options: Cli.CommandOptions<typeof definition>){
-  // options: { elements: string[], value: number, files: string[] }
+  // options: { elements: string[] | undefined, value: number, files: string[] }
 }
 ```
 

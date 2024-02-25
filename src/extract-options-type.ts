@@ -2,16 +2,22 @@ import { Definition, Command, Option } from "./types";
 
 /** Defines the final option-value type based on Option.type */
 type OptionsTypes<T extends Definition<Option>> = {
-  [K in keyof T]: T[K]["type"] extends "number" | "float"
-    ? number
-    : T[K]["type"] extends "boolean"
-    ? boolean
-    : T[K]["type"] extends "list"
-    ? string[]
-    : T[K]["positional"] extends true
-    ? string[]
-    : string;
+  [K in keyof T]: MaybeOptional<
+    T[K]["type"] extends "number" | "float"
+      ? number
+      : T[K]["type"] extends "boolean"
+      ? boolean
+      : T[K]["type"] extends "list"
+      ? string[]
+      : T[K]["positional"] extends true
+      ? string[]
+      : string,
+    T[K]
+  >;
 };
+
+/** Take into account Option.required for defining T value */
+type MaybeOptional<T, O extends Option> = O["required"] extends true ? T : T | undefined;
 
 export type CommandOptions<T extends Omit<Command, "kind">> = T["options"] extends { [key: string]: any }
   ? OptionsTypes<T["options"]>

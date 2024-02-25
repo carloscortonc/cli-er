@@ -5,10 +5,10 @@ describe("defineCommand", () => {
   test("should return the option-value type of its option", () => {
     const cmd = defineCommand({
       options: {
-        number: { type: "number" },
-        float: { type: "float" },
-        boolean: { type: "boolean" },
-        list: { type: "list" },
+        number: { type: "number", required: true },
+        float: { type: "float", required: true },
+        boolean: { type: "boolean", required: true },
+        list: { type: "list", required: true },
       },
     });
     expect<CommandOptions<typeof cmd>>().type.toEqual<{
@@ -16,12 +16,24 @@ describe("defineCommand", () => {
       float: number;
       boolean: boolean;
       list: string[];
-    }>;
+    }>();
+  });
+  test("should take `Option.required` into account", () => {
+    const cmd = defineCommand({
+      options: {
+        req: { required: true },
+        nonreq: { required: false },
+      },
+    });
+    expect<CommandOptions<typeof cmd>>().type.toEqual<{
+      req: string;
+      nonreq: string | undefined;
+    }>();
   });
   test("return `never` if no options are present", () => {
     const cmd = defineCommand({
       options: undefined,
     });
-    expect<CommandOptions<typeof cmd>>().type.toEqual<never>;
+    expect<CommandOptions<typeof cmd>>().type.toEqual<never>();
   });
 });
