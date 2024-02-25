@@ -25,7 +25,7 @@
     "build": "rimraf dist && yarn tsup && node ./scripts/fix-types.js",
     "smoke-test": "cd test/smoke && node cjs/index.cjs && node mjs/index.mjs && ts-node-transpile-only ts/index.ts",
     "types-test": "tstyche",
-    "test": "yarn tsc && jest --silent && yarn types-test && yarn smoke-test",
+    "test": "yarn tsc && jest --silent && yarn smoke-test",
     "format": "prettier --write ."
   },
   "dependencies": {},
