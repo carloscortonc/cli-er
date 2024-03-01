@@ -5385,10 +5385,10 @@ ts-node@^10.9.1:
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
 
-tstyche@^1.0.0-rc.2:
-  version "1.0.0-rc.2"
-  resolved "https://registry.yarnpkg.com/tstyche/-/tstyche-1.0.0-rc.2.tgz#09f3354ee177c188f5e676d7118c656c53494235"
-  integrity sha512-LWOxsYgjWFmZJDt2DTkVxVfRF5kxgb87bu9pr3Kby+F4fH1q8msGFPPJeZ3rDd7qtGvsz/feMQZXLWjw8V8FEA==
+tstyche@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/tstyche/-/tstyche-1.0.0.tgz#e19f3829ccb25ef48334df0724b6f98dc298cebf"
+  integrity sha512-iIpktIBuWL0M+KgCO8TIgo+QGS+mD24ll+wAYCFsd8IkA3Lai0ETqGSilHo1PC59+2lf71qJmWShFZwMMH4i1g==
 
 tsup@^6.2.0:
   version "6.6.3"

@@ -41,7 +41,7 @@
     "rimraf": "^3.0.2",
     "ts-jest": "^28.0.0",
     "ts-node": "^10.9.1",
-    "tstyche": "^1.0.0-rc.2",
+    "tstyche": "^1.0.0",
     "tsup": "^6.2.0",
     "typescript": "^4.7.4"
   }
