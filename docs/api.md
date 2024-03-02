@@ -77,7 +77,7 @@ If a cli application does not have registered a root command (logic executed wit
 
 You also use `CliOptions.rootCommand` to define a default command to execute, when no command/namespace is supplied (check this [webpack-cli example](/examples/webpack-cli)).
 
-### Typing command's options
+### [Typescript] Typing command's options
 When defining a command handler inside a script file, in order to have typed options the following steps are needed:
 - Define the command using `Cli.defineCommand`:
 ```typescript

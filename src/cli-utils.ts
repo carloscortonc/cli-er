@@ -1,7 +1,16 @@
 import path from "path";
 import fs from "fs";
 import url from "url";
-import { addLineBreaks, clone, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
+import {
+  addLineBreaks,
+  clone,
+  ColumnFormatter,
+  debug,
+  DEBUG_TYPE,
+  deprecationWarning,
+  logErrorAndExit,
+  quote,
+} from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
@@ -325,7 +334,7 @@ export function parseArguments(
         current: output.options[outputKey],
         option: {
           ...(optionDefinition as Option),
-          key: curr,
+          key: isPositional === Positional.TRUE ? optionDefinition.key! : curr,
         },
         format: () =>
           deprecationWarning({
@@ -540,10 +549,26 @@ function generateHelp(
   // Generate the formatted versions of aliases
   const formatAliases = (aliases: string[] = []) => aliases.join(", ");
   // Generate default-value hint, if present
-  const defaultHint = (option: DefinitionElement) =>
-    option.default !== undefined
-      ? " ".concat(Cli.formatMessage("generate-help.option-default", { default: option.default.toString() }))
-      : "";
+  const defaultHint = (option: DefinitionElement) => {
+    const w = (c: string) => (c ? ` (${c})` : c);
+    // format default/enum value
+    const f = (v: any) => {
+      if (typeof v !== "string" && !Array.isArray(v)) {
+        return v;
+      }
+      return (Array.isArray(v) ? v : [v]).map(quote).join(", ");
+    };
+    return w(
+      [
+        Array.isArray(option.enum) ? Cli.formatMessage("generate-help.option-enum", { enum: f(option.enum) }) : "",
+        option.default !== undefined
+          ? Cli.formatMessage("generate-help.option-default", { default: f(option.default) })
+          : "",
+      ]
+        .filter((e) => e)
+        .join(", "),
+    );
+  };
   // Format all the information relative to an element
   const formatElement = (element: ExtendedDefinitionElement, formatter: ColumnFormatter, indentation: number) => {
     const start = [" ".repeat(indentation), formatter.format("name", element.name, 2)].join("");

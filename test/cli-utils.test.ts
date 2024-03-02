@@ -206,6 +206,13 @@ describe("parseArguments", () => {
       errors: ['Missing value of type <string> for option "--opt"'],
       location: expect.anything(),
     });
+    expect(
+      parseArguments(["--opt", "othervalue"], { opt: { ...d.opt, enum: ["optv1", "optv2"] } }, cliOptions),
+    ).toStrictEqual({
+      options: { opt: "defaultvalue", _: [] },
+      errors: ['Wrong value for option "--opt". Expected \'optv1 | optv2\' but found "othervalue"'],
+      location: expect.anything(),
+    });
   });
   it("Parse BOOLEAN value", () => {
     const d: Definition<DefinitionElement> = {
@@ -229,6 +236,13 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt"], d, cliOptions)).toStrictEqual({
       options: { _: [] },
       errors: ['Missing value of type <list> for option "--opt"'],
+      location: expect.anything(),
+    });
+    expect(
+      parseArguments(["--opt", "optv1,optv3"], { opt: { ...d.opt, enum: ["optv1", "optv2"] } }, cliOptions),
+    ).toStrictEqual({
+      options: { _: [] },
+      errors: ['Wrong value for option "--opt". Expected \'optv1 | optv2\' but found "optv3"'],
       location: expect.anything(),
     });
   });
@@ -277,10 +291,12 @@ describe("parseArguments", () => {
   it("Option with parser property", () => {
     const d = new Cli({
       opt: {
-        parser: ({ value }) => {
+        parser: ({ value, option: { key } }) => {
           // return error if value is not a date
           if (isNaN(Date.parse(value || ""))) {
-            return { error: Cli.formatMessage("option_wrong_value", { option: "x", expected: "x", found: "x" }) };
+            return {
+              error: Cli.formatMessage("option_wrong_value", { option: key, expected: "<date>", found: value! }),
+            };
           }
           return { value: new Date(value!) };
         },
@@ -289,7 +305,7 @@ describe("parseArguments", () => {
     expect(parseArguments(["--opt", "not-a-date"], d, cliOptions)).toStrictEqual({
       options: { _: [] },
       location: expect.anything(),
-      errors: [expect.stringContaining("Wrong value for option")],
+      errors: ['Wrong value for option "--opt". Expected <date> but found "not-a-date"'],
     });
   });
   it("No arguments", () => {
@@ -431,6 +447,13 @@ describe("parseArguments", () => {
       options: { _: ["extra"], opt: "optvalue", opt2: "opt2value" },
       location: [],
       errors: ['Unknown option "extra"'],
+    });
+    expect(
+      parseArguments(["optvalue"], { opt: { ...definition.opt, enum: ["optv1", "optv2"] } }, cliOptions),
+    ).toStrictEqual({
+      options: { _: [] },
+      errors: ['Wrong value for option "opt". Expected \'optv1 | optv2\' but found "optvalue"'],
+      location: expect.anything(),
     });
   });
   it("Positional option (true)", () => {
@@ -634,7 +657,7 @@ Commands:
   gcmd          Description for global command
 
 Options:
-  -g, --global  Option shared between all commands (default: globalvalue)
+  -g, --global  Option shared between all commands (default: "globalvalue")
   -h, --help    Display global help, or scoped to a namespace/command
 
 `);
@@ -652,7 +675,7 @@ Commands:
   cmd           Description for the command
 
 Options:
-  -g, --global  Option shared between all commands (default: globalvalue)
+  -g, --global  Option shared between all commands (default: "globalvalue")
   -h, --help    Display global help, or scoped to a namespace/command
 
 `);
@@ -722,6 +745,11 @@ This is a custom footer
     logger.mockImplementation((m: any) => !!(output += m));
     const { definition: def } = new Cli({
       bool: { type: "boolean", default: true, description: "boolean option" },
+      num: { type: "number", default: 10, description: "number option" },
+      float: { type: "float", default: 0.5, description: "float option" },
+      list: { type: "list", default: ["one", "two"], description: "list option" },
+      enum: { enum: ["opt1", "opt2"], description: "string with enum" },
+      enumdef: { enum: ["opt1", "opt2"], default: "opt1", description: "string with enum and default" },
       arg1: { positional: 0, required: true, description: "first positional mandatory option" },
       arg2: { positional: 1, description: "second positional option" },
       arg3: { positional: true, description: "catch-all positional option" },
@@ -734,6 +762,11 @@ cli-description
 
 Options:
   --bool      boolean option (default: true)
+  --num       number option (default: 10)
+  --float     float option (default: 0.5)
+  --list      list option (default: "one", "two")
+  --enum      string with enum (allowed: "opt1", "opt2")
+  --enumdef   string with enum and default (allowed: "opt1", "opt2", default: "opt1")
   --arg1      first positional mandatory option
   --arg2      second positional option
   --arg3      catch-all positional option

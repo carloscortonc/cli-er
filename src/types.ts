@@ -67,6 +67,8 @@ export type Option = BaseElement & {
    * @default false
    */
   positional?: boolean | number;
+  /** Possible values for an option */
+  enum?: string[];
   /** If type=boolean, whether to include negated aliases
    * e.g. --debug => --no-debug/--nodebug
    * @default false
