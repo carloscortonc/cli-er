@@ -14,7 +14,7 @@
 
   "command_not_found": "Comando \"{0}\" no encontrado. Quieres decir \"{1}\" ?",
   "option_not_found": "Opcion desconocida \"{0}\"",
-  "option_wrong_value": "Valor erróneo para la opción \"{0}\". Se esperaba <{1}> pero se encontró \"{2}\"",
+  "option_wrong_value": "Valor erróneo para la opción \"{0}\". Se esperaba {1} pero se encontró \"{2}\"",
   "option_missing_value": "Se esperaba un valor de tipo <{0}> para la opción \"{1}\"",
   "option_required": "Se esperaba una opción obligatoria \"{0}\"",
 

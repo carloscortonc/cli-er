@@ -1,5 +1,6 @@
 import { Kind, Type, ValueParserInput, ValueParserOutput } from "./types";
 import Cli from ".";
+import { quote } from "./utils";
 
 /** Evaluate the value of an option */
 export default function parseOptionValue({ value, current, option }: ValueParserInput): ValueParserOutput {
@@ -17,23 +18,39 @@ export default function parseOptionValue({ value, current, option }: ValueParser
   };
   const wrongValueError = Cli.formatMessage("option_wrong_value", {
     option: option.key,
-    expected: type,
+    expected: `<${type}>`,
     found: value!,
   });
+  // Validate Option.enum
+  const validateEnum = (values: (string | undefined)[]) => {
+    if (!option.enum) {
+      return undefined;
+    }
+    const found = values.find((v) => !option.enum!.includes(v!));
+    const formatEnum = () => option.enum!.join(" | ");
+    return found
+      ? Cli.formatMessage("option_wrong_value", { option: option.key, expected: quote(formatEnum(), "'"), found })
+      : undefined;
+  };
 
   /** Implemented parsers */
   const valueParsers: { [key in Type]: Partial<ValueParserOutput> | (() => Partial<ValueParserOutput>) } = {
-    [Type.STRING]: {
+    [Type.STRING]: () => ({
       value,
-    },
+      error: defaultParserOutput.error || validateEnum([value]),
+    }),
     [Type.BOOLEAN]: () => ({
       value: ["true", undefined].includes(value),
       next: ["true", "false"].includes(value as string) ? 1 : 0,
       error: undefined,
     }),
-    [Type.LIST]: () => ({
-      value: ((current as string[]) || []).concat(value?.split(",") as string[]),
-    }),
+    [Type.LIST]: () => {
+      const v = ((current as string[]) || []).concat(value?.split(",") as string[]);
+      return {
+        value: v,
+        error: defaultParserOutput.error || validateEnum(v),
+      };
+    },
     [Type.NUMBER]: () => {
       const v = parseInt(value as string);
       return {
