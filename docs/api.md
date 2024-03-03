@@ -146,7 +146,7 @@ Commands:
   gcmd          Description for global command
 
 Options:
-  -g, --global  Option shared between all commands (default: globalvalue)
+  -g, --global  Option shared between all commands (default: "globalvalue")
   -h, --help    Display global help, or scoped to a namespace/command
 ```
 
@@ -167,7 +167,7 @@ Commands:
   cmd  Description for the command
 
 Options:
-  -g, --global  Option shared between all commands (default: globalvalue)
+  -g, --global  Option shared between all commands (default: "globalvalue")
   -h, --help    Display global help, or scoped to a namespace/command
 ```
 
