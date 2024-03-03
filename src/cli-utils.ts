@@ -556,7 +556,7 @@ function generateHelp(
       if (typeof v !== "string" && !Array.isArray(v)) {
         return v;
       }
-      return (Array.isArray(v) ? v : [v]).map(quote).join(", ");
+      return (Array.isArray(v) ? v : [v]).map((e) => quote(e)).join(", ");
     };
     return w(
       [

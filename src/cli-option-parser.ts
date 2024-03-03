@@ -1,5 +1,6 @@
 import { Kind, Type, ValueParserInput, ValueParserOutput } from "./types";
 import Cli from ".";
+import { quote } from "./utils";
 
 /** Evaluate the value of an option */
 export default function parseOptionValue({ value, current, option }: ValueParserInput): ValueParserOutput {
@@ -28,7 +29,7 @@ export default function parseOptionValue({ value, current, option }: ValueParser
     const found = values.find((v) => !option.enum!.includes(v!));
     const formatEnum = () => option.enum!.join(" | ");
     return found
-      ? Cli.formatMessage("option_wrong_value", { option: option.key, expected: `'${formatEnum()}'`, found })
+      ? Cli.formatMessage("option_wrong_value", { option: option.key, expected: quote(formatEnum(), "'"), found })
       : undefined;
   };
 
