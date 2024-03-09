@@ -556,7 +556,8 @@ function generateHelp(
       if (typeof v !== "string" && !Array.isArray(v)) {
         return v;
       }
-      return (Array.isArray(v) ? v : [v]).map((e) => quote(e)).join(", ");
+      const isNumber = ["number", "float"].includes(option.type!);
+      return (Array.isArray(v) ? v : [v]).map((e) => (isNumber ? e : quote(e))).join(", ");
     };
     return w(
       [

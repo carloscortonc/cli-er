@@ -81,9 +81,10 @@ You also use `CliOptions.rootCommand` to define a default command to execute, wh
 When defining a command handler inside a script file, in order to have typed options the following steps are needed:
 - Define the command using `Cli.defineCommand`:
 ```typescript
-const definition = Cli.defineCommand({
+const command = Cli.defineCommand({
   // ...
   options: {
+    type: { type: "string", enum: ["type-1", "type-2", "type-3"] as const},
     elements: { type: "list" },
     value: { type: "float", required: true },
     files: { positional: true, required: true }
@@ -92,8 +93,13 @@ const definition = Cli.defineCommand({
 ```
 - Get the type for the options by using `Cli.CommandOptions`:
 ```typescript
-function handler(options: Cli.CommandOptions<typeof definition>){
-  // options: { elements: string[] | undefined, value: number, files: string[] }
+function handler(options: Cli.CommandOptions<typeof command>){
+  // options: {
+  //   type: "type-1" | "type-2" | "type-3" | undefined;
+  //   elements: string[] | undefined;
+  //   value: number;
+  //   files: string[]
+  //  }
 }
 ```
 
