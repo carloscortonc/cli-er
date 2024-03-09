@@ -16,6 +16,7 @@ import CliLogger from "./cli-logger";
 import { ERROR_MESSAGES } from "./cli-errors";
 import { CLI_MESSAGES, formatMessage } from "./cli-messages";
 import { defineCommand, CommandOptions } from "./extract-options-type";
+import { generateCompletions } from "./bash-completion";
 
 export default class Cli {
   static logger: ICliLogger = new CliLogger();
@@ -174,6 +175,12 @@ export default class Cli {
    */
   version() {
     formatVersion(this.options);
+  }
+  /**
+   * Output bash-completion script contents
+   */
+  completions() {
+    generateCompletions({ definition: this.definition, cliOptions: this.options });
   }
 }
 
