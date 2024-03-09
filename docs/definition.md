@@ -54,7 +54,7 @@ type Option = BaseElement & {
   default?: any;
   required?: boolean;
   type?: "string" | "boolean" | "list" | "number" | "float";
-  enum?: string[];
+  enum?: (string | number)[];
   parser?: (input: ValueParserInput) => ValueParserOutput
 }
 ```
@@ -64,7 +64,7 @@ type Option = BaseElement & {
 - **default**: default value for the option.
 - **required**: specifies an option as required, generating an error if a value is not provided. Default: `false`
 - **type**: type of option, to load the appropriate parser. Default: `string`
-- **enum**: restrict the possible option-values based on the given list. Available for option-types `string`, `boolean` and `list`.
+- **enum**: restrict the possible option-values based on the given list. Available for option-types `string`, `list`, `number` and `float`.
 - **parser**: allows defining [custom parser](#custom-parser) for an option, instead of using the supported types.
 
 ### Positional options
