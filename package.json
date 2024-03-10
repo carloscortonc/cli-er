@@ -1,6 +1,6 @@
 {
   "name": "cli-er",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "Tool for building advanced cli applications",
   "repository": "github:carloscortonc/cli-er",
   "author": "Carlos Cortón Cobas <carloscortoncobas98@gmail.com>",
