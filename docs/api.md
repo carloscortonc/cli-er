@@ -190,3 +190,8 @@ Prints the formatted version of the current cli application: finds the package.j
 
 > **Note**
 > version-generation option is auto-included by default. This can be configured via [`CliOptions.version`](/docs/cli-options.md#versionautoinclude)
+
+
+## completions()
+
+Generates and outputs bash-completion script contents. This can instead be included as a command and be managed by `Cli.run`, check: [`bash completion`](/docs/features.md#bash-completion)
