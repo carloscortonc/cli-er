@@ -52,4 +52,5 @@ If any `WARN` log is generated, the `exitCode` will be set to `1`, so a simple v
 To see how to enable it check [`CliOptions.debug`](/docs/cli-options.md#debug).
 
 ## Typescript support
-You can check [this example](/examples/ts-cli) on how to write a full typescript cli application.
+You can check [this example](/examples/ts-cli) on how to write a full typescript cli application. Some features are:
+- [Typed command options](/docs/api.md#typescript-typing-commands-options): utility to infer the type of the final options for a command.

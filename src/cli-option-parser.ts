@@ -1,5 +1,23 @@
 import { Kind, Type, ValueParserInput, ValueParserOutput } from "./types";
 import Cli from ".";
+import { quote } from "./utils";
+
+/** Validate Option.enum for a given value */
+const validateEnum = (values: (string | number | undefined)[], opt: ValueParserInput["option"]) => {
+  if (!opt.enum) {
+    return undefined;
+  }
+  const values_ = (Array.isArray(values) ? values : [values]) as (string | number)[];
+  const found = values_.find((v) => !opt.enum!.includes(v));
+  const formatEnum = () => opt.enum!.join(" | ");
+  return found
+    ? Cli.formatMessage("option_wrong_value", {
+        option: opt.key,
+        expected: quote(formatEnum(), "'"),
+        found: found.toString(),
+      })
+    : undefined;
+};
 
 /** Evaluate the value of an option */
 export default function parseOptionValue({ value, current, option }: ValueParserInput): ValueParserOutput {
@@ -17,35 +35,40 @@ export default function parseOptionValue({ value, current, option }: ValueParser
   };
   const wrongValueError = Cli.formatMessage("option_wrong_value", {
     option: option.key,
-    expected: type,
+    expected: `<${type}>`,
     found: value!,
   });
 
   /** Implemented parsers */
   const valueParsers: { [key in Type]: Partial<ValueParserOutput> | (() => Partial<ValueParserOutput>) } = {
-    [Type.STRING]: {
+    [Type.STRING]: () => ({
       value,
-    },
+      error: defaultParserOutput.error || validateEnum([value], option),
+    }),
     [Type.BOOLEAN]: () => ({
       value: ["true", undefined].includes(value),
       next: ["true", "false"].includes(value as string) ? 1 : 0,
       error: undefined,
     }),
-    [Type.LIST]: () => ({
-      value: ((current as string[]) || []).concat(value?.split(",") as string[]),
-    }),
+    [Type.LIST]: () => {
+      const v = ((current as string[]) || []).concat(value?.split(",") as string[]);
+      return {
+        value: v,
+        error: defaultParserOutput.error || validateEnum(v, option),
+      };
+    },
     [Type.NUMBER]: () => {
       const v = parseInt(value as string);
       return {
         value: v,
-        error: value && isNaN(v) ? wrongValueError : defaultParserOutput.error,
+        error: value && isNaN(v) ? wrongValueError : defaultParserOutput.error || validateEnum([v], option),
       };
     },
     [Type.FLOAT]: () => {
       const v = parseFloat(value as string);
       return {
         value: v,
-        error: value && isNaN(v) ? wrongValueError : defaultParserOutput.error,
+        error: value && isNaN(v) ? wrongValueError : defaultParserOutput.error || validateEnum([v], option),
       };
     },
   };

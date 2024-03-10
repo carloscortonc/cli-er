@@ -79,6 +79,9 @@ export function addLineBreaks(value: string, params: { start: number; rightMargi
   return lines.join(`\n${" ".repeat(start + indent)}`).concat("\n");
 }
 
+/** Add single/doble quotes to a given string */
+export const quote = (e: string, q: "'" | '"' = '"') => "".concat(q, e, q);
+
 /** Shortened method for logging an error an exiting */
 export const logErrorAndExit = (message?: string) => {
   if (message) {

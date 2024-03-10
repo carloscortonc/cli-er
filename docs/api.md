@@ -77,6 +77,32 @@ If a cli application does not have registered a root command (logic executed wit
 
 You also use `CliOptions.rootCommand` to define a default command to execute, when no command/namespace is supplied (check this [webpack-cli example](/examples/webpack-cli)).
 
+### [Typescript] Typing command's options
+When defining a command handler inside a script file, in order to have typed options the following steps are needed:
+- Define the command using `Cli.defineCommand`:
+```typescript
+const command = Cli.defineCommand({
+  // ...
+  options: {
+    type: { type: "string", enum: ["type-1", "type-2", "type-3"] as const},
+    elements: { type: "list" },
+    value: { type: "float", required: true },
+    files: { positional: true, required: true }
+  }
+})
+```
+- Get the type for the options by using `Cli.CommandOptions`:
+```typescript
+function handler(options: Cli.CommandOptions<typeof command>){
+  // options: {
+  //   type: "type-1" | "type-2" | "type-3" | undefined;
+  //   elements: string[] | undefined;
+  //   value: number;
+  //   files: string[]
+  //  }
+}
+```
+
 
 ## help(location?)
 
@@ -126,7 +152,7 @@ Commands:
   gcmd          Description for global command
 
 Options:
-  -g, --global  Option shared between all commands (default: globalvalue)
+  -g, --global  Option shared between all commands (default: "globalvalue")
   -h, --help    Display global help, or scoped to a namespace/command
 ```
 
@@ -147,7 +173,7 @@ Commands:
   cmd  Description for the command
 
 Options:
-  -g, --global  Option shared between all commands (default: globalvalue)
+  -g, --global  Option shared between all commands (default: "globalvalue")
   -h, --help    Display global help, or scoped to a namespace/command
 ```
 
@@ -164,3 +190,8 @@ Prints the formatted version of the current cli application: finds the package.j
 
 > **Note**
 > version-generation option is auto-included by default. This can be configured via [`CliOptions.version`](/docs/cli-options.md#versionautoinclude)
+
+
+## completions()
+
+Generates and outputs bash-completion script contents. This can instead be included as a command and be managed by `Cli.run`, check: [`bash completion`](/docs/features.md#bash-completion)

@@ -4,7 +4,7 @@ import Cli from ".";
 export const ERROR_MESSAGES = {
   command_not_found: 'Command "{command}" not found',
   option_not_found: 'Unknown option "{option}"',
-  option_wrong_value: 'Wrong value for option "{option}". Expected <{expected}> but found "{found}"',
+  option_wrong_value: 'Wrong value for option "{option}". Expected {expected} but found "{found}"',
   option_missing_value: 'Missing value of type <{type}> for option "{option}"',
   option_required: 'Missing required option "{option}"',
 } as const;
@@ -16,7 +16,7 @@ export type ErrorType = keyof typeof ERROR_MESSAGES;
 export class CliError {
   /** Test if the given error message matches an error type */
   private static test(value: string, error: string) {
-    return new RegExp(error.replace(/\{\w+\}/g, "[a-zA-Z-0-9/\\.]+")).test(value);
+    return new RegExp(error.replace(/\{\w+\}/g, "[a-zA-Z-0-9/\\., \"'|]+")).test(value);
   }
   /** Analize the given error message to identify its type */
   static analize(value: string | undefined): ErrorType | undefined {

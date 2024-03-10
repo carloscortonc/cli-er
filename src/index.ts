@@ -1,3 +1,4 @@
+import path from "path";
 import {
   completeDefinition,
   parseArguments,
@@ -14,12 +15,14 @@ import { CliError } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import { ERROR_MESSAGES } from "./cli-errors";
 import { CLI_MESSAGES, formatMessage } from "./cli-messages";
-import path from "path";
+import { defineCommand, CommandOptions } from "./extract-options-type";
+import { generateCompletions } from "./bash-completion";
 
 export default class Cli {
   static logger: ICliLogger = new CliLogger();
   static messages = { ...ERROR_MESSAGES, ...CLI_MESSAGES } as const;
   static formatMessage = formatMessage;
+  static defineCommand = defineCommand;
   definition: Definition;
   options: CliOptions;
   /** Creates a new Cli instance
@@ -173,4 +176,13 @@ export default class Cli {
   version() {
     formatVersion(this.options);
   }
+  /**
+   * Output bash-completion script contents
+   */
+  completions() {
+    generateCompletions({ definition: this.definition, cliOptions: this.options });
+  }
 }
+
+// Export of types not used anywhere in the codebase
+export type { CommandOptions };

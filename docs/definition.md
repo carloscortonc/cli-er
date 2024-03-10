@@ -40,7 +40,7 @@ type Command = BaseElement & {
   action?: (out: ParsingOutput) => void;
 }
 ```
-- **aliases**: alternative names for the command. If specified, the will added on top of command key. Default `[key]`
+- **aliases**: alternative names for the command. If specified, the will added on top of command key. Default: `[key]`
 - **action**: method that will be called when the command is matched, receiving the output of the parsing process.
 
 ## Option
@@ -54,6 +54,7 @@ type Option = BaseElement & {
   default?: any;
   required?: boolean;
   type?: "string" | "boolean" | "list" | "number" | "float";
+  enum?: (string | number)[];
   parser?: (input: ValueParserInput) => ValueParserOutput
 }
 ```
@@ -63,6 +64,7 @@ type Option = BaseElement & {
 - **default**: default value for the option.
 - **required**: specifies an option as required, generating an error if a value is not provided. Default: `false`
 - **type**: type of option, to load the appropriate parser. Default: `string`
+- **enum**: restrict the possible option-values based on the given list. Available for option-types `string`, `list`, `number` and `float`.
 - **parser**: allows defining [custom parser](#custom-parser) for an option, instead of using the supported types.
 
 ### Positional options
@@ -115,7 +117,7 @@ type ValueParserOutput = {
   value?: any;
   /** Number of additional arguments that the parser consumed. For example, a boolean option
    * might not consume any additional arguments ("--show-config", next=0) while a string option
-   * would ("--path path-value", next=1). The main case of `next=0` is when incoming value
+   * would ("--path path-value", next=1). The main use-case of `next=0` is when incoming value
    * is `undefined` */
   next?: number;
   /** Error generated during parsing */
