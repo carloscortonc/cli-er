@@ -679,6 +679,24 @@ Options:
 
 `);
   });
+  it("Only autoincluded options: [OPTIONS] is not included", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const noOptsDef = { nms: { options: { cmd: { options: { opt: {} } } } } };
+    generateScopedHelp(new Cli(noOptsDef).definition, [], cliOptions);
+    expect(output).toBe(`
+Usage:  cli-name NAMESPACE
+
+cli-description
+
+Namespaces:
+  nms         -
+
+Options:
+  -h, --help  Display global help, or scoped to a namespace/command
+
+`);
+  });
   it("With location", () => {
     let output = "";
     logger.mockImplementation((m: any) => !!(output += m));
