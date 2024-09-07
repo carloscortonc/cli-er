@@ -121,7 +121,7 @@ npm install cli-er
 - [**run(args?)**](./docs/api.md#runargs): parse the given arguments and execute the corresponding script found in the calculated location. Integrates help and version generation.
 - [**help(location?)**](./docs/api.md#helplocation): generate help based on the definition. Can be scoped to a namespace/command.
 - [**version()**](./docs/api.md#version): generate a formatted version of the application's version.
-- [**completions()**](./docs/features.md#bash-completion): output bash-completion script contents.
+- [**completions()**](./docs/api.md#completions): output bash-completion script contents.
 
 #### Glossary
 - **Namespace**: is used to group commands, but cannot be invoked. Can contain other namespaces, commands or options.

@@ -377,6 +377,21 @@ export function parseArguments(
     }
   });
 
+  // Verify option requirements
+  Object.values(defToProcess).some((opt) => {
+    if (!opt.requires) {
+      return false;
+    }
+    const r = typeof opt.requires === "function" ? opt.requires(output.options[opt.key!]) : opt.requires;
+    const missed = r.filter((k) => output.options[k] === undefined).map((k) => "".concat(opt.key!, "->", k));
+    if (missed.length > 0) {
+      output.errors.push(
+        Cli.formatMessage("option_missing_dependencies", { option: opt.key!, dependencies: missed.join(", ") }),
+      );
+      return true;
+    }
+  });
+
   // Process value-transformations. Removed in 0.11.0 in favor of Option.parser
   Object.values(aliases)
     .filter((v) => typeof v !== "string" && typeof v.value === "function")

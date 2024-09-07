@@ -175,7 +175,7 @@ class DeprecationWarning {
     description?: string;
   }) => {
     // Check if debug mode is active to avoid unnecessary execution
-    if (!isDebugActive()) {
+    if (!isDebugActive() || options.condition === false) {
       return;
     }
     const depMessage = `<${options.property}> is deprecated`.concat(
@@ -183,7 +183,7 @@ class DeprecationWarning {
       options.alternative ? `. Use <${options.alternative}> instead` : "",
       options.description ? ". ".concat(options.description) : "",
     );
-    if (options.condition !== false && !this.list.has(depMessage)) {
+    if (!this.list.has(depMessage)) {
       this.list.add(depMessage);
       debug(DEBUG_TYPE.WARN, depMessage);
     }

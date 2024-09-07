@@ -81,6 +81,7 @@ describe("Cli.constructor", () => {
           "command_not_found",
           "option_wrong_value",
           "option_required",
+          "option_missing_dependencies",
           "option_missing_value",
           "option_not_found",
         ],

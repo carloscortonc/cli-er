@@ -425,12 +425,38 @@ describe("parseArguments", () => {
       errors: [],
     });
   });
-  it("Return error if required option not provided", () => {
+  it("[Option.required] Return error if required option not provided", () => {
     const definition = new Cli({ opt: { required: true } }).definition;
     expect(parseArguments([], definition as Definition, cliOptions)).toStrictEqual({
       options: expect.anything(),
       location: [],
       errors: ['Missing required option "opt"'],
+    });
+  });
+  describe("Option.requires", () => {
+    it("Return error if some key in option.requires not present", () => {
+      const definition = new Cli({ opt: { requires: ["not-present-1", "not-present-2"] } }).definition;
+      expect(parseArguments([], definition as Definition, cliOptions)).toStrictEqual({
+        options: expect.anything(),
+        location: [],
+        errors: ['Missing dependencies for option "opt": opt->not-present-1, opt->not-present-2'],
+      });
+    });
+    it("Specify list using function", () => {
+      const definition = new Cli({ opt: { requires: (v) => [(v as string).concat("__")] } }).definition;
+      expect(parseArguments(["--opt", "optvalue"], definition as Definition, cliOptions)).toStrictEqual({
+        options: expect.anything(),
+        location: [],
+        errors: ['Missing dependencies for option "opt": opt->optvalue__'],
+      });
+    });
+    it("Do not return error if all keys present", () => {
+      const definition = new Cli({ opt: { requires: ["opt"] } }).definition;
+      expect(parseArguments(["--opt", "optvalue"], definition as Definition, cliOptions)).toStrictEqual({
+        options: expect.anything(),
+        location: [],
+        errors: [],
+      });
     });
   });
   it("Detect '--' delimiter", () => {

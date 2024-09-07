@@ -7,6 +7,7 @@ export const ERROR_MESSAGES = {
   option_wrong_value: 'Wrong value for option "{option}". Expected {expected} but found "{found}"',
   option_missing_value: 'Missing value of type <{type}> for option "{option}"',
   option_required: 'Missing required option "{option}"',
+  option_missing_dependencies: 'Missing dependencies for option "{option}": {dependencies}',
 } as const;
 
 /** Existing errors */
