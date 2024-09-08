@@ -782,7 +782,7 @@ Usage:  cli-name NAMESPACE|COMMAND [OPTIONS]`),
     let output = "";
     logger.mockImplementation((m: any) => !!(output += m));
     const def: Definition<DefinitionElement> = {
-      nms: { kind: "namespace", aliases: ["nms"] },
+      nms: { kind: "namespace", aliases: ["nms"], key: "nms" },
       opt: { aliases: ["--opt"], kind: "option", type: "boolean", hidden: true },
     };
     generateScopedHelp(def, [], {
@@ -806,6 +806,7 @@ This is a custom footer
     logger.mockImplementation((m: any) => !!(output += m));
     const { definition: def } = new Cli({
       bool: { type: "boolean", default: true, description: "boolean option" },
+      negatable: { type: "boolean", negatable: true, description: "negatable option" },
       num: { type: "number", default: 10, enum: [1, 10, 50], description: "number option" },
       float: { type: "float", default: 0.5, enum: [0.1, 0.3, 0.5], description: "float option" },
       list: { type: "list", default: ["one", "two"], description: "list option" },
@@ -822,16 +823,17 @@ Usage:  cli-name <arg1> [arg2] [arg3...] [OPTIONS]
 cli-description
 
 Options:
-  --bool      boolean option (default: true)
-  --num       number option (allowed: 1, 10, 50, default: 10)
-  --float     float option (allowed: 0.1, 0.3, 0.5, default: 0.5)
-  --list      list option (default: "one", "two")
-  --enum      string with enum (allowed: "opt1", "opt2")
-  --enumdef   string with enum and default (allowed: "opt1", "opt2", default: "opt1")
-  --arg1      first positional mandatory option
-  --arg2      second positional option
-  --arg3      catch-all positional option
-  -h, --help  Display global help, or scoped to a namespace/command
+  --bool           boolean option (default: true)
+  --(no)negatable  negatable option
+  --num            number option (allowed: 1, 10, 50, default: 10)
+  --float          float option (allowed: 0.1, 0.3, 0.5, default: 0.5)
+  --list           list option (default: "one", "two")
+  --enum           string with enum (allowed: "opt1", "opt2")
+  --enumdef        string with enum and default (allowed: "opt1", "opt2", default: "opt1")
+  --arg1           first positional mandatory option
+  --arg2           second positional option
+  --arg3           catch-all positional option
+  -h, --help       Display global help, or scoped to a namespace/command
 
 `);
   });
