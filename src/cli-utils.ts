@@ -27,7 +27,11 @@ export type DefinitionElement = F<Namespace> &
   F<OptionExt> & {
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
+  } & {
+    /** Store original list of aliases, without any transformations */
+    rawAliases?: string[];
   };
+
 type CompletionContext = {
   positional: Option[];
   location: string[];
@@ -47,14 +51,14 @@ export function getEntryPoint() {
 }
 
 /** Determine the correct aliases depending on the kind of element */
-function getAliases(key: string, element: DefinitionElement) {
-  if (element.kind === Kind.NAMESPACE || !element.aliases) {
-    return [key];
+function getAliases(element: DefinitionElement) {
+  if (element.kind === Kind.NAMESPACE || !element.rawAliases) {
+    return [element.key!];
   }
   if (element.kind === Kind.COMMAND) {
-    return [key].concat(element.aliases);
+    return [element.key!].concat(element.rawAliases);
   }
-  return element.aliases.map((alias) => {
+  return element.rawAliases.map((alias) => {
     if (!alias.startsWith("-")) {
       return (alias.length > 1 ? "--" : "-").concat(alias);
     }
@@ -118,6 +122,8 @@ function completeElementDefinition(
       : Kind.OPTION;
   }
 
+  const deContext = { ...context, positional: [] };
+
   if (element.kind === Kind.OPTION) {
     // Set positional arguments configured as "true" with type=list
     if (element.positional === true) {
@@ -139,13 +145,14 @@ function completeElementDefinition(
       element.negatable === true &&
       element.aliases?.some((a) => !a.startsWith("-") && a.length > 1)
     ) {
-      definition[name.concat("Negated")] = {
+      const negatedName = name.concat("Negated");
+      definition[negatedName] = {
         kind: Kind.OPTION,
         type: Type.BOOLEAN,
         // Will only work when aliases are defined without dashes
         aliases: element.aliases
           .filter((a) => !a.startsWith("-") && a.length > 1)
-          .reduce((acc, a) => [...acc, ...["no", "no-"].map((e) => `--${e}`.concat(a))], [] as string[]),
+          .reduce((acc, a) => [...acc, ...["no", "no-"].map((e) => e.concat(a))], [] as string[]),
         parser: (input) => {
           const o = parseOptionValue(input);
           return { ...o, value: !o.value };
@@ -153,7 +160,9 @@ function completeElementDefinition(
         hidden: true,
         key: name,
       };
+      completeElementDefinition(negatedName, definition, deContext);
     } else if (element.type === Type.BOOLEAN && element.negatable === true) {
+      element.negatable = false;
       debug(
         DEBUG_TYPE.WARN,
         `Boolean option <${name}> will be included without negated aliases.` +
@@ -161,10 +170,12 @@ function completeElementDefinition(
       );
     }
   }
-  // Complete aliases
-  element.aliases = getAliases(name, element);
   // Add name as key
-  element.key = name;
+  element.key ||= name;
+  // Initialize rawAliases list
+  element.rawAliases = element.aliases;
+  // Complete aliases
+  element.aliases = getAliases(element);
   // Look for description inside `messages`, otherwise use element's description
   const descriptionIntlPrefix = context.location.length > 0 ? context.location.join(".").concat(".") : "";
   element.description =
@@ -181,7 +192,7 @@ function completeElementDefinition(
     version: "0.12.0",
     alternative: "Option.parser",
   });
-  const deContext = { ...context, positional: [] };
+
   for (const optionKey in element.options ?? {}) {
     completeElementDefinition(
       optionKey,
@@ -563,7 +574,13 @@ function generateHelp(
   type ElementSections = { [key in HELP_SECTIONS]?: ExtendedDefinitionElement[] };
 
   // Generate the formatted versions of aliases
-  const formatAliases = (aliases: string[] = []) => aliases.join(", ");
+  const formatAliases = (element: DefinitionElement) => {
+    let als = element.rawAliases!;
+    if (element.negatable) {
+      als = als.map((a) => (a.length === 1 ? a : "(no)".concat(a)));
+    }
+    return getAliases({ ...element, rawAliases: als }).join(", ");
+  };
   // Generate default-value hint, if present
   const defaultHint = (option: DefinitionElement) => {
     const w = (c: string) => (c ? ` (${c})` : c);
@@ -614,7 +631,7 @@ function generateHelp(
             [Kind.OPTION]: HELP_SECTIONS.OPTIONS,
           } as const;
           const sectionKey = sectionAdapter[element.kind as Kind],
-            name = formatAliases(element.aliases);
+            name = formatAliases(element);
           const completeElement = { ...element, name };
           acc.formattedNames.push(name);
           acc.elementSections[sectionKey].push(completeElement);
