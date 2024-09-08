@@ -55,7 +55,8 @@ type Option = BaseElement & {
   required?: boolean;
   type?: "string" | "boolean" | "list" | "number" | "float";
   enum?: (string | number)[];
-  parser?: (input: ValueParserInput) => ValueParserOutput
+  parser?: (input: ValueParserInput) => ValueParserOutput;
+  requires?: string[] | ((v: OptionValue) => string[]);
 }
 ```
 - **aliases**: alternative names for the options, e.g. `["h", "help"]`. They should be specified without dashes, and final alias value will be calculated depending on the provided alias length: prefixed with `-` for single letters, and `--` in other cases. When not specified, the name of the option will be used. Default: `[key]`
@@ -66,6 +67,7 @@ type Option = BaseElement & {
 - **type**: type of option, to load the appropriate parser. Default: `string`
 - **enum**: restrict the possible option-values based on the given list. Available for option-types `string`, `list`, `number` and `float`.
 - **parser**: allows defining [custom parser](#custom-parser) for an option, instead of using the supported types.
+- **requires**: specifies a list of options that need to be set if this option is also set. A function may be provided, receiving the current option value.
 
 ### Positional options
 Positional options allow asigning an option to a determinate position in the arguments.

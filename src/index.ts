@@ -48,6 +48,7 @@ export default class Cli {
           "option_wrong_value",
           "option_required",
           "option_missing_value",
+          "option_missing_dependencies",
           "option_not_found",
         ],
       },

@@ -86,6 +86,10 @@ export type Option = BaseElement & {
   value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
   /** Custom parser for the option */
   parser?: (input: ValueParserInput) => ValueParserOutput;
+  /** Specify a list of option-keys that shoud be set if this option is present
+   * A function may be provided so the list depends on the option's value
+   */
+  requires?: string[] | ((v: OptionValue) => string[]);
 };
 
 export type Namespace = BaseElement & {
