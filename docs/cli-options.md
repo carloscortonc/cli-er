@@ -31,7 +31,7 @@ List of error-types that will get displayed before help</br>
 **Default**: `["command_not_found"]`
 ##### `errors.onExecuteCommand`
 List of error-types that will cause to end execution with `exit(1)` </br>
-**Default**: `["command_not_found", "option_wrong_value", "option_required", "option_missing_dependencies", "option_missing_value", "option_not_found"]`
+**Default**: `["command_not_found", "option_wrong_value", "option_required", "option_missing_value", "option_missing_dependencies", "option_not_found"]`
 
 #### `help`
 Help-related configuration
