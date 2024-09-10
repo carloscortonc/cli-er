@@ -1,4 +1,5 @@
 import Cli from "../src/index";
+import fs from "fs";
 import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
@@ -6,6 +7,9 @@ import { CliError, ErrorType } from "../src/cli-errors";
 import { Definition, Option } from "../src/types";
 const definition = _definition as Definition;
 
+jest.mock("fs", () => ({
+  readFileSync: jest.fn(),
+}));
 jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
 jest.spyOn(utils, "findPackageJson").mockImplementation(
   (_: any) =>
@@ -15,6 +19,7 @@ jest.spyOn(utils, "findPackageJson").mockImplementation(
       description: "cli-description",
     } as any),
 );
+jest.spyOn(utils, "findFile").mockImplementation(() => "{}");
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -109,6 +114,7 @@ describe("Cli.constructor", () => {
         enabled: true,
         command: "generate-completions",
       },
+      configFile: undefined,
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
@@ -154,6 +160,7 @@ describe("Cli.constructor", () => {
         enabled: true,
         command: "generate-completions",
       },
+      configFile: undefined,
     });
   });
   it("Overwrite default logger", () => {
@@ -359,5 +366,34 @@ describe("Cli.run", () => {
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["option_not_found", "command_not_found"] } });
     c.run([]);
     expect(logger.error).toHaveBeenCalledWith("OPT_NOT_FOUND", "\n");
+  });
+});
+
+describe("Cli.findConfigFileContents", () => {
+  it("'configFile' not enabled - returns undefined", () => {
+    const c = new Cli(definition);
+    expect(c.configContent()).toBe(undefined);
+    expect(utils.findFile).not.toHaveBeenCalled();
+  });
+  it("No file found - returns undefined", () => {
+    (utils.findFile as jest.Mock).mockImplementation(() => undefined);
+    const c = new Cli(definition, { configFile: { names: ["filename"] } });
+    expect(c.configContent()).toBe(undefined);
+    expect(utils.findFile).toHaveBeenCalled();
+  });
+  it("No parser provided, default to JSON", () => {
+    (utils.findFile as jest.Mock).mockImplementation(() => "file");
+    (fs.readFileSync as jest.Mock).mockImplementation(() => '{"content": "config"}');
+    const c = new Cli(definition, { configFile: { names: ["filename"] } });
+    expect(c.configContent()).toStrictEqual({ content: "config" });
+  });
+  it("Custom parser provided", () => {
+    const mockParsedContent = { content: "parser-generated" };
+    const parse = jest.fn(() => mockParsedContent);
+    (utils.findFile as jest.Mock).mockImplementation(() => "file");
+    (fs.readFileSync as jest.Mock).mockImplementation(() => "file-contents");
+    const c = new Cli(definition, { configFile: { names: ["filename"], parse } });
+    expect(c.configContent()).toStrictEqual(mockParsedContent);
+    expect(parse).toHaveBeenCalledWith("file-contents", "file");
   });
 });

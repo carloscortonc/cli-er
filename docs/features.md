@@ -38,6 +38,22 @@ If the location is `["nms", "cmd"]` for an entryfile `cli.js`, the list of candi
 5. `/index.js` - named import  (`cmd`)
 6. `/cli.js` - named import  (`cmd`)
 
+## Configuration file support
+A list of configuration file names can be used, so its contents will be processed when using [`Cli.run`](/docs/api.md#runargs).  
+Starting from the current directory where the cli is invoked (`process.cwd()`), the program will search up a file matching the provided list.
+The default format support is `JSON`, but a parser may be provided to manage other formats:
+
+```typescript
+import { parse } from 'ini'; // https://github.com/npm/ini
+
+new Cli(definition, {
+  configFile: {
+    names: [".npmrc", "npmrc"],
+    parse: (content) => parse(content),
+  },
+} as any).run();
+```
+
 ## Bash completion
 `cli-er` includes a command to generate bash-completions for the cli. This can be configured through [`CliOptions.completion`](/docs/cli-options.md#completion), to change the name of such command, or to disable this behaviour.  
 You can check [here](/examples/docker/completions.sh) the generated script for docker example.

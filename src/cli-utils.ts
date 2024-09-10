@@ -205,14 +205,16 @@ function completeElementDefinition(
 }
 
 /** Process incoming args based on provided definition */
-export function parseArguments(
-  args: string[],
-  definition: Definition<DefinitionElement>,
-  cliOptions: CliOptions,
-): ParsingOutput {
+export function parseArguments(params: {
+  args: string[];
+  definition: Definition<DefinitionElement>;
+  cliOptions: CliOptions;
+  initial?: Partial<ParsingOutput["options"]>;
+}): ParsingOutput {
+  const { args, definition, cliOptions } = params;
   const output: ParsingOutput = {
     location: [],
-    options: { _: [] },
+    options: Object.assign({ _: [] }, params.initial),
     errors: [],
   };
   const aliases: { [key: string]: DefinitionElement | string } = {};

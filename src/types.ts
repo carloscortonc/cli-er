@@ -208,4 +208,15 @@ export type CliOptions = {
    * This allows to include new translations, or tweak the current ones
    */
   messages?: Messages;
+  /** Enable config-file processing */
+  configFile?: {
+    /** Names of config files to search for
+     * @example [".clierrc"]
+     */
+    names: string[];
+    /** By default, file content is parsed as JSON. If more formats are supported,
+     * you can use this method to implement the parsing method and return the final object
+     */
+    parse?: (content: string, filePath: string) => Record<string, OptionValue>;
+  };
 };

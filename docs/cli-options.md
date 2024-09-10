@@ -104,3 +104,9 @@ Name of the completion command
 Object containing the messages to be used in the Cli, to override the default ones defined by this library. This enables internationalization and customization of cli-native messages. You can see a use-case in this [intl-cli example](/examples/intl-cli)</br>
 **Default**: defined in [/src/cli-messages](/src/cli-messages.ts) and [/src/cli-errors](/src/cli-errors.ts)
 
+#### `configFile`
+Enable configuration file processing
+##### `configFile.names`
+Names of config files to search for
+##### `configFile.parse`
+Override default `JSON` parser. Receives the contents of such file (string), and the full path for the file found.
