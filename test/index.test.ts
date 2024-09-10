@@ -369,7 +369,7 @@ describe("Cli.run", () => {
   });
 });
 
-describe("Cli.findConfigFileContents", () => {
+describe("Cli.configContent", () => {
   it("'configFile' not enabled - returns undefined", () => {
     const c = new Cli(definition);
     expect(c.configContent()).toBe(undefined);

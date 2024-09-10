@@ -51,7 +51,7 @@ new Cli(definition, {
     names: [".npmrc", "npmrc"],
     parse: (content) => parse(content),
   },
-} as any).run();
+}).run();
 ```
 
 ## Bash completion
