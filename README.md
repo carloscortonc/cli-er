@@ -46,7 +46,7 @@ node cli.js [namespace(s)|command] [OPTIONS]
 ## Features
 - [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
 - [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
-- [**Configuration file support**](./docs/features#configuration-file-support): define the list of configuration file-names for your cli, and `cli-er` will try to find, read its contents (from `process.cwd()` up), and use it inside [`Cli.run`](./docs/api.md#runargs).
+- [**Configuration file support**](./docs/features.md#configuration-file-support): define the list of configuration file-names for your cli, and `cli-er` will try to find, read its contents (from `process.cwd()` up), and use it inside [`Cli.run`](./docs/api.md#runargs).
 - [**Bash completion**](./docs/features.md#bash-completion): a command is created to generate the `bash-completions` script for the cli.
 - [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
 - [**Typescript support**](./docs/features.md#typescript-support): build the cli with typescript.
