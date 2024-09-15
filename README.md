@@ -42,6 +42,16 @@ Invocation:
 node cli.js [namespace(s)|command] [OPTIONS]
 ```
 
+
+## Features
+- [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
+- [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
+- [**Configuration file support**](./docs/features.md#configuration-file-support): define the list of configuration file-names for your cli, and `cli-er` will try to find, read its contents (from `process.cwd()` up), and use it inside [`Cli.run`](./docs/api.md#runargs).
+- [**Bash completion**](./docs/features.md#bash-completion): a command is created to generate the `bash-completions` script for the cli.
+- [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
+- [**Typescript support**](./docs/features.md#typescript-support): build the cli with typescript.
+
+
 #### Example
 
 Given the following definition (docker.js):
@@ -99,13 +109,6 @@ This allows us to organize and structure the logic nicely.
 
 You can check the full [docker-based example](./examples/docker) for a more in-depth demo.
 
-## Features
-- [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
-- [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
-- [**Bash completion**](./docs/features.md#bash-completion): a command is created to generate the `bash-completions` script for the cli.
-- [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
-- [**Typescript support**](./docs/features.md#typescript-support): build the cli with typescript.
-
 
 ## Installation
 
@@ -122,6 +125,7 @@ npm install cli-er
 - [**help(location?)**](./docs/api.md#helplocation): generate help based on the definition. Can be scoped to a namespace/command.
 - [**version()**](./docs/api.md#version): generate a formatted version of the application's version.
 - [**completions()**](./docs/api.md#completions): output bash-completion script contents.
+- [**configContent()**](./docs/api.md#configcontent): find the contents of configuration files (e.g. `.prettierrc.json`).
 
 #### Glossary
 - **Namespace**: is used to group commands, but cannot be invoked. Can contain other namespaces, commands or options.

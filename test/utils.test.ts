@@ -1,4 +1,13 @@
-import { CLIER_DEBUG_KEY, DEBUG_TYPE, clone, debug, deprecationWarning, findPackageJson, merge } from "../src/utils";
+import {
+  CLIER_DEBUG_KEY,
+  DEBUG_TYPE,
+  clone,
+  debug,
+  deprecationWarning,
+  findPackageJson,
+  merge,
+  findFile,
+} from "../src/utils";
 import path from "path";
 import fs from "fs";
 
@@ -20,31 +29,49 @@ beforeEach(() => {
   process.exitCode = 0;
 });
 
+describe("findFile", () => {
+  it("[windows] Checks all directories from 'start' upwards", () => {
+    mockPath.sep = "\\";
+    const pkgjson = findFile("C:\\start\\location\\path", ["file.json"]);
+    expect((fs.existsSync as any).mock.calls).toEqual([
+      ["C:\\start\\location\\path\\file.json"],
+      ["C:\\start\\location\\file.json"],
+      ["C:\\start\\file.json"],
+      ["C:\\file.json"],
+    ]);
+    // Returns undefined if no package.json found
+    expect(pkgjson).toBe(undefined);
+  });
+  it("[unix] Checks all directories from 'start' upwards", () => {
+    mockPath.sep = "/";
+    const pkgjson = findFile("/start/location", [".rpirc", ".rpirc.json"]);
+    expect((fs.existsSync as any).mock.calls).toEqual([
+      ["/start/location/.rpirc"],
+      ["/start/location/.rpirc.json"],
+      ["/start/.rpirc"],
+      ["/start/.rpirc.json"],
+    ]);
+    // Returns undefined if no file found
+    expect(pkgjson).toBe(undefined);
+  });
+  it("Returns the first file found", () => {
+    const mockReadFile = (path: string) =>
+      ({
+        "/start/location/path/rpirc.json": undefined,
+        "/start/location/rpirc.json": '{"name": "location-config"}',
+        "/start/rpirc.json": '{"name": "base-config"}',
+      }[path]);
+
+    (fs.existsSync as jest.Mock).mockImplementation(mockReadFile);
+    (fs.readFileSync as jest.Mock).mockImplementation(mockReadFile);
+    const file = findFile("/start/location/path", ["rpirc.json"]);
+    expect(file).toStrictEqual("/start/location/rpirc.json");
+  });
+});
+
 describe("findPackageJson", () => {
   const baseLocation = "/base/location/path";
-  it("[windows] Checks all directories from baseLocation upwards", () => {
-    mockPath.sep = "\\";
-    const pkgjson = findPackageJson("C:\\base\\location\\path");
-    expect((fs.existsSync as any).mock.calls).toEqual([
-      ["C:\\base\\location\\path\\package.json"],
-      ["C:\\base\\location\\package.json"],
-      ["C:\\base\\package.json"],
-      ["C:\\package.json"],
-    ]);
-    // Returns undefined if no package.json found
-    expect(pkgjson).toBe(undefined);
-  });
-  it("[unix] Checks all directories from baseLocation upwards", () => {
-    mockPath.sep = "/";
-    const pkgjson = findPackageJson(baseLocation);
-    expect((fs.existsSync as any).mock.calls).toEqual([
-      ["/base/location/path/package.json"],
-      ["/base/location/package.json"],
-      ["/base/package.json"],
-    ]);
-    // Returns undefined if no package.json found
-    expect(pkgjson).toBe(undefined);
-  });
+
   it("Returns the first package.json found", () => {
     const mockReadFile = (path: string) =>
       ({

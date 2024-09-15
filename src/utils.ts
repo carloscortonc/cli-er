@@ -113,22 +113,36 @@ export function merge(target: TObject, ...srcValues: TObject[]) {
   }
 }
 
+/**
+ * Find a file from a given starting point, returning absolute file path if found
+ * @param start starting directory for the search
+ * @param names list of candidate file names to search for, ordered by priority (most priority first)
+ */
+export function findFile(start: string, names: string[]) {
+  // Split "start" into the composing directories
+  const parts = start?.split(new RegExp(`(?!^)${path.sep == "\\" ? path.sep.repeat(2) : path.sep}`)) || [];
+  for (let len = parts.length; len > 0; len--) {
+    for (const name of names) {
+      const candidate = path.resolve(...parts.slice(0, len), name);
+      if (fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+  }
+}
+
 /** Find the package.json of the application that is using this library
  * Returns the content of the nearest package.json. The search goes from `CliOptions.baseLocation` up */
 export function findPackageJson(baseLocation: string) {
   // Split baseLocation into the composing directories
-  const parts = baseLocation?.split(new RegExp(`(?!^)${path.sep == "\\" ? path.sep.repeat(2) : path.sep}`)) || [];
-  for (let len = parts.length; len > 0; len--) {
-    const candidate = path.resolve(...parts.slice(0, len), "package.json");
-    if (!fs.existsSync(candidate)) {
-      continue;
-    }
-    try {
-      return JSON.parse(fs.readFileSync(candidate, "utf-8"));
-    } catch {
-      // Error parsing package.json, return undefined
-      break;
-    }
+  const location = findFile(baseLocation, ["package.json"]);
+  if (!location) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(fs.readFileSync(location, "utf-8"));
+  } catch {
+    // Error parsing package.json, return undefined
   }
   return undefined;
 }
