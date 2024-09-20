@@ -98,12 +98,14 @@ export type Namespace = BaseElement & {
   options?: Definition;
 };
 
-export type Command = Omit<Option, "kind"> & {
+export type Command = Pick<Option, "aliases"> & {
   kind: `${Kind.COMMAND}`;
   /** Nested options definition */
   options?: Definition<Option>;
   /** Action to be executed when matched */
   action?: (out: ParsingOutput) => void;
+  /** Specify the `Usage` section to be used in the generated help */
+  usage?: string;
 };
 
 export type Definition<T = Namespace | Command | Option> = {

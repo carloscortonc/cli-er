@@ -38,10 +38,12 @@ type Command = BaseElement & {
   aliases?: string[];
   options?: Definition<Option>;
   action?: (out: ParsingOutput) => void;
+  usage?: string;
 }
 ```
-- **aliases**: alternative names for the command. If specified, the will added on top of command key. Default: `[key]`
+- **aliases**: alternative names for the command. If specified, the will added on top of command key. Default: `[key]`.
 - **action**: method that will be called when the command is matched, receiving the output of the parsing process.
+- **usage**: override default `Usage` content for this command.
 
 ## Option
 An element with `kind: "option"`, or since 0.11.0, when its kind is inferred to this one.
