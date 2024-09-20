@@ -1,23 +1,9 @@
-## Intl support
-To internationalize library messages, the [`CliOptions.messages`](/docs/cli-options.md#messages) can be used to override the default messages. Check the [intl-cli example](/examples/intl-cli) for a use case.  
-`CliOptions.messages` can be also be used to specify descriptions for element's definition. For this, the key must be the full route to such element, followed by `".description"`, e.g:
-```javascript
-new Cli({
-  nms: {
-    options: {
-      cmd: {
-        debug: { type: "boolean"}
-      }
-    }
-  }
-}, {
-  messages: {
-    "nms.description": "Namespace",
-    "nms.cmd.description": "Command",
-    "nms.cmd.debug.description": "Option",
-  }
-})
-```
+## Help generation
+`cli-er` will include by default a help option (`-h`/`--help`), which will generate help on the current location (scoped). Some features include:
+- Document negated option aliases.
+- Options from parent scopes will also be documented, in the same way it is implemented when parsing arguments.
+- Enable override of `Usage` section for commands.
+- Use of `process.stdout.columns` to format the help and line-breaks appropriately.
 
 ## Routing
 A "location" is calculated and returned by [`Cli.parse`](/docs/api.md#parseargs): this is the route to the final invocable command.
@@ -52,6 +38,27 @@ new Cli(definition, {
     parse: (content) => parse(content),
   },
 }).run();
+```
+
+## Intl support
+To internationalize library messages, the [`CliOptions.messages`](/docs/cli-options.md#messages) can be used to override the default messages. Check the [intl-cli example](/examples/intl-cli) for a use case.  
+`CliOptions.messages` can be also be used to specify descriptions for element's definition. For this, the key must be the full route to such element, followed by `".description"`, e.g:
+```javascript
+new Cli({
+  nms: {
+    options: {
+      cmd: {
+        debug: { type: "boolean"}
+      }
+    }
+  }
+}, {
+  messages: {
+    "nms.description": "Namespace",
+    "nms.cmd.description": "Command",
+    "nms.cmd.debug.description": "Option",
+  }
+})
 ```
 
 ## Bash completion

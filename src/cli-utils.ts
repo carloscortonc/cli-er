@@ -549,17 +549,23 @@ export function generateScopedHelp(
       })
       .join(" ");
 
-  sections[HELP_SECTIONS.USAGE] = [
-    `${Cli.formatMessage("generate-help.usage")}:  ${cliOptions.cliName}`,
-    location.join(" "),
-    formatKinds(existingKinds),
-    element?.kind === Kind.COMMAND && element!.type !== undefined ? `<${element!.type}>` : "",
-    formatPositionalOptions(positionalOptions),
-    hasOptions ? Cli.formatMessage("generate-help.has-options") : "",
-  ]
+  const usageCommonHeader = [`${Cli.formatMessage("generate-help.usage")}:  ${cliOptions.cliName}`, location.join(" ")]
     .filter((e) => e)
-    .join(" ")
-    .concat("\n");
+    .join(" ");
+
+  sections[HELP_SECTIONS.USAGE] =
+    element?.kind === Kind.COMMAND && element.usage
+      ? usageCommonHeader.concat(" ", element.usage)
+      : [
+          usageCommonHeader,
+          formatKinds(existingKinds),
+          element?.kind === Kind.COMMAND && element!.type !== undefined ? `<${element!.type}>` : "",
+          formatPositionalOptions(positionalOptions),
+          hasOptions ? Cli.formatMessage("generate-help.has-options") : "",
+        ]
+          .filter((e) => e)
+          .join(" ")
+          .concat("\n");
   generateHelp(definitionRef, cliOptions, sections);
 }
 

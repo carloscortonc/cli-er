@@ -177,6 +177,8 @@ Options:
   -h, --help    Display global help, or scoped to a namespace/command
 ```
 
+In the case of commands, you may specify `usage` option to override default section content.
+
 The library also checks `process.stdout.columns` to format the help and line-breaks appropriately.
 
 _**TIP**: any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition._

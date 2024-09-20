@@ -874,6 +874,20 @@ Namespaces:
 This is a custom footer
 `);
   });
+  it("With custom `usage`", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const def: Definition<DefinitionElement> = {
+      cmd: { kind: "command", usage: "Custom Usage" },
+      opt: { aliases: ["--opt"], kind: "option", type: "boolean", hidden: true },
+    };
+    generateScopedHelp(def, ["cmd"], cliOptions);
+    expect(output).toStrictEqual(
+      expect.stringContaining(`
+Usage:  cli-name cmd Custom Usage
+`),
+    );
+  });
   it("With options", () => {
     let output = "";
     logger.mockImplementation((m: any) => !!(output += m));
