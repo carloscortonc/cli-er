@@ -392,7 +392,7 @@ export function parseArguments(params: {
 
   // Verify option requirements
   Object.values(defToProcess).some((opt) => {
-    if (!opt.requires) {
+    if (!opt.requires || output.options[opt.key!] === undefined) {
       return false;
     }
     const r = typeof opt.requires === "function" ? opt.requires(output.options[opt.key!]) : opt.requires;
