@@ -453,10 +453,20 @@ describe("parseArguments", () => {
   describe("Option.requires", () => {
     it("Return error if some key in option.requires not present", () => {
       const definition = new Cli({ opt: { requires: ["not-present-1", "not-present-2"] } }).definition;
-      expect(parseArguments({ args: [], definition: definition as Definition, cliOptions })).toStrictEqual({
+      expect(
+        parseArguments({ args: ["--opt", "optvalue"], definition: definition as Definition, cliOptions }),
+      ).toStrictEqual({
         options: expect.anything(),
         location: [],
         errors: ['Missing dependencies for option "opt": opt->not-present-1, opt->not-present-2'],
+      });
+    });
+    it("Error only reported if configured option is present", () => {
+      const definition = new Cli({ opt: { requires: ["not-present-1", "not-present-2"] } }).definition;
+      expect(parseArguments({ args: [], definition: definition as Definition, cliOptions })).toStrictEqual({
+        options: expect.anything(),
+        location: [],
+        errors: [],
       });
     });
     it("Specify list using function", () => {
