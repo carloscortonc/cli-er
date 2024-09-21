@@ -1,3 +1,18 @@
+# [0.16.0](https://github.com/carloscortonc/cli-er/compare/v0.15.0...v0.16.0) (2024-09-21)
+
+
+### Bug Fixes
+
+* ignore dependencies on for empty options ([#88](https://github.com/carloscortonc/cli-er/issues/88)) ([46a9fa8](https://github.com/carloscortonc/cli-er/commit/46a9fa8e10654ecbd81495a0acf47253ad906b47))
+
+
+### Features
+
+* allow custom `usage` section content ([#86](https://github.com/carloscortonc/cli-er/issues/86)) ([b98dc4e](https://github.com/carloscortonc/cli-er/commit/b98dc4e05b0b3084aa332be815eb4c177af24c57))
+* include negated hint in help generation ([#84](https://github.com/carloscortonc/cli-er/issues/84)) ([b57efd1](https://github.com/carloscortonc/cli-er/commit/b57efd103497d9816fb3eb87c6bedd1aa1e12eb5))
+* support configuration files ([#85](https://github.com/carloscortonc/cli-er/issues/85)) ([dd0a913](https://github.com/carloscortonc/cli-er/commit/dd0a913f640e77eb1337252518f66c2398a23f5b))
+* support option requirements ([#83](https://github.com/carloscortonc/cli-er/issues/83)) ([13e0634](https://github.com/carloscortonc/cli-er/commit/13e0634b198b99d39cd2d4a2605b3712cfc0f8ff))
+
 # [0.15.0](https://github.com/carloscortonc/cli-er/compare/v0.14.0...v0.15.0) (2024-03-10)
 
 
