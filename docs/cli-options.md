@@ -22,6 +22,7 @@ The available error-types are:
 - `command_not_found`: an unknown argument is encountered when a command was expected
 - `option_wrong_value`: the option parser considers the given value as incorrect (e.g. `type:number` when given `"a123"`)
 - `option_required`: an option is marked as required but is not provided
+- `option_missing_dependencies`: some requirement specified for an option (`Option.requires`) is missing.
 - `option_missing_value`: an option is provided without its corresponding value
 - `option_not_found`: an unknown argument is encountered when an option was expected
 
@@ -30,7 +31,7 @@ List of error-types that will get displayed before help</br>
 **Default**: `["command_not_found"]`
 ##### `errors.onExecuteCommand`
 List of error-types that will cause to end execution with `exit(1)` </br>
-**Default**: `["command_not_found", "option_wrong_value", "option_required", "option_missing_value", "option_not_found"]`
+**Default**: `["command_not_found", "option_wrong_value", "option_required", "option_missing_value", "option_missing_dependencies", "option_not_found"]`
 
 #### `help`
 Help-related configuration
@@ -103,3 +104,9 @@ Name of the completion command
 Object containing the messages to be used in the Cli, to override the default ones defined by this library. This enables internationalization and customization of cli-native messages. You can see a use-case in this [intl-cli example](/examples/intl-cli)</br>
 **Default**: defined in [/src/cli-messages](/src/cli-messages.ts) and [/src/cli-errors](/src/cli-errors.ts)
 
+#### `configFile`
+Enable configuration file processing
+##### `configFile.names`
+Names of config files to search for
+##### `configFile.parse`
+Override default `JSON` parser. Receives the contents of such file (string), and the full path for the file found.

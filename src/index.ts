@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import {
   completeDefinition,
   parseArguments,
@@ -10,7 +11,7 @@ import {
   getEntryFile,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
-import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY, deprecationWarning } from "./utils";
+import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY, deprecationWarning, findFile } from "./utils";
 import { CliError } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import { ERROR_MESSAGES } from "./cli-errors";
@@ -48,6 +49,7 @@ export default class Cli {
           "option_wrong_value",
           "option_required",
           "option_missing_value",
+          "option_missing_dependencies",
           "option_not_found",
         ],
       },
@@ -74,6 +76,7 @@ export default class Cli {
         enabled: true,
         command: "generate-completions",
       },
+      configFile: undefined,
     };
 
     // Environment variables should have the highest priority
@@ -106,7 +109,7 @@ export default class Cli {
    * @param {string[]} args list of arguments to be processed
    */
   parse(args: string[]): ParsingOutput {
-    return parseArguments(args, this.definition, this.options);
+    return parseArguments({ args, definition: this.definition, cliOptions: this.options });
   }
   /**
    * Run the provided argument list. This defaults to `process.argv.slice(2)`
@@ -115,7 +118,12 @@ export default class Cli {
    */
   run(args?: string[]): void | Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
-    const opts = this.parse(args_);
+    const opts = parseArguments({
+      args: args_,
+      definition: this.definition,
+      cliOptions: this.options,
+      initial: this.configContent(),
+    });
     // Include CliOptions.rootCommand if empty location provided
     const elementLocation =
       opts.location.length === 0 && typeof this.options.rootCommand === "string"
@@ -175,6 +183,28 @@ export default class Cli {
    */
   version() {
     formatVersion(this.options);
+  }
+  /**
+   * Find nearest configuration file. Returns undefined if:
+   * - options.configFile is not specified
+   * - no configuration file is found
+   * - an error is generated while parsing contents
+   */
+  configContent() {
+    if (!this.options.configFile || this.options.configFile.names.length === 0) {
+      return;
+    }
+    const file = findFile(process.cwd(), this.options.configFile.names);
+    if (!file) {
+      return;
+    }
+    try {
+      const content = fs.readFileSync(file, "utf-8");
+      return (this.options.configFile.parse || ((c: string) => JSON.parse(c)))(content, file);
+    } catch {
+      // silent error
+    }
+    return;
   }
   /**
    * Output bash-completion script contents

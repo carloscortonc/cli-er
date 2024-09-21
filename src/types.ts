@@ -86,6 +86,10 @@ export type Option = BaseElement & {
   value?: (v: OptionValue, o: ParsingOutput["options"]) => OptionValue;
   /** Custom parser for the option */
   parser?: (input: ValueParserInput) => ValueParserOutput;
+  /** Specify a list of option-keys that shoud be set if this option is present
+   * A function may be provided so the list depends on the option's value
+   */
+  requires?: string[] | ((v: OptionValue) => string[]);
 };
 
 export type Namespace = BaseElement & {
@@ -94,12 +98,14 @@ export type Namespace = BaseElement & {
   options?: Definition;
 };
 
-export type Command = Omit<Option, "kind"> & {
+export type Command = Pick<Option, "aliases"> & {
   kind: `${Kind.COMMAND}`;
   /** Nested options definition */
   options?: Definition<Option>;
   /** Action to be executed when matched */
   action?: (out: ParsingOutput) => void;
+  /** Specify the `Usage` section to be used in the generated help */
+  usage?: string;
 };
 
 export type Definition<T = Namespace | Command | Option> = {
@@ -204,4 +210,15 @@ export type CliOptions = {
    * This allows to include new translations, or tweak the current ones
    */
   messages?: Messages;
+  /** Enable config-file processing */
+  configFile?: {
+    /** Names of config files to search for
+     * @example [".clierrc"]
+     */
+    names: string[];
+    /** By default, file content is parsed as JSON. If more formats are supported,
+     * you can use this method to implement the parsing method and return the final object
+     */
+    parse?: (content: string, filePath: string) => Record<string, OptionValue>;
+  };
 };

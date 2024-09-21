@@ -38,10 +38,12 @@ type Command = BaseElement & {
   aliases?: string[];
   options?: Definition<Option>;
   action?: (out: ParsingOutput) => void;
+  usage?: string;
 }
 ```
-- **aliases**: alternative names for the command. If specified, the will added on top of command key. Default: `[key]`
+- **aliases**: alternative names for the command. If specified, the will added on top of command key. Default: `[key]`.
 - **action**: method that will be called when the command is matched, receiving the output of the parsing process.
+- **usage**: override default `Usage` content for this command.
 
 ## Option
 An element with `kind: "option"`, or since 0.11.0, when its kind is inferred to this one.
@@ -55,7 +57,8 @@ type Option = BaseElement & {
   required?: boolean;
   type?: "string" | "boolean" | "list" | "number" | "float";
   enum?: (string | number)[];
-  parser?: (input: ValueParserInput) => ValueParserOutput
+  parser?: (input: ValueParserInput) => ValueParserOutput;
+  requires?: string[] | ((v: OptionValue) => string[]);
 }
 ```
 - **aliases**: alternative names for the options, e.g. `["h", "help"]`. They should be specified without dashes, and final alias value will be calculated depending on the provided alias length: prefixed with `-` for single letters, and `--` in other cases. When not specified, the name of the option will be used. Default: `[key]`
@@ -66,6 +69,7 @@ type Option = BaseElement & {
 - **type**: type of option, to load the appropriate parser. Default: `string`
 - **enum**: restrict the possible option-values based on the given list. Available for option-types `string`, `list`, `number` and `float`.
 - **parser**: allows defining [custom parser](#custom-parser) for an option, instead of using the supported types.
+- **requires**: specifies a list of options that need to be set if this option is also set. A function may be provided, receiving the current option value.
 
 ### Positional options
 Positional options allow asigning an option to a determinate position in the arguments.

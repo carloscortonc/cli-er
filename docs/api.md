@@ -177,6 +177,8 @@ Options:
   -h, --help    Display global help, or scoped to a namespace/command
 ```
 
+In the case of commands, you may specify `usage` option to override default section content.
+
 The library also checks `process.stdout.columns` to format the help and line-breaks appropriately.
 
 _**TIP**: any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition._
@@ -195,3 +197,13 @@ Prints the formatted version of the current cli application: finds the package.j
 ## completions()
 
 Generates and outputs bash-completion script contents. This can instead be included as a command and be managed by `Cli.run`, check: [`bash completion`](/docs/features.md#bash-completion)
+
+## configContent()
+
+Find and parse configuration files defined via [`CliOptions.configFile`](/docs/cli-options.md#configfile).  
+In several cases, `undefined` may be returned:
+- No `CliOptions.configFile` configured
+- No file is found from the provided list (`CliOptions.configFile.names`)
+- An error is generated while parsing the file contents
+
+Otherwise, the parsed content is returned (hopefully, an object containing global options defined in the cli).

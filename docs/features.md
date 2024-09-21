@@ -1,3 +1,45 @@
+## Help generation
+`cli-er` will include by default a help option (`-h`/`--help`), which will generate help on the current location (scoped). Some features include:
+- Document negated option aliases.
+- Options from parent scopes will also be documented, in the same way it is implemented when parsing arguments.
+- Enable override of `Usage` section for commands.
+- Use of `process.stdout.columns` to format the help and line-breaks appropriately.
+
+## Routing
+A "location" is calculated and returned by [`Cli.parse`](/docs/api.md#parseargs): this is the route to the final invocable command.
+With this location, the [`Cli.run`](/docs/api.md#runargs) method generates a list of candidate files to execute and forward the parsed options. For each element of the location list (`[...rest, element]`):
+1. `{...rest}/{element}/index` file.
+2. `{...rest}/{element}` file.
+3. The name of the entrypoint file
+
+For all of these candidates, only the two from the last element are imported with default import, the rest with named import (the name of the last element).  
+For single commands, the location is prefixed with [`CliOptions.rootCommand`](/docs/cli-options.md#rootcommand), if declared as string.
+
+### Example
+If the location is `["nms", "cmd"]` for an entryfile `cli.js`, the list of candidates (in order) will be:
+1. `/nms/cmd/index.js` - default import
+2. `/nms/cmd.js` - default import
+3. `/nms/index.js` - named import  (`cmd`)
+4. `/nms.js` - named import  (`cmd`)
+5. `/index.js` - named import  (`cmd`)
+6. `/cli.js` - named import  (`cmd`)
+
+## Configuration file support
+A list of configuration file names can be used, so its contents will be processed when using [`Cli.run`](/docs/api.md#runargs).  
+Starting from the current directory where the cli is invoked (`process.cwd()`), the program will search up a file matching the provided list.
+The default format support is `JSON`, but a parser may be provided to manage other formats:
+
+```typescript
+import { parse } from 'ini'; // https://github.com/npm/ini
+
+new Cli(definition, {
+  configFile: {
+    names: [".npmrc", "npmrc"],
+    parse: (content) => parse(content),
+  },
+}).run();
+```
+
 ## Intl support
 To internationalize library messages, the [`CliOptions.messages`](/docs/cli-options.md#messages) can be used to override the default messages. Check the [intl-cli example](/examples/intl-cli) for a use case.  
 `CliOptions.messages` can be also be used to specify descriptions for element's definition. For this, the key must be the full route to such element, followed by `".description"`, e.g:
@@ -18,25 +60,6 @@ new Cli({
   }
 })
 ```
-
-## Routing
-A "location" is calculated and returned by [`Cli.parse`](/docs/api.md#parseargs): this is the route to the final invocable command.
-With this location, the [`Cli.run`](/docs/api.md#runargs) method generates a list of candidate files to execute and forward the parsed options. For each element of the location list (`[...rest, element]`):
-1. `{...rest}/{element}/index` file.
-2. `{...rest}/{element}` file.
-3. The name of the entrypoint file
-
-For all of these candidates, only the two from the last element are imported with default import, the rest with named import (the name of the last element).  
-For single commands, the location is prefixed with [`CliOptions.rootCommand`](/docs/cli-options.md#rootcommand), if declared as string.
-
-### Example
-If the location is `["nms", "cmd"]` for an entryfile `cli.js`, the list of candidates (in order) will be:
-1. `/nms/cmd/index.js` - default import
-2. `/nms/cmd.js` - default import
-3. `/nms/index.js` - named import  (`cmd`)
-4. `/nms.js` - named import  (`cmd`)
-5. `/index.js` - named import  (`cmd`)
-6. `/cli.js` - named import  (`cmd`)
 
 ## Bash completion
 `cli-er` includes a command to generate bash-completions for the cli. This can be configured through [`CliOptions.completion`](/docs/cli-options.md#completion), to change the name of such command, or to disable this behaviour.  
