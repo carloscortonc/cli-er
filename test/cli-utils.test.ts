@@ -907,6 +907,7 @@ Usage:  cli-name cmd Custom Usage
       num: { type: "number", default: 10, enum: [1, 10, 50], description: "number option" },
       float: { type: "float", default: 0.5, enum: [0.1, 0.3, 0.5], description: "float option" },
       list: { type: "list", default: ["one", "two"], description: "list option" },
+      listempty: { type: "list", default: [], description: "list - empty default" },
       enum: { enum: ["opt1", "opt2"], description: "string with enum" },
       enumdef: { enum: ["opt1", "opt2"], default: "opt1", description: "string with enum and default" },
       arg1: { positional: 0, required: true, description: "first positional mandatory option" },
@@ -925,6 +926,7 @@ Options:
   --num            number option (allowed: [1, 10, 50], default: 10)
   --float          float option (allowed: [0.1, 0.3, 0.5], default: 0.5)
   --list           list option (default: ["one", "two"])
+  --listempty      list - empty default (default: [])
   --enum           string with enum (allowed: ["opt1", "opt2"])
   --enumdef        string with enum and default (allowed: ["opt1", "opt2"], default: "opt1")
   --arg1           first positional mandatory option
