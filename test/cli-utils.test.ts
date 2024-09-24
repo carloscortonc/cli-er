@@ -806,6 +806,30 @@ Options:
 
 `);
   });
+  it("Only autoincluded + positional options: [OPTIONS] is not included", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const optsDef = {
+      nms: { options: { cmd: { options: { opt: {} } } } },
+      g1: { positional: 0 },
+      g2: { positional: true },
+    };
+    generateScopedHelp(new Cli(optsDef).definition, [], cliOptions);
+    expect(output).toBe(`
+Usage:  cli-name NAMESPACE [g1] [g2...]
+
+cli-description
+
+Namespaces:
+  nms         -
+
+Options:
+  --g1        -
+  --g2        -
+  -h, --help  Display global help, or scoped to a namespace/command
+
+`);
+  });
   it("With location", () => {
     let output = "";
     logger.mockImplementation((m: any) => !!(output += m));

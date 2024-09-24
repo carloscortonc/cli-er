@@ -513,8 +513,10 @@ export function generateScopedHelp(
         const { kind, positional, required, key } = curr;
         if (kind === Kind.OPTION) {
           // Ignore autoincluded options when rendering `has-options` string
-          acc.hasOptions ||= !(["help", "version"] as const).some((k) => k === key && cliOptions[k].autoInclude);
-          if (positional === true || typeof positional === "number") {
+          const isAutoincluded = (["help", "version"] as const).some((k) => k === key && cliOptions[k].autoInclude);
+          const isPositional = positional === true || typeof positional === "number";
+          acc.hasOptions ||= !isAutoincluded && !isPositional;
+          if (isPositional) {
             acc.positionalOptions.push({ index: positional, key, required });
           }
         } else if (acc.existingKinds.indexOf(kind as string) < 0) {
