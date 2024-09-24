@@ -1,16 +1,7 @@
 import path from "path";
 import fs from "fs";
 import url from "url";
-import {
-  addLineBreaks,
-  clone,
-  ColumnFormatter,
-  debug,
-  DEBUG_TYPE,
-  deprecationWarning,
-  logErrorAndExit,
-  quote,
-} from "./utils";
+import { addLineBreaks, clone, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
@@ -593,13 +584,12 @@ function generateHelp(
   const defaultHint = (option: DefinitionElement) => {
     const w = (c: string) => (c ? ` (${c})` : c);
     // format default/enum value
-    const f = (v: any) => {
-      if (typeof v !== "string" && !Array.isArray(v)) {
-        return v;
-      }
-      const isNumber = ["number", "float"].includes(option.type!);
-      return (Array.isArray(v) ? v : [v]).map((e) => (isNumber ? e : quote(e))).join(", ");
-    };
+    const f = (v: any) =>
+      JSON.stringify(v, null, 1)
+        .split(/\n\s?/)
+        // format arrays with spaces only after first element e.g "[a, b, c]"
+        .map((e, i, a) => (a.length > 1 && ![0, 1, a.length - 1].includes(i) ? " ".concat(e) : e))
+        .join("");
     return w(
       [
         Array.isArray(option.enum) ? Cli.formatMessage("generate-help.option-enum", { enum: f(option.enum) }) : "",
