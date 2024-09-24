@@ -922,11 +922,11 @@ cli-description
 Options:
   --bool           boolean option (default: true)
   --(no)negatable  negatable option
-  --num            number option (allowed: 1, 10, 50, default: 10)
-  --float          float option (allowed: 0.1, 0.3, 0.5, default: 0.5)
-  --list           list option (default: "one", "two")
-  --enum           string with enum (allowed: "opt1", "opt2")
-  --enumdef        string with enum and default (allowed: "opt1", "opt2", default: "opt1")
+  --num            number option (allowed: [1, 10, 50], default: 10)
+  --float          float option (allowed: [0.1, 0.3, 0.5], default: 0.5)
+  --list           list option (default: ["one", "two"])
+  --enum           string with enum (allowed: ["opt1", "opt2"])
+  --enumdef        string with enum and default (allowed: ["opt1", "opt2"], default: "opt1")
   --arg1           first positional mandatory option
   --arg2           second positional option
   --arg3           catch-all positional option
