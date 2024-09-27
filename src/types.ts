@@ -221,4 +221,8 @@ export type CliOptions = {
      */
     parse?: (content: string, filePath: string) => Record<string, OptionValue>;
   };
+  /** Configure a prefix for environment variables to be included as options
+   * @example "NPM_CONFIG_"
+   */
+  envPrefix?: string;
 };

@@ -115,6 +115,7 @@ describe("Cli.constructor", () => {
         command: "generate-completions",
       },
       configFile: undefined,
+      envPrefix: undefined,
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
@@ -161,6 +162,7 @@ describe("Cli.constructor", () => {
         command: "generate-completions",
       },
       configFile: undefined,
+      envPrefix: undefined,
     });
   });
   it("Overwrite default logger", () => {
@@ -367,6 +369,22 @@ describe("Cli.run", () => {
     c.run([]);
     expect(logger.error).toHaveBeenCalledWith("OPT_NOT_FOUND", "\n");
   });
+  it("Inital value is computed from configuration-content and env-content", () => {
+    (utils.findFile as jest.Mock).mockImplementation(() => "file");
+    (fs.readFileSync as jest.Mock).mockImplementation(() => '{"key1": "value1", "key2": "value2"}');
+    process.env.CLIERTEST_KEY2 = "env2";
+    process.env.CLIERTEST_KEY3 = "env3";
+    const mock = jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
+      location: [],
+      options: { _: [] },
+      errors: [],
+    }));
+    const c = new Cli(definition, { configFile: { names: ["file"] }, envPrefix: "CLIERTEST_" });
+    c.run([]);
+    expect(mock).toHaveBeenCalledWith(
+      expect.objectContaining({ initial: { key1: "value1", key2: "env2", key3: "env3" } }),
+    );
+  });
 });
 
 describe("Cli.configContent", () => {
@@ -395,5 +413,18 @@ describe("Cli.configContent", () => {
     const c = new Cli(definition, { configFile: { names: ["filename"], parse } });
     expect(c.configContent()).toStrictEqual(mockParsedContent);
     expect(parse).toHaveBeenCalledWith("file-contents", "file");
+  });
+});
+
+describe("Cli.envContent", () => {
+  it("envPrefix not defined - returns undefined", () => {
+    const c = new Cli(definition);
+    expect(c.envContent()).toBe(undefined);
+  });
+  it("envPrefix defined - extracts options from process.env", () => {
+    process.env.CLIERTEST2_VALUE1 = "v1-value";
+    process.env.CLIERTEST2_VALUE3 = "v3-value";
+    const c = new Cli(definition, { envPrefix: "CLIERTEST2_" });
+    expect(c.envContent()).toStrictEqual({ value1: "v1-value", value3: "v3-value" });
   });
 });
