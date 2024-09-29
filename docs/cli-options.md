@@ -110,3 +110,6 @@ Enable configuration file processing
 Names of config files to search for
 ##### `configFile.parse`
 Override default `JSON` parser. Receives the contents of such file (string), and the full path for the file found.
+
+#### `envPrefix`
+Configure a prefix for environment variables to be included as options

@@ -40,6 +40,22 @@ new Cli(definition, {
 }).run();
 ```
 
+## Environment-variable prefix support
+A [prefix](/docs/cli-options.md#envprefix) for environment variables can be provided, so those with such prefix will extracted into options and used inside [`Cli.run`](/docs/api.md#runargs).  
+The final option key is the result of stripping the prefix and transforming to lowercase.
+
+> `envPrefix` extracted options have **HIGHER** precedence over `configFile` parsed options
+
+```typescript
+// process.env: { RPI_USER: "uservalue", RPI_IP: "ipvalue" }
+
+const c = new Cli(definition, { envPrefix: "RPI_"} ).run();
+
+// Final options will include:
+// { user: "uservalue", ip: "ipvalue"}
+```
+
+
 ## Intl support
 To internationalize library messages, the [`CliOptions.messages`](/docs/cli-options.md#messages) can be used to override the default messages. Check the [intl-cli example](/examples/intl-cli) for a use case.  
 `CliOptions.messages` can be also be used to specify descriptions for element's definition. For this, the key must be the full route to such element, followed by `".description"`, e.g:

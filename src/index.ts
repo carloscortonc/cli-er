@@ -77,6 +77,7 @@ export default class Cli {
         command: "generate-completions",
       },
       configFile: undefined,
+      envPrefix: undefined,
     };
 
     // Environment variables should have the highest priority
@@ -122,7 +123,7 @@ export default class Cli {
       args: args_,
       definition: this.definition,
       cliOptions: this.options,
-      initial: this.configContent(),
+      initial: { ...this.configContent(), ...this.envContent() },
     });
     // Include CliOptions.rootCommand if empty location provided
     const elementLocation =
@@ -205,6 +206,18 @@ export default class Cli {
       // silent error
     }
     return;
+  }
+  /** If `CliOptions.envPrefix` is defined, extract options from environment variables
+   * matching that value
+   */
+  envContent() {
+    const p = this.options.envPrefix;
+    if (!p) {
+      return;
+    }
+    return Object.entries(process.env)
+      .filter(([k]) => k.startsWith(p))
+      .reduce((acc, [k, v]) => ({ ...acc, [k.replace(new RegExp("^".concat(p)), "").toLowerCase()]: v }), {});
   }
   /**
    * Output bash-completion script contents

@@ -207,3 +207,8 @@ In several cases, `undefined` may be returned:
 - An error is generated while parsing the file contents
 
 Otherwise, the parsed content is returned (hopefully, an object containing global options defined in the cli).
+
+## envContent()
+
+Extract options from environment variables matching [`CliOptions.envPrefix`](/docs/cli-options.md#envprefix).  
+Will return undefined if no prefix value is configured.
