@@ -238,6 +238,10 @@ describe("parseArguments", () => {
     };
     expect(parseArguments({ args: ["--opt", "false"], definition: d2, cliOptions }).options.opt).toBe(false);
     expect(parseArguments({ args: [], definition: d2, cliOptions }).options.opt).toBe(true);
+    const d3: Definition<DefinitionElement> = {
+      opt: { kind: "option", type: "boolean", aliases: ["--opt"], key: "opt", default: false },
+    };
+    expect(parseArguments({ args: [], definition: d3, cliOptions }).options.opt).toBe(false);
   });
   it("Parse LIST value", () => {
     const d: Definition<DefinitionElement> = {
