@@ -385,7 +385,7 @@ export function parseArguments(params: {
   // Verify required options
   Object.values(defToProcess).some((opt) => {
     // Include default values for non-defined options
-    if (opt.default && output.options[opt.key!] === undefined) {
+    if (opt.default !== undefined && output.options[opt.key!] === undefined) {
       output.options[opt.key!] = opt.default;
     }
     if (opt.required && output.options[opt.key!] === undefined) {
