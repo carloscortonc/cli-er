@@ -103,6 +103,40 @@ function handler(options: Cli.CommandOptions<typeof command>){
 }
 ```
 
+### [Typescript] Typing namespace's options
+When defining a namespace handler inside a script file, in order to have typed options the following steps are needed:
+- Define the namespace using `Cli.defineNamespace`:
+```typescript
+const namespace = Cli.defineNamespace({
+  // ...
+  options: {
+    get: {
+      kind: "command",
+      options: { key: { kind: "option", type: "string" } },
+    },
+    set: {
+      kind: "command",
+      options: {
+        key: { kind: "option", type: "string", required: true },
+        set: { kind: "option", type: "string", required: true },
+      },
+    },
+    globalopt: { kind: "option", type: "string"}
+  },
+});
+```
+- Get the type for the options by using `Cli.NamespaceOptions`:
+```typescript
+type ConfigOptions = Cli.NamespaceOptions<typeof namespace>;
+function setHandler(options: ConfigOptions["set"]){
+  // options: {
+  //   key: string;
+  //   value: string;
+  //   globalopt: string | undefined
+  //  }
+}
+```
+
 
 ## help(location?)
 
