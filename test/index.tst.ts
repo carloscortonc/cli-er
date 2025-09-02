@@ -59,7 +59,7 @@ describe("defineCommand", () => {
   });
 });
 
-describe.only("defineNamespace", () => {
+describe("defineNamespace", () => {
   test("single command", () => {
     const nms = defineNamespace({
       options: { cmd: { kind: "command", options: { cmdOpt: { kind: "option", type: "string" } } } },
@@ -88,7 +88,7 @@ describe.only("defineNamespace", () => {
             nmsOpt: { kind: "option", type: "string" },
           },
         },
-        cmd: { kind: "command", options: { cmdOpt: { type: "list" } } },
+        cmd: { kind: "command", options: { cmdOpt: { kind: "option", type: "list" } } },
         globalOpt: { kind: "option", type: "number" },
       },
     });

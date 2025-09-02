@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node for build
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
 
       - name: Setup cache for dist
         uses: actions/cache@v3
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [12, 14, 16]
+        node-version: [18, 20, 22]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -59,5 +59,5 @@ jobs:
 
       # type-testing library is only supported on node >=16
       - name: Test types (node version agnostic)
-        if: matrix.node-version == 16
-        run: yarn types-test
+        if: matrix.node-version == 20
+        run: npm run types-test

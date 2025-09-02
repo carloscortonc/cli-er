@@ -39,7 +39,9 @@ type ExtractOptions<T> = {
     : never;
 };
 
-type Expand<T> = T extends object
+type Expand<T> = T extends readonly any[]
+  ? T
+  : T extends object
   ? {
       [K in keyof T as T[K] extends never ? never : K]: Expand<T[K]>;
     }
