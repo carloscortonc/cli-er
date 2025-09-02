@@ -57,7 +57,7 @@ jobs:
       - name: Test
         run: yarn test
 
-      # type-testing library is only supported on node >=16
+      # type-testing library is only supported on node >=20.9
       - name: Test types (node version agnostic)
-        if: matrix.node-version == 20
+        if: matrix.node-version == 22
         run: npm run types-test
