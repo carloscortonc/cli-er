@@ -1,5 +1,5 @@
 import { describe, test, expect } from "tstyche";
-import { defineCommand, CommandOptions } from "../src/extract-options-type";
+import { defineCommand, defineNamespace, CommandOptions, NamespaceOptions } from "../src/extract-options-type";
 
 describe("defineCommand", () => {
   test("should return the option-value type of its option", () => {
@@ -11,7 +11,7 @@ describe("defineCommand", () => {
         list: { type: "list", required: true },
       },
     });
-    expect<CommandOptions<typeof cmd>>().type.toEqual<{
+    expect<CommandOptions<typeof cmd>>().type.toBe<{
       number: number;
       float: number;
       boolean: boolean;
@@ -27,7 +27,7 @@ describe("defineCommand", () => {
         nonreq: { required: false },
       },
     });
-    expect<CommandOptions<typeof cmd>>().type.toEqual<{
+    expect<CommandOptions<typeof cmd>>().type.toBe<{
       req: string;
       def: string;
       nonreq: string | undefined;
@@ -43,7 +43,7 @@ describe("defineCommand", () => {
         list: { type: "list", enum: ["elem1", "elem2"] as const, required: true },
       },
     });
-    expect<CommandOptions<typeof cmd>>().type.toEqual<{
+    expect<CommandOptions<typeof cmd>>().type.toBe<{
       string: "str1" | "str2";
       number: 1 | 5 | 10;
       float: 0.5 | 1.5 | 5.5;
@@ -55,6 +55,52 @@ describe("defineCommand", () => {
     const cmd = defineCommand({
       options: undefined,
     });
-    expect<CommandOptions<typeof cmd>>().type.toEqual<never>();
+    expect<CommandOptions<typeof cmd>>().type.toBe<never>();
+  });
+});
+
+describe.only("defineNamespace", () => {
+  test("single command", () => {
+    const nms = defineNamespace({
+      options: { cmd: { kind: "command", options: { cmdOpt: { kind: "option", type: "string" } } } },
+    });
+    expect<NamespaceOptions<typeof nms>>().type.toBe<{ cmd: { cmdOpt: string | undefined } }>();
+  });
+  test("nested namespace", () => {
+    const nms = defineNamespace({
+      options: {
+        nms: {
+          kind: "namespace",
+          options: { cmd: { kind: "command", options: { cmdOpt: { kind: "option", type: "string" } } } },
+        },
+      },
+    });
+    expect<NamespaceOptions<typeof nms>>().type.toBe<{ nms: { cmd: { cmdOpt: string | undefined } } }>();
+  });
+  test("include options for previous levels", () => {
+    const nms = defineNamespace({
+      options: {
+        nms: {
+          kind: "namespace",
+          options: {
+            nms_cmd: { kind: "command", options: { nmsCmdOpt: { kind: "option", type: "string" } } },
+            nms_cmd2: { kind: "command", options: {} },
+            nmsOpt: { kind: "option", type: "string" },
+          },
+        },
+        cmd: { kind: "command", options: { cmdOpt: { type: "list" } } },
+        globalOpt: { kind: "option", type: "number" },
+      },
+    });
+    expect<NamespaceOptions<typeof nms>>().type.toBe<{
+      nms: {
+        nms_cmd: { nmsCmdOpt: string | undefined; nmsOpt: string | undefined; globalOpt: number | undefined };
+        nms_cmd2: { nmsOpt: string | undefined; globalOpt: number | undefined };
+      };
+      cmd: {
+        cmdOpt: string[] | undefined;
+        globalOpt: number | undefined;
+      };
+    }>();
   });
 });
