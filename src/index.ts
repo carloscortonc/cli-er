@@ -32,15 +32,16 @@ export default class Cli {
    * @param {DeepPartial<CliOptions>} options Options to customize the behavior of the tool
    */
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
-    const packagejson: any = findPackageJson(options.baseLocation || getEntryPoint()) || {};
+    const entryPoint = getEntryPoint();
+    const packagejson: any = findPackageJson(entryPoint) || {};
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
     // Allow to override messages
     Object.assign(Cli.messages, { ...(options.messages || {}) } as const);
 
     this.options = {
-      baseLocation: getEntryPoint(),
-      baseScriptLocation: getEntryPoint(),
+      baseLocation: entryPoint,
+      baseScriptLocation: entryPoint,
       commandsPath: "commands",
       errors: {
         onGenerateHelp: ["command_not_found"],
@@ -92,9 +93,13 @@ export default class Cli {
       this.options.baseLocation = this.options.baseScriptLocation;
       deprecationWarning({ property: "CliOptions.baseScriptLocation", alternative: "CliOptions.baseLocation" });
     }
+    // Transform `CliOptions.baseLocation` into an absolute path
+    if (!path.isAbsolute(this.options.baseLocation)) {
+      this.options.baseLocation = path.resolve(entryPoint, this.options.baseLocation);
+    }
     // Regularize CliOptions.commandsPath into relative path to CliOptions.baseLocation
     if (path.isAbsolute(this.options.commandsPath)) {
-      this.options.commandsPath = path.relative(this.options.baseLocation, this.options.commandsPath);
+      this.options.commandsPath = path.relative(this.options.baseLocation, this.options.commandsPath) || ".";
     }
     // Store back at process.env.CLIER_DEBUG the final value of CliOptions.debug, to be accesible without requiring CliOptions
     process.env[CLIER_DEBUG_KEY] = this.options.debug ? "1" : "";
