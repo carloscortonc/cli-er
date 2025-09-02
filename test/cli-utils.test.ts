@@ -272,6 +272,13 @@ describe("parseArguments", () => {
       parseArguments({ args: ["--opt", "one,two", "--opt", "three"], definition: d, cliOptions }).options.opt,
     ).toStrictEqual(["one", "two", "three"]);
   });
+  it("parse LIST value with default", () => {
+    const d: Definition<DefinitionElement> = {
+      opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt", default: ["one"] },
+    };
+    expect(parseArguments({ args: [], definition: d, cliOptions }).options.opt).toStrictEqual(["one"]);
+    expect(parseArguments({ args: ["--opt", "two"], definition: d, cliOptions }).options.opt).toStrictEqual(["two"]);
+  });
   it("Parse NUMBER value", () => {
     const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "number", aliases: ["--opt"], key: "opt", enum: [1] },

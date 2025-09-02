@@ -223,10 +223,6 @@ export function parseArguments(params: {
     otherAliases.forEach((alias: string) => {
       aliases[alias] = mainAlias;
     });
-    //Process default
-    if (element.type !== undefined && element.default !== undefined) {
-      output.options[element.key!] = element.default;
-    }
   };
 
   let definitionRef = definition,
@@ -388,6 +384,10 @@ export function parseArguments(params: {
 
   // Verify required options
   Object.values(defToProcess).some((opt) => {
+    // Include default values for non-defined options
+    if (opt.default && output.options[opt.key!] === undefined) {
+      output.options[opt.key!] = opt.default;
+    }
     if (opt.required && output.options[opt.key!] === undefined) {
       output.errors.push(Cli.formatMessage("option_required", { option: opt.key! }));
       return true;
