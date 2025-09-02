@@ -46,7 +46,8 @@ node cli.js [namespace(s)|command] [OPTIONS]
 ## Features
 - [**Help generation**](./docs/features.md#help-generation): help is generated for all commands and options.
 - [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
-- [**Configuration file support**](./docs/features.md#configuration-file-support): define the list of configuration file-names for your cli, and `cli-er` will try to find, read its contents (from `process.cwd()` up), and use it inside [`Cli.run`](./docs/api.md#runargs).
+- [**Configuration file support**](./docs/features.md#configuration-file-support): define the list of configuration file-names for your cli, and `cli-er` will try to find (from `process.cwd()` up), read its contents, and use it inside [`Cli.run`](./docs/api.md#runargs).
+- [**Environment-variable prefix support**](/docs/features.md#environment-variable-prefix-support): define a prefix so all environment variables matching that will be passed into [`Cli.run`](./docs/api.md#runargs).
 - [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
 - [**Bash completion**](./docs/features.md#bash-completion): a command is created to generate the `bash-completions` script for the cli.
 - [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
@@ -127,6 +128,7 @@ npm install cli-er
 - [**version()**](./docs/api.md#version): generate a formatted version of the application's version.
 - [**completions()**](./docs/api.md#completions): output bash-completion script contents.
 - [**configContent()**](./docs/api.md#configcontent): find the contents of configuration files (e.g. `.prettierrc.json`).
+- [**envContent()**](./docs/api.md#envcontent): find the contents of configuration files (e.g. `.prettierrc.json`).
 
 #### Glossary
 - **Namespace**: is used to group commands, but cannot be invoked. Can contain other namespaces, commands or options.

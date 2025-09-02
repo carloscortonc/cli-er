@@ -96,6 +96,8 @@ export type Namespace = BaseElement & {
   kind?: `${Kind.NAMESPACE}`;
   /** Nested options definition */
   options?: Definition;
+  /** Default command to be executed */
+  default?: string;
 };
 
 export type Command = Pick<Option, "aliases"> & {
@@ -221,4 +223,8 @@ export type CliOptions = {
      */
     parse?: (content: string, filePath: string) => Record<string, OptionValue>;
   };
+  /** Configure a prefix for environment variables to be included as options
+   * @example "NPM_CONFIG_"
+   */
+  envPrefix?: string;
 };

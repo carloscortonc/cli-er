@@ -12,9 +12,9 @@ const fs = require("fs");
 const fileLocation = path.resolve(path.join(__dirname, "..", "dist", "index.d.ts"));
 let currentDts = fs.readFileSync(fileLocation).toString();
 const newDts = currentDts.replace(
-  /export { (\w+, )*Cli as default };/,
+  /export { (type \w+, )*Cli as default };/,
   `declare namespace Cli {
-  export type { Definition, Namespace, Command, Option, CommandOptions, ValueParserInput, ErrorType };
+  export type { Definition, Namespace, Command, Option, CommandOptions, NamespaceOptions, ValueParserInput, ErrorType };
   export { Cli as default };
 }
 

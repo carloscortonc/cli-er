@@ -16,7 +16,7 @@ import { CliError } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import { ERROR_MESSAGES } from "./cli-errors";
 import { CLI_MESSAGES, formatMessage } from "./cli-messages";
-import { defineCommand, CommandOptions } from "./extract-options-type";
+import { defineCommand, CommandOptions, NamespaceOptions, defineNamespace } from "./extract-options-type";
 import { generateCompletions } from "./bash-completion";
 
 export default class Cli {
@@ -24,6 +24,7 @@ export default class Cli {
   static messages = { ...ERROR_MESSAGES, ...CLI_MESSAGES } as const;
   static formatMessage = formatMessage;
   static defineCommand = defineCommand;
+  static defineNamespace = defineNamespace;
   definition: Definition;
   options: CliOptions;
   /** Creates a new Cli instance
@@ -32,15 +33,16 @@ export default class Cli {
    * @param {DeepPartial<CliOptions>} options Options to customize the behavior of the tool
    */
   constructor(definition: Definition, options: DeepPartial<CliOptions> = {}) {
-    const packagejson: any = findPackageJson(options.baseLocation || getEntryPoint()) || {};
+    const entryPoint = getEntryPoint();
+    const packagejson: any = findPackageJson(entryPoint) || {};
     // Allow to override logger implementation
     Object.assign(Cli.logger, options.logger || {});
     // Allow to override messages
     Object.assign(Cli.messages, { ...(options.messages || {}) } as const);
 
     this.options = {
-      baseLocation: getEntryPoint(),
-      baseScriptLocation: getEntryPoint(),
+      baseLocation: entryPoint,
+      baseScriptLocation: entryPoint,
       commandsPath: "commands",
       errors: {
         onGenerateHelp: ["command_not_found"],
@@ -77,6 +79,7 @@ export default class Cli {
         command: "generate-completions",
       },
       configFile: undefined,
+      envPrefix: undefined,
     };
 
     // Environment variables should have the highest priority
@@ -91,9 +94,13 @@ export default class Cli {
       this.options.baseLocation = this.options.baseScriptLocation;
       deprecationWarning({ property: "CliOptions.baseScriptLocation", alternative: "CliOptions.baseLocation" });
     }
+    // Transform `CliOptions.baseLocation` into an absolute path
+    if (!path.isAbsolute(this.options.baseLocation)) {
+      this.options.baseLocation = path.resolve(entryPoint, this.options.baseLocation);
+    }
     // Regularize CliOptions.commandsPath into relative path to CliOptions.baseLocation
     if (path.isAbsolute(this.options.commandsPath)) {
-      this.options.commandsPath = path.relative(this.options.baseLocation, this.options.commandsPath);
+      this.options.commandsPath = path.relative(this.options.baseLocation, this.options.commandsPath) || ".";
     }
     // Store back at process.env.CLIER_DEBUG the final value of CliOptions.debug, to be accesible without requiring CliOptions
     process.env[CLIER_DEBUG_KEY] = this.options.debug ? "1" : "";
@@ -122,7 +129,7 @@ export default class Cli {
       args: args_,
       definition: this.definition,
       cliOptions: this.options,
-      initial: this.configContent(),
+      initial: { ...this.configContent(), ...this.envContent() },
     });
     // Include CliOptions.rootCommand if empty location provided
     const elementLocation =
@@ -206,6 +213,18 @@ export default class Cli {
     }
     return;
   }
+  /** If `CliOptions.envPrefix` is defined, extract options from environment variables
+   * matching that value
+   */
+  envContent() {
+    const p = this.options.envPrefix;
+    if (!p) {
+      return;
+    }
+    return Object.entries(process.env)
+      .filter(([k]) => k.startsWith(p))
+      .reduce((acc, [k, v]) => ({ ...acc, [k.replace(new RegExp("^".concat(p)), "").toLowerCase()]: v }), {});
+  }
   /**
    * Output bash-completion script contents
    */
@@ -215,4 +234,4 @@ export default class Cli {
 }
 
 // Export of types not used anywhere in the codebase
-export type { CommandOptions };
+export type { CommandOptions, NamespaceOptions };

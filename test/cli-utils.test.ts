@@ -238,6 +238,10 @@ describe("parseArguments", () => {
     };
     expect(parseArguments({ args: ["--opt", "false"], definition: d2, cliOptions }).options.opt).toBe(false);
     expect(parseArguments({ args: [], definition: d2, cliOptions }).options.opt).toBe(true);
+    const d3: Definition<DefinitionElement> = {
+      opt: { kind: "option", type: "boolean", aliases: ["--opt"], key: "opt", default: false },
+    };
+    expect(parseArguments({ args: [], definition: d3, cliOptions }).options.opt).toBe(false);
   });
   it("Parse LIST value", () => {
     const d: Definition<DefinitionElement> = {
@@ -271,6 +275,13 @@ describe("parseArguments", () => {
     expect(
       parseArguments({ args: ["--opt", "one,two", "--opt", "three"], definition: d, cliOptions }).options.opt,
     ).toStrictEqual(["one", "two", "three"]);
+  });
+  it("parse LIST value with default", () => {
+    const d: Definition<DefinitionElement> = {
+      opt: { kind: "option", type: "list", aliases: ["--opt"], key: "opt", default: ["one"] },
+    };
+    expect(parseArguments({ args: [], definition: d, cliOptions }).options.opt).toStrictEqual(["one"]);
+    expect(parseArguments({ args: ["--opt", "two"], definition: d, cliOptions }).options.opt).toStrictEqual(["two"]);
   });
   it("Parse NUMBER value", () => {
     const d: Definition<DefinitionElement> = {
@@ -363,6 +374,51 @@ describe("parseArguments", () => {
     expect(parseArguments({ args: ["nms", "cmd", "cmdValue"], definition: def, cliOptions })).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: "cmdValue", _: [] },
+      errors: [],
+    });
+  });
+  it("Namespace with default command", () => {
+    let c = new Cli({
+      nms: {
+        kind: "namespace",
+        default: "a",
+        options: {
+          a: { kind: "command", options: { aa: { required: true } } },
+          b: { kind: "command" },
+          c: { kind: "option" },
+        },
+      },
+    });
+    expect(parseArguments({ args: ["nms"], definition: c.definition, cliOptions: c.options })).toStrictEqual({
+      location: ["nms", "a"],
+      options: { _: [] },
+      errors: ['Missing required option "aa"'],
+    });
+    expect(
+      parseArguments({ args: ["nms", "--aa", "aa-value"], definition: c.definition, cliOptions: c.options }),
+    ).toStrictEqual({
+      location: ["nms", "a"],
+      options: { aa: "aa-value", _: [] },
+      errors: [],
+    });
+    expect(parseArguments({ args: ["nms", "b"], definition: c.definition, cliOptions: c.options })).toStrictEqual({
+      location: ["nms", "b"],
+      options: { _: [] },
+      errors: [],
+    });
+    // With positional options
+    c = new Cli({
+      nms: {
+        kind: "namespace",
+        default: "a",
+        options: { a: { kind: "command" }, b: { kind: "command" }, c: { kind: "option", positional: 0 } },
+      },
+    });
+    expect(
+      parseArguments({ args: ["nms", "opt-value"], definition: c.definition, cliOptions: c.options }),
+    ).toStrictEqual({
+      location: ["nms", "a"],
+      options: { c: "opt-value", _: [] },
       errors: [],
     });
   });
@@ -806,6 +862,30 @@ Options:
 
 `);
   });
+  it("Only autoincluded + positional options: [OPTIONS] is not included", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const optsDef = {
+      nms: { options: { cmd: { options: { opt: {} } } } },
+      g1: { positional: 0 },
+      g2: { positional: true },
+    };
+    generateScopedHelp(new Cli(optsDef).definition, [], cliOptions);
+    expect(output).toBe(`
+Usage:  cli-name NAMESPACE [g1] [g2...]
+
+cli-description
+
+Namespaces:
+  nms         -
+
+Options:
+  --g1        -
+  --g2        -
+  -h, --help  Display global help, or scoped to a namespace/command
+
+`);
+  });
   it("With location", () => {
     let output = "";
     logger.mockImplementation((m: any) => !!(output += m));
@@ -907,6 +987,7 @@ Usage:  cli-name cmd Custom Usage
       num: { type: "number", default: 10, enum: [1, 10, 50], description: "number option" },
       float: { type: "float", default: 0.5, enum: [0.1, 0.3, 0.5], description: "float option" },
       list: { type: "list", default: ["one", "two"], description: "list option" },
+      listempty: { type: "list", default: [], description: "list - empty default" },
       enum: { enum: ["opt1", "opt2"], description: "string with enum" },
       enumdef: { enum: ["opt1", "opt2"], default: "opt1", description: "string with enum and default" },
       arg1: { positional: 0, required: true, description: "first positional mandatory option" },
@@ -922,11 +1003,12 @@ cli-description
 Options:
   --bool           boolean option (default: true)
   --(no)negatable  negatable option
-  --num            number option (allowed: 1, 10, 50, default: 10)
-  --float          float option (allowed: 0.1, 0.3, 0.5, default: 0.5)
-  --list           list option (default: "one", "two")
-  --enum           string with enum (allowed: "opt1", "opt2")
-  --enumdef        string with enum and default (allowed: "opt1", "opt2", default: "opt1")
+  --num            number option (allowed: [1, 10, 50], default: 10)
+  --float          float option (allowed: [0.1, 0.3, 0.5], default: 0.5)
+  --list           list option (default: ["one", "two"])
+  --listempty      list - empty default (default: [])
+  --enum           string with enum (allowed: ["opt1", "opt2"])
+  --enumdef        string with enum and default (allowed: ["opt1", "opt2"], default: "opt1")
   --arg1           first positional mandatory option
   --arg2           second positional option
   --arg3           catch-all positional option

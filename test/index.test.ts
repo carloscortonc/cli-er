@@ -10,7 +10,7 @@ const definition = _definition as Definition;
 jest.mock("fs", () => ({
   readFileSync: jest.fn(),
 }));
-jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
+jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "/require.main.filename");
 jest.spyOn(utils, "findPackageJson").mockImplementation(
   (_: any) =>
     ({
@@ -77,8 +77,8 @@ describe("Cli.constructor", () => {
   it("CliOptions are default when instantiating with no options", () => {
     const c = new Cli({});
     expect(c.options).toStrictEqual({
-      baseLocation: "require.main.filename",
-      baseScriptLocation: "require.main.filename",
+      baseLocation: "/require.main.filename",
+      baseScriptLocation: "/require.main.filename",
       commandsPath: "commands",
       errors: {
         onGenerateHelp: ["command_not_found"],
@@ -115,12 +115,14 @@ describe("Cli.constructor", () => {
         command: "generate-completions",
       },
       configFile: undefined,
+      envPrefix: undefined,
     });
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
     const overwrites = {
-      baseLocation: "..",
-      baseScriptLocation: "./",
+      baseLocation: "./",
+      baseScriptLocation: "base-location",
+      commandsPath: "/require.main.filename/base-location",
       help: { autoInclude: false, aliases: ["help"], description: "", template: "template" },
       errors: { onExecuteCommand: [] },
       version: { aliases: ["version"], description: "", hidden: false },
@@ -130,9 +132,9 @@ describe("Cli.constructor", () => {
     };
     const c = new Cli({}, overwrites);
     expect(c.options).toStrictEqual({
-      baseLocation: overwrites.baseScriptLocation,
+      baseLocation: "/require.main.filename/base-location",
       baseScriptLocation: overwrites.baseScriptLocation,
-      commandsPath: "commands",
+      commandsPath: ".",
       errors: {
         onExecuteCommand: [],
         onGenerateHelp: ["command_not_found"],
@@ -161,6 +163,27 @@ describe("Cli.constructor", () => {
         command: "generate-completions",
       },
       configFile: undefined,
+      envPrefix: undefined,
+    });
+  });
+  it("CliOptions - transform baseLocation into absolute path", () => {
+    const options = { baseLocation: "base-location" };
+    const c = new Cli({}, options);
+    expect(c.options.baseLocation).toBe("/require.main.filename/".concat(options.baseLocation));
+  });
+  it("CliOptions - transform commandsPath into a relative path to baseLocation", () => {
+    const options = { baseLocation: "base-location", commandsPath: "/require.main.filename/base-location/cmds-path" };
+    const c = new Cli({}, options);
+    expect(c.options.commandsPath).toBe("cmds-path");
+  });
+  it("[deprecated] CliOptions - baseLocation inherits from baseScriptLocation when provided", () => {
+    const dpwMock = jest.spyOn(utils, "deprecationWarning").mockImplementation((_: any) => {});
+    const options = { baseLocation: "base-location", baseScriptLocation: "base-script-location" };
+    const c = new Cli({}, options);
+    expect(c.options.baseLocation).toBe("/require.main.filename/".concat(options.baseScriptLocation));
+    expect(dpwMock).toHaveBeenCalledWith({
+      property: "CliOptions.baseScriptLocation",
+      alternative: "CliOptions.baseLocation",
     });
   });
   it("Overwrite default logger", () => {
@@ -367,6 +390,22 @@ describe("Cli.run", () => {
     c.run([]);
     expect(logger.error).toHaveBeenCalledWith("OPT_NOT_FOUND", "\n");
   });
+  it("Inital value is computed from configuration-content and env-content", () => {
+    (utils.findFile as jest.Mock).mockImplementation(() => "file");
+    (fs.readFileSync as jest.Mock).mockImplementation(() => '{"key1": "value1", "key2": "value2"}');
+    process.env.CLIERTEST_KEY2 = "env2";
+    process.env.CLIERTEST_KEY3 = "env3";
+    const mock = jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
+      location: [],
+      options: { _: [] },
+      errors: [],
+    }));
+    const c = new Cli(definition, { configFile: { names: ["file"] }, envPrefix: "CLIERTEST_" });
+    c.run([]);
+    expect(mock).toHaveBeenCalledWith(
+      expect.objectContaining({ initial: { key1: "value1", key2: "env2", key3: "env3" } }),
+    );
+  });
 });
 
 describe("Cli.configContent", () => {
@@ -395,5 +434,18 @@ describe("Cli.configContent", () => {
     const c = new Cli(definition, { configFile: { names: ["filename"], parse } });
     expect(c.configContent()).toStrictEqual(mockParsedContent);
     expect(parse).toHaveBeenCalledWith("file-contents", "file");
+  });
+});
+
+describe("Cli.envContent", () => {
+  it("envPrefix not defined - returns undefined", () => {
+    const c = new Cli(definition);
+    expect(c.envContent()).toBe(undefined);
+  });
+  it("envPrefix defined - extracts options from process.env", () => {
+    process.env.CLIERTEST2_VALUE1 = "v1-value";
+    process.env.CLIERTEST2_VALUE3 = "v3-value";
+    const c = new Cli(definition, { envPrefix: "CLIERTEST2_" });
+    expect(c.envContent()).toStrictEqual({ value1: "v1-value", value3: "v3-value" });
   });
 });

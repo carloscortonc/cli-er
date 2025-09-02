@@ -1,16 +1,7 @@
 import path from "path";
 import fs from "fs";
 import url from "url";
-import {
-  addLineBreaks,
-  clone,
-  ColumnFormatter,
-  debug,
-  DEBUG_TYPE,
-  deprecationWarning,
-  logErrorAndExit,
-  quote,
-} from "./utils";
+import { addLineBreaks, clone, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
@@ -20,13 +11,14 @@ import { generateCompletions } from "./bash-completion";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
-type F<T> = Omit<T, "kind" | "options">;
+type F<T> = Omit<T, "kind" | "options" | "default">;
 export type OptionExt = Option & { key?: string };
 export type DefinitionElement = F<Namespace> &
   F<Command> &
   F<OptionExt> & {
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
+    default?: any;
   } & {
     /** Store original list of aliases, without any transformations */
     rawAliases?: string[];
@@ -231,10 +223,6 @@ export function parseArguments(params: {
     otherAliases.forEach((alias: string) => {
       aliases[alias] = mainAlias;
     });
-    //Process default
-    if (element.type !== undefined && element.default !== undefined) {
-      output.options[element.key!] = element.default;
-    }
   };
 
   let definitionRef = definition,
@@ -281,6 +269,7 @@ export function parseArguments(params: {
         break argsLoop;
       }
       if (element.kind === Kind.COMMAND) {
+        // This is depredated, will be removed soon
         if (element.type === undefined) {
           argsToProcess = argsToProcess.slice(1);
         }
@@ -291,7 +280,18 @@ export function parseArguments(params: {
       // Namespaces will follow here
       argsToProcess = argsToProcess.slice(1);
       output.location.push(key);
-      definitionRef = definitionRef[key].options || {};
+      const defaultCmd = definitionRef[key].default;
+      // In case namespace defines a default command, check if what follows is an available command or not
+      const commands = Object.values(definitionRef[key].options || {})
+        .filter((e) => e.kind === Kind.COMMAND)
+        .map((e) => e.key);
+      if (defaultCmd && !commands.includes(argsToProcess[0])) {
+        output.location.push(defaultCmd);
+        // Jump to default command options
+        definitionRef = definitionRef[key].options![defaultCmd].options || {};
+      } else {
+        definitionRef = definitionRef[key].options || {};
+      }
       break;
     }
   }
@@ -384,6 +384,10 @@ export function parseArguments(params: {
 
   // Verify required options
   Object.values(defToProcess).some((opt) => {
+    // Include default values for non-defined options
+    if (opt.default !== undefined && output.options[opt.key!] === undefined) {
+      output.options[opt.key!] = opt.default;
+    }
     if (opt.required && output.options[opt.key!] === undefined) {
       output.errors.push(Cli.formatMessage("option_required", { option: opt.key! }));
       return true;
@@ -522,8 +526,10 @@ export function generateScopedHelp(
         const { kind, positional, required, key } = curr;
         if (kind === Kind.OPTION) {
           // Ignore autoincluded options when rendering `has-options` string
-          acc.hasOptions ||= !(["help", "version"] as const).some((k) => k === key && cliOptions[k].autoInclude);
-          if (positional === true || typeof positional === "number") {
+          const isAutoincluded = (["help", "version"] as const).some((k) => k === key && cliOptions[k].autoInclude);
+          const isPositional = positional === true || typeof positional === "number";
+          acc.hasOptions ||= !isAutoincluded && !isPositional;
+          if (isPositional) {
             acc.positionalOptions.push({ index: positional, key, required });
           }
         } else if (acc.existingKinds.indexOf(kind as string) < 0) {
@@ -593,13 +599,12 @@ function generateHelp(
   const defaultHint = (option: DefinitionElement) => {
     const w = (c: string) => (c ? ` (${c})` : c);
     // format default/enum value
-    const f = (v: any) => {
-      if (typeof v !== "string" && !Array.isArray(v)) {
-        return v;
-      }
-      const isNumber = ["number", "float"].includes(option.type!);
-      return (Array.isArray(v) ? v : [v]).map((e) => (isNumber ? e : quote(e))).join(", ");
-    };
+    const f = (v: any) =>
+      JSON.stringify(v, null, 1)
+        .split(/\n\s?/)
+        // format arrays with spaces only after first element e.g "[a, b, c]"
+        .map((e, i, a) => (a.length > 1 && ![0, 1, a.length - 1].includes(i) ? " ".concat(e) : e))
+        .join("");
     return w(
       [
         Array.isArray(option.enum) ? Cli.formatMessage("generate-help.option-enum", { enum: f(option.enum) }) : "",
