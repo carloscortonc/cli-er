@@ -26,9 +26,11 @@ An element with `kind: "namespace"`, or since 0.11.0, when its kind is inferred 
 ```typescript
 type Namespace = BaseElement & {
   kind: "namespace",
-  options: Definition<Namespace | Command | Option>
+  options: Definition<Namespace | Command | Option>;
+  default?: string;
 }
 ```
+- **default**: default command to execute if none provided
 
 ## Command
 An element with `kind: "command"`, or since 0.11.0, when its kind is inferred to this one.

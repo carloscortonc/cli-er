@@ -1,0 +1,11 @@
+{
+  "name": "config",
+  "version": "1.0.0",
+  "description": "Configuration cli",
+  "main": "config.js",
+  "type": "module",
+  "author": "carloscortonc",
+  "dependencies": {
+    "cli-er": "0.17.0"
+  }
+}

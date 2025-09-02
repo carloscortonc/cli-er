@@ -96,6 +96,8 @@ export type Namespace = BaseElement & {
   kind?: `${Kind.NAMESPACE}`;
   /** Nested options definition */
   options?: Definition;
+  /** Default command to be executed */
+  default?: string;
 };
 
 export type Command = Pick<Option, "aliases"> & {

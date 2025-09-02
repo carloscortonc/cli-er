@@ -366,6 +366,51 @@ describe("parseArguments", () => {
       errors: [],
     });
   });
+  it("Namespace with default command", () => {
+    let c = new Cli({
+      nms: {
+        kind: "namespace",
+        default: "a",
+        options: {
+          a: { kind: "command", options: { aa: { required: true } } },
+          b: { kind: "command" },
+          c: { kind: "option" },
+        },
+      },
+    });
+    expect(parseArguments({ args: ["nms"], definition: c.definition, cliOptions: c.options })).toStrictEqual({
+      location: ["nms", "a"],
+      options: { _: [] },
+      errors: ['Missing required option "aa"'],
+    });
+    expect(
+      parseArguments({ args: ["nms", "--aa", "aa-value"], definition: c.definition, cliOptions: c.options }),
+    ).toStrictEqual({
+      location: ["nms", "a"],
+      options: { aa: "aa-value", _: [] },
+      errors: [],
+    });
+    expect(parseArguments({ args: ["nms", "b"], definition: c.definition, cliOptions: c.options })).toStrictEqual({
+      location: ["nms", "b"],
+      options: { _: [] },
+      errors: [],
+    });
+    // With positional options
+    c = new Cli({
+      nms: {
+        kind: "namespace",
+        default: "a",
+        options: { a: { kind: "command" }, b: { kind: "command" }, c: { kind: "option", positional: 0 } },
+      },
+    });
+    expect(
+      parseArguments({ args: ["nms", "opt-value"], definition: c.definition, cliOptions: c.options }),
+    ).toStrictEqual({
+      location: ["nms", "a"],
+      options: { c: "opt-value", _: [] },
+      errors: [],
+    });
+  });
   it("No args but rootCommand:string", () => {
     const c = new Cli(
       {
