@@ -11,13 +11,14 @@ import { generateCompletions } from "./bash-completion";
 import Cli from ".";
 
 /** Create a type containing all elements for better readability, as here is not necessary type-checking due to all methods being internal */
-type F<T> = Omit<T, "kind" | "options">;
+type F<T> = Omit<T, "kind" | "options" | "default">;
 export type OptionExt = Option & { key?: string };
 export type DefinitionElement = F<Namespace> &
   F<Command> &
   F<OptionExt> & {
     kind?: `${Kind}`;
     options?: Definition<DefinitionElement>;
+    default?: any;
   } & {
     /** Store original list of aliases, without any transformations */
     rawAliases?: string[];
@@ -272,6 +273,7 @@ export function parseArguments(params: {
         break argsLoop;
       }
       if (element.kind === Kind.COMMAND) {
+        // This is depredated, will be removed soon
         if (element.type === undefined) {
           argsToProcess = argsToProcess.slice(1);
         }
@@ -282,7 +284,18 @@ export function parseArguments(params: {
       // Namespaces will follow here
       argsToProcess = argsToProcess.slice(1);
       output.location.push(key);
-      definitionRef = definitionRef[key].options || {};
+      const defaultCmd = definitionRef[key].default;
+      // In case namespace defines a default command, check if what follows is an available command or not
+      const commands = Object.values(definitionRef[key].options || {})
+        .filter((e) => e.kind === Kind.COMMAND)
+        .map((e) => e.key);
+      if (defaultCmd && !commands.includes(argsToProcess[0])) {
+        output.location.push(defaultCmd);
+        // Jump to default command options
+        definitionRef = definitionRef[key].options![defaultCmd].options || {};
+      } else {
+        definitionRef = definitionRef[key].options || {};
+      }
       break;
     }
   }
