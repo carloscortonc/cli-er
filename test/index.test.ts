@@ -10,7 +10,7 @@ const definition = _definition as Definition;
 jest.mock("fs", () => ({
   readFileSync: jest.fn(),
 }));
-jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "require.main.filename");
+jest.spyOn(cliutils, "getEntryPoint").mockImplementation(() => "/require.main.filename");
 jest.spyOn(utils, "findPackageJson").mockImplementation(
   (_: any) =>
     ({
@@ -77,8 +77,8 @@ describe("Cli.constructor", () => {
   it("CliOptions are default when instantiating with no options", () => {
     const c = new Cli({});
     expect(c.options).toStrictEqual({
-      baseLocation: "require.main.filename",
-      baseScriptLocation: "require.main.filename",
+      baseLocation: "/require.main.filename",
+      baseScriptLocation: "/require.main.filename",
       commandsPath: "commands",
       errors: {
         onGenerateHelp: ["command_not_found"],
@@ -120,8 +120,9 @@ describe("Cli.constructor", () => {
   });
   it("CliOptions are the result of merging default and provided options when instantiating with options", () => {
     const overwrites = {
-      baseLocation: "..",
-      baseScriptLocation: "./",
+      baseLocation: "./",
+      baseScriptLocation: "base-location",
+      commandsPath: "/require.main.filename/base-location",
       help: { autoInclude: false, aliases: ["help"], description: "", template: "template" },
       errors: { onExecuteCommand: [] },
       version: { aliases: ["version"], description: "", hidden: false },
@@ -131,9 +132,9 @@ describe("Cli.constructor", () => {
     };
     const c = new Cli({}, overwrites);
     expect(c.options).toStrictEqual({
-      baseLocation: overwrites.baseScriptLocation,
+      baseLocation: "/require.main.filename/base-location",
       baseScriptLocation: overwrites.baseScriptLocation,
-      commandsPath: "commands",
+      commandsPath: ".",
       errors: {
         onExecuteCommand: [],
         onGenerateHelp: ["command_not_found"],
@@ -163,6 +164,26 @@ describe("Cli.constructor", () => {
       },
       configFile: undefined,
       envPrefix: undefined,
+    });
+  });
+  it("CliOptions - transform baseLocation into absolute path", () => {
+    const options = { baseLocation: "base-location" };
+    const c = new Cli({}, options);
+    expect(c.options.baseLocation).toBe("/require.main.filename/".concat(options.baseLocation));
+  });
+  it("CliOptions - transform commandsPath into a relative path to baseLocation", () => {
+    const options = { baseLocation: "base-location", commandsPath: "/require.main.filename/base-location/cmds-path" };
+    const c = new Cli({}, options);
+    expect(c.options.commandsPath).toBe("cmds-path");
+  });
+  it("[deprecated] CliOptions - baseLocation inherits from baseScriptLocation when provided", () => {
+    const dpwMock = jest.spyOn(utils, "deprecationWarning").mockImplementation((_: any) => {});
+    const options = { baseLocation: "base-location", baseScriptLocation: "base-script-location" };
+    const c = new Cli({}, options);
+    expect(c.options.baseLocation).toBe("/require.main.filename/".concat(options.baseScriptLocation));
+    expect(dpwMock).toHaveBeenCalledWith({
+      property: "CliOptions.baseScriptLocation",
+      alternative: "CliOptions.baseLocation",
     });
   });
   it("Overwrite default logger", () => {
