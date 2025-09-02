@@ -1,3 +1,19 @@
+# [0.17.0](https://github.com/carloscortonc/cli-er/compare/v0.16.0...v0.17.0) (2025-09-02)
+
+
+### Bug Fixes
+
+* consider booleans when processing defaults ([#101](https://github.com/carloscortonc/cli-er/issues/101)) ([b288c14](https://github.com/carloscortonc/cli-er/commit/b288c140508cf7897c7bbbe5aa914f6f9c34dab4))
+* do not show `has-options` for positional ([#90](https://github.com/carloscortonc/cli-er/issues/90)) ([845ae7f](https://github.com/carloscortonc/cli-er/commit/845ae7f47fe27c298b99f1ea106c24c4b22febb2))
+* improve enums & default-value formatting ([#89](https://github.com/carloscortonc/cli-er/issues/89)) ([dcfc2cf](https://github.com/carloscortonc/cli-er/commit/dcfc2cf6ab0d0bc3b3eeda1d0ec0907b2f0e291f))
+* list option with default value ([#97](https://github.com/carloscortonc/cli-er/issues/97)) ([63dadf1](https://github.com/carloscortonc/cli-er/commit/63dadf1b25fbc569d757d9519de2efd66b7e9821))
+
+
+### Features
+
+* support `env-prefix` for loading variables ([#91](https://github.com/carloscortonc/cli-er/issues/91)) ([55e8060](https://github.com/carloscortonc/cli-er/commit/55e806007952c8188226073d3bb028d63fdd3fbe))
+* type util for namespace options ([#98](https://github.com/carloscortonc/cli-er/issues/98)) ([3f96b80](https://github.com/carloscortonc/cli-er/commit/3f96b803d918c3547a76867245ed25467014a831))
+
 # [0.16.0](https://github.com/carloscortonc/cli-er/compare/v0.15.0...v0.16.0) (2024-09-21)
 
 
