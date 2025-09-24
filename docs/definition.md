@@ -75,7 +75,8 @@ type Option = BaseElement & {
 
 ### Positional options
 Positional options allow asigning an option to a determinate position in the arguments.
-- If a number is used, the argument provided in that position will be assigned to the option with that number (as long as the argument does not match with any existing alias).
+- If a number is used, the argument provided in that position will be assigned to the option with that number, as long as the argument does not match with any existing alias.
+If the argument *does* match an existing alias, alias takes precedence. To provide a value for the positional option in this case, you can use the alias of the positional argument.
 - If `true` is provided, all isolated arguments will be assigned to this option, in the form of a list.
 
 ```js
@@ -86,6 +87,13 @@ new Cli({ projectName: { positional: 0} }, { cliName: "create-project" });
 new Cli({ files: { positional: true} }, { cliName: "format" });
 // $ format file1 file2 file3
 // => { options: { files: ["file1", "file2", "file3"] }}
+```
+- If `-1` is provided in combination with other `positional=true`, it will match the last argument:
+
+```js
+new Cli({ files: { positional: true }, destination: { positional: -1 } }, { cliName: "cp" })
+// $ cp file-1.txt file-2.txt dest
+// => { options: { files: ["file-1.txt", "file-2.txt"], destination: "dest" }}
 ```
 
 **Example**: [jest-cli](/examples/jest-cli/)

@@ -19,10 +19,12 @@ export function validatePositional(positionalOptions: DefinitionElement[]) {
   // Check correlation between numerical values
   const numericalOpts = positionalOptions.filter((o) => typeof o.positional === "number");
   const numerical = numericalOpts.map((o) => o.positional as number);
+
+  if (!numerical.length) return;
   let missing = 0;
   if (
-    numerical.length > 0 &&
-    (numerical[0] !== 0 || numerical.slice(1).some((n) => numerical.indexOf((missing = n - 1)) < 0))
+    // -1 and 0 are the ends of each check, so skip them. For the rest, validate that {n-1}(positives)/ {n+1}(negatives) exists
+    numerical.some((n) => ![0, -1].includes(n) && numerical.indexOf(n > 0 ? (missing = n - 1) : (missing = n + 1)) < 0)
   ) {
     debug(DEBUG_TYPE.WARN, `Missing correlative positional value <${missing}> in options: ${fOpts(numericalOpts)}`);
   }
