@@ -1044,12 +1044,12 @@ Usage:  cli-name cmd Custom Usage
       arg1: { positional: 0, required: true, description: "first positional mandatory option" },
       arg2: { positional: 1, description: "second positional option" },
       arg3: { positional: true, description: "catch-all positional option" },
-      arg4: { positional: -1, description: "prev-last positional option" },
-      arg5: { positional: -2, description: "last positional option" },
+      arg4: { positional: -2, description: "prev-last positional option" },
+      arg5: { positional: -1, description: "last positional option" },
     });
     generateScopedHelp(def, [], cliOptions);
     expect(output).toStrictEqual(`
-Usage:  cli-name <arg1> [arg2] [arg3...] [arg4] [arg5] [OPTIONS]
+Usage:  cli-name [OPTIONS] <arg1> [arg2] [arg3...] [arg4] [arg5]
 
 cli-description
 
@@ -1070,6 +1070,51 @@ Options:
   -h, --help       Display global help, or scoped to a namespace/command
 
 `);
+  });
+  describe("Positional options", () => {
+    it("non-negative numbers - without additional options", () => {
+      let output = "";
+      logger.mockImplementation((m: any) => !!(output += m));
+      const { definition: def } = new Cli({
+        arg1: { positional: 0, required: true },
+        arg2: { positional: 1 },
+      });
+      generateScopedHelp(def, [], cliOptions);
+      expect(output).toContain("Usage:  cli-name <arg1> [arg2]");
+    });
+    it("non-negative numbers - with additional options: opt-hint placed at the end", () => {
+      let output = "";
+      logger.mockImplementation((m: any) => !!(output += m));
+      const { definition: def } = new Cli({
+        arg1: { positional: 0, required: true },
+        arg2: { positional: 1 },
+        opt: {},
+      });
+      generateScopedHelp(def, [], cliOptions);
+      expect(output).toContain("Usage:  cli-name <arg1> [arg2] [OPTIONS]");
+    });
+    it("negative numbers with additional options: opt-hint placed at the beggining", () => {
+      let output = "";
+      logger.mockImplementation((m: any) => !!(output += m));
+      const { definition: def } = new Cli({
+        arg1: { positional: -2, required: true },
+        arg2: { positional: -1 },
+        opt: {},
+      });
+      generateScopedHelp(def, [], cliOptions);
+      expect(output).toContain("Usage:  cli-name [OPTIONS] <arg1> [arg2]");
+    });
+    it("[USER_ERROR] both negative and positive numbers with additional options: opt-hint placed at the beggining", () => {
+      let output = "";
+      logger.mockImplementation((m: any) => !!(output += m));
+      const { definition: def } = new Cli({
+        arg1: { positional: 1, required: true },
+        arg2: { positional: -1 },
+        opt: {},
+      });
+      generateScopedHelp(def, [], cliOptions);
+      expect(output).toContain("Usage:  cli-name [OPTIONS] <arg1> [arg2]");
+    });
   });
   it("Takes tty columns into account when formatting options", () => {
     let output = "";

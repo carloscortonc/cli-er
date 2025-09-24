@@ -556,7 +556,7 @@ export function generateScopedHelp(
   const formatPositionalOptions = (positionalOpts: OPConfig[]) => {
     const map = new Map(positionalOpts.map((p) => [p.index, p]));
     const positives = (<number[]>[...map.keys()]).filter((x) => typeof x === "number" && x >= 0).sort((a, b) => a - b);
-    const negatives = (<number[]>[...map.keys()]).filter((x) => typeof x === "number" && x < 0).sort((a, b) => b - a);
+    const negatives = (<number[]>[...map.keys()]).filter((x) => typeof x === "number" && x < 0).sort((a, b) => a - b);
     return (map.has(true) ? [...positives, true, ...negatives] : [...positives, ...negatives])
       .map((index) => {
         const s = index === true ? "..." : "";
@@ -570,6 +570,8 @@ export function generateScopedHelp(
     .filter((e) => e)
     .join(" ");
 
+  // Check whether options hint ("[OPTIONS]") should be included before or after positional-options
+  const includeOptsHintBeforePositional = positionalOptions.some((p) => typeof p.index === "number" && p.index < 0);
   sections[HELP_SECTIONS.USAGE] =
     element?.kind === Kind.COMMAND && element.usage
       ? usageCommonHeader.concat(" ", element.usage)
@@ -577,8 +579,9 @@ export function generateScopedHelp(
           usageCommonHeader,
           formatKinds(existingKinds),
           element?.kind === Kind.COMMAND && element!.type !== undefined ? `<${element!.type}>` : "",
+          hasOptions && includeOptsHintBeforePositional ? Cli.formatMessage("generate-help.has-options") : "",
           formatPositionalOptions(positionalOptions),
-          hasOptions ? Cli.formatMessage("generate-help.has-options") : "",
+          hasOptions && !includeOptsHintBeforePositional ? Cli.formatMessage("generate-help.has-options") : "",
         ]
           .filter((e) => e)
           .join(" ")
