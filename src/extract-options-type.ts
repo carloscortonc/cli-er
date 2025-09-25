@@ -30,7 +30,7 @@ type MaybeOptional<T, O extends Option> = O["required"] extends true
   : T | undefined;
 
 export type CommandOptions<T extends Omit<Command, "kind">> = T["options"] extends { [key: string]: any }
-  ? OptionsTypes<T["options"]>
+  ? Expand<OptionsTypes<T["options"]> & { _: string[]; __?: string[] }>
   : never;
 
 type ExtractOptions<T> = {
@@ -66,7 +66,7 @@ export type NamespaceOptions<
  * ```
  * const cmd = defineCommand({ options: { somelist: { type: "list" } }});
  * type CmdOptions = CommandOptions<typeof cmd>
- * // CmdOptions: { somelist: string[] | undefined }
+ * // CmdOptions: { somelist: string[] | undefined, _: string[], __?: string[] }
  * ```
  */
 export const defineCommand = <T extends Omit<Command, "kind">>(c: T): T => Object.assign(c, { kind: "command" });
@@ -77,7 +77,7 @@ export const defineCommand = <T extends Omit<Command, "kind">>(c: T): T => Objec
  * ```
  * const nms = defineNamespace({ options: { cmd: { options: { opt: { type: "list" } } } }});
  * type NmsOptions = NamespaceOptions<typeof nms>
- * // NmsOptions: { cmd: { opt: string | undefined } }
+ * // NmsOptions: { cmd: { opt: string | undefined, _: string[], __?: string[] } }
  * ```
  */
 export const defineNamespace = <T extends Omit<Namespace, "kind">>(n: T): T => Object.assign(n, { kind: "namespace" });
