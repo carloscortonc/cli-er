@@ -1,3 +1,17 @@
+# [0.18.0](https://github.com/carloscortonc/cli-er/compare/v0.17.0...v0.18.0) (2025-09-26)
+
+
+### Features
+
+* include _ in CommandOptions & NamespaceOptions type ([#111](https://github.com/carloscortonc/cli-er/issues/111)) ([7da0415](https://github.com/carloscortonc/cli-er/commit/7da0415aa6fb79425b95148adade4941e3e75e2c))
+* support negative positional values ([#108](https://github.com/carloscortonc/cli-er/issues/108)) ([2e92ffa](https://github.com/carloscortonc/cli-er/commit/2e92ffa37ba282767904ce438800a5b178e81193))
+* update default logger & switch to static ([#106](https://github.com/carloscortonc/cli-er/issues/106)) ([00cf865](https://github.com/carloscortonc/cli-er/commit/00cf865e9d5eb56e400690e603fa7d5afe6e0c6a))
+
+
+### Bug Fixes
+
+* wrong help for positional arguments ([#110](https://github.com/carloscortonc/cli-er/issues/110)) ([bd23d06](https://github.com/carloscortonc/cli-er/commit/bd23d06364ac6c30dcbadfef7d82c16be650eee9))
+
 # [0.17.0](https://github.com/carloscortonc/cli-er/compare/v0.16.0...v0.17.0) (2025-09-02)
 
 
