@@ -598,6 +598,23 @@ describe("parseArguments", () => {
       location: expect.anything(),
     });
   });
+  it("Positional option (numerical, negative)", () => {
+    const { definition, options } = new Cli(
+      { optLast: { positional: -1 }, optPrevLast: { positional: -2 } },
+      baseConfig,
+    );
+    expect(
+      parseArguments({
+        args: ["extra", "opt-prev-last", "opt-last"],
+        definition: definition as Definition,
+        cliOptions: options,
+      }),
+    ).toStrictEqual({
+      options: { _: ["extra"], optLast: "opt-last", optPrevLast: "opt-prev-last" },
+      location: [],
+      errors: ['Unknown option "extra"'],
+    });
+  });
   it("Positional option (true)", () => {
     const { definition, options } = new Cli({ opt: {}, popt: { positional: true } }, baseConfig);
     expect(
@@ -624,6 +641,40 @@ describe("parseArguments", () => {
       options: { _: [], opt: ["optvalue", "optvalue2"], opt2: "opt2value" },
       location: [],
       errors: [],
+    });
+  });
+  it("Positional option (numerical-negative & true)", () => {
+    const { definition, options } = new Cli(
+      { captureAll: { positional: true }, optLast: { positional: -1 } },
+      baseConfig,
+    );
+    expect(
+      parseArguments({
+        args: ["extra-1", "extra-2", "opt-last"],
+        definition: definition as Definition,
+        cliOptions: options,
+      }),
+    ).toStrictEqual({
+      options: { _: [], captureAll: ["extra-1", "extra-2"], optLast: "opt-last" },
+      location: [],
+      errors: [],
+    });
+  });
+  it("Positional option (numerical-negative & true:required)", () => {
+    const { definition, options } = new Cli(
+      { captureAll: { positional: true, required: true }, optLast: { positional: -1 } },
+      baseConfig,
+    );
+    expect(
+      parseArguments({
+        args: ["opt-value"],
+        definition: definition as Definition,
+        cliOptions: options,
+      }),
+    ).toStrictEqual({
+      options: { _: [], optLast: "opt-value" },
+      location: [],
+      errors: ['Missing required option "captureAll"'],
     });
   });
   it("Positional option (numerical) non-required - conflicting with alias", () => {
@@ -993,10 +1044,12 @@ Usage:  cli-name cmd Custom Usage
       arg1: { positional: 0, required: true, description: "first positional mandatory option" },
       arg2: { positional: 1, description: "second positional option" },
       arg3: { positional: true, description: "catch-all positional option" },
+      arg4: { positional: -2, description: "prev-last positional option" },
+      arg5: { positional: -1, description: "last positional option" },
     });
     generateScopedHelp(def, [], cliOptions);
     expect(output).toStrictEqual(`
-Usage:  cli-name <arg1> [arg2] [arg3...] [OPTIONS]
+Usage:  cli-name [OPTIONS] <arg1> [arg2] [arg3...] [arg4] [arg5]
 
 cli-description
 
@@ -1012,9 +1065,56 @@ Options:
   --arg1           first positional mandatory option
   --arg2           second positional option
   --arg3           catch-all positional option
+  --arg4           prev-last positional option
+  --arg5           last positional option
   -h, --help       Display global help, or scoped to a namespace/command
 
 `);
+  });
+  describe("Positional options", () => {
+    it("non-negative numbers - without additional options", () => {
+      let output = "";
+      logger.mockImplementation((m: any) => !!(output += m));
+      const { definition: def } = new Cli({
+        arg1: { positional: 0, required: true },
+        arg2: { positional: 1 },
+      });
+      generateScopedHelp(def, [], cliOptions);
+      expect(output).toContain("Usage:  cli-name <arg1> [arg2]");
+    });
+    it("non-negative numbers - with additional options: opt-hint placed at the end", () => {
+      let output = "";
+      logger.mockImplementation((m: any) => !!(output += m));
+      const { definition: def } = new Cli({
+        arg1: { positional: 0, required: true },
+        arg2: { positional: 1 },
+        opt: {},
+      });
+      generateScopedHelp(def, [], cliOptions);
+      expect(output).toContain("Usage:  cli-name <arg1> [arg2] [OPTIONS]");
+    });
+    it("negative numbers with additional options: opt-hint placed at the beggining", () => {
+      let output = "";
+      logger.mockImplementation((m: any) => !!(output += m));
+      const { definition: def } = new Cli({
+        arg1: { positional: -2, required: true },
+        arg2: { positional: -1 },
+        opt: {},
+      });
+      generateScopedHelp(def, [], cliOptions);
+      expect(output).toContain("Usage:  cli-name [OPTIONS] <arg1> [arg2]");
+    });
+    it("[USER_ERROR] both negative and positive numbers with additional options: opt-hint placed at the beggining", () => {
+      let output = "";
+      logger.mockImplementation((m: any) => !!(output += m));
+      const { definition: def } = new Cli({
+        arg1: { positional: 1, required: true },
+        arg2: { positional: -1 },
+        opt: {},
+      });
+      generateScopedHelp(def, [], cliOptions);
+      expect(output).toContain("Usage:  cli-name [OPTIONS] <arg1> [arg2]");
+    });
   });
   it("Takes tty columns into account when formatting options", () => {
     let output = "";

@@ -16,6 +16,8 @@ describe("defineCommand", () => {
       float: number;
       boolean: boolean;
       list: string[];
+      _: string[];
+      __?: string[];
     }>();
   });
   test("should take `Option.required` into account", () => {
@@ -31,6 +33,8 @@ describe("defineCommand", () => {
       req: string;
       def: string;
       nonreq: string | undefined;
+      _: string[];
+      __?: string[];
     }>();
   });
   test("should take `Option.enum` into account", () => {
@@ -49,6 +53,8 @@ describe("defineCommand", () => {
       float: 0.5 | 1.5 | 5.5;
       positional: "pos1" | "pos2";
       list: ("elem1" | "elem2")[];
+      _: string[];
+      __?: string[];
     }>();
   });
   test("return `never` if no options are present", () => {
@@ -64,7 +70,9 @@ describe("defineNamespace", () => {
     const nms = defineNamespace({
       options: { cmd: { kind: "command", options: { cmdOpt: { kind: "option", type: "string" } } } },
     });
-    expect<NamespaceOptions<typeof nms>>().type.toBe<{ cmd: { cmdOpt: string | undefined } }>();
+    expect<NamespaceOptions<typeof nms>>().type.toBe<{
+      cmd: { cmdOpt: string | undefined; _: string[]; __?: string[] };
+    }>();
   });
   test("nested namespace", () => {
     const nms = defineNamespace({
@@ -75,7 +83,9 @@ describe("defineNamespace", () => {
         },
       },
     });
-    expect<NamespaceOptions<typeof nms>>().type.toBe<{ nms: { cmd: { cmdOpt: string | undefined } } }>();
+    expect<NamespaceOptions<typeof nms>>().type.toBe<{
+      nms: { cmd: { cmdOpt: string | undefined; _: string[]; __?: string[] } };
+    }>();
   });
   test("include options for previous levels", () => {
     const nms = defineNamespace({
@@ -94,12 +104,20 @@ describe("defineNamespace", () => {
     });
     expect<NamespaceOptions<typeof nms>>().type.toBe<{
       nms: {
-        nms_cmd: { nmsCmdOpt: string | undefined; nmsOpt: string | undefined; globalOpt: number | undefined };
-        nms_cmd2: { nmsOpt: string | undefined; globalOpt: number | undefined };
+        nms_cmd: {
+          nmsCmdOpt: string | undefined;
+          nmsOpt: string | undefined;
+          globalOpt: number | undefined;
+          _: string[];
+          __?: string[];
+        };
+        nms_cmd2: { nmsOpt: string | undefined; globalOpt: number | undefined; _: string[]; __?: string[] };
       };
       cmd: {
         cmdOpt: string[] | undefined;
         globalOpt: number | undefined;
+        _: string[];
+        __?: string[];
       };
     }>();
   });

@@ -130,11 +130,11 @@ export enum LogType {
 
 export interface ICliLogger {
   /** Method for general logs. Must not add a new line at the end.
-   * @default process.stdout.write("".concat(message.join(" ")));
+   * @default process.stdout.write("".concat(message.join("")));
    */
   log: (...message: any[]) => void;
   /** Method for logging errors. Must not add a new line at the end.
-   * @default process.stderr.write("ERROR ".concat(message.join(" ")))
+   * @default process.stderr.write("ERROR ".concat(message.join("")))
    */
   error: (...message: any[]) => void;
 }

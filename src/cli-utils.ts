@@ -325,7 +325,8 @@ export function parseArguments(params: {
     const curr = finalArgs[i],
       next = finalArgs[i + 1];
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
-    const strictPositional = positionalOptions[i];
+    // Check for op<i> (for positive numbers) and op<i-length> (for negative numbers)
+    const strictPositional = positionalOptions[i] || positionalOptions[i - finalArgs.length];
     // If an option-alias is found where a numeric-positional option was expected, discard all remaining numeric-positional options
     ignorePositional ||= strictPositional && aliases.hasOwnProperty(optionKey);
     const positional = (!ignorePositional ? strictPositional : undefined) || positionalOptions.true;
@@ -518,6 +519,7 @@ export function generateScopedHelp(
   } else if (cliOptions.cliDescription) {
     sections[HELP_SECTIONS.DESCRIPTION] = cliOptions.cliDescription.concat("\n");
   }
+  type OPConfig = { index: NonNullable<Option["positional"]>; key: string; required: Option["required"] };
   // Add usage section
   const { existingKinds, hasOptions, positionalOptions } = Object.values(definitionRef || {})
     .filter((e) => !e.hidden)
@@ -530,14 +532,14 @@ export function generateScopedHelp(
           const isPositional = positional === true || typeof positional === "number";
           acc.hasOptions ||= !isAutoincluded && !isPositional;
           if (isPositional) {
-            acc.positionalOptions.push({ index: positional, key, required });
+            acc.positionalOptions.push({ index: positional, key: key!, required });
           }
         } else if (acc.existingKinds.indexOf(kind as string) < 0) {
           acc.existingKinds.push(kind as string);
         }
         return acc;
       },
-      { existingKinds: [] as string[], hasOptions: false, positionalOptions: [] as any[] },
+      { existingKinds: [] as string[], hasOptions: false, positionalOptions: [] as OPConfig[] },
     );
 
   const formatKinds = (kinds: string[]) =>
@@ -546,19 +548,30 @@ export function generateScopedHelp(
       .join("|")
       .toUpperCase();
 
-  const formatPositionalOptions = (positionalOpts: any[]) =>
-    positionalOpts
-      .sort((a, b) => (b.index === true ? -1 : a.index === true ? 1 : a.index - b.index))
-      .map(({ index, key, required }) => {
+  /** The order should be:
+   * - index > 0 (sorted)
+   * - `true`
+   * - index < 0 (sorted)
+   */
+  const formatPositionalOptions = (positionalOpts: OPConfig[]) => {
+    const map = new Map(positionalOpts.map((p) => [p.index, p]));
+    const positives = (<number[]>[...map.keys()]).filter((x) => typeof x === "number" && x >= 0).sort((a, b) => a - b);
+    const negatives = (<number[]>[...map.keys()]).filter((x) => typeof x === "number" && x < 0).sort((a, b) => a - b);
+    return (map.has(true) ? [...positives, true, ...negatives] : [...positives, ...negatives])
+      .map((index) => {
         const s = index === true ? "..." : "";
-        return required ? `<${key}${s}>` : `[${key}${s}]`;
+        const o = map.get(index as OPConfig["index"])!;
+        return o.required ? `<${o.key}${s}>` : `[${o.key}${s}]`;
       })
       .join(" ");
+  };
 
   const usageCommonHeader = [`${Cli.formatMessage("generate-help.usage")}:  ${cliOptions.cliName}`, location.join(" ")]
     .filter((e) => e)
     .join(" ");
 
+  // Check whether options hint ("[OPTIONS]") should be included before or after positional-options
+  const includeOptsHintBeforePositional = positionalOptions.some((p) => typeof p.index === "number" && p.index < 0);
   sections[HELP_SECTIONS.USAGE] =
     element?.kind === Kind.COMMAND && element.usage
       ? usageCommonHeader.concat(" ", element.usage)
@@ -566,8 +579,9 @@ export function generateScopedHelp(
           usageCommonHeader,
           formatKinds(existingKinds),
           element?.kind === Kind.COMMAND && element!.type !== undefined ? `<${element!.type}>` : "",
+          hasOptions && includeOptsHintBeforePositional ? Cli.formatMessage("generate-help.has-options") : "",
           formatPositionalOptions(positionalOptions),
-          hasOptions ? Cli.formatMessage("generate-help.has-options") : "",
+          hasOptions && !includeOptsHintBeforePositional ? Cli.formatMessage("generate-help.has-options") : "",
         ]
           .filter((e) => e)
           .join(" ")

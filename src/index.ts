@@ -20,7 +20,7 @@ import { defineCommand, CommandOptions, NamespaceOptions, defineNamespace } from
 import { generateCompletions } from "./bash-completion";
 
 export default class Cli {
-  static logger: ICliLogger = new CliLogger();
+  static logger: ICliLogger = CliLogger;
   static messages = { ...ERROR_MESSAGES, ...CLI_MESSAGES } as const;
   static formatMessage = formatMessage;
   static defineCommand = defineCommand;
