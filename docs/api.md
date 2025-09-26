@@ -99,6 +99,8 @@ function handler(options: Cli.CommandOptions<typeof command>){
   //   elements: string[] | undefined;
   //   value: number;
   //   files: string[]
+  //   _: string[];
+  //   __?: string[];
   //  }
 }
 ```
@@ -133,6 +135,8 @@ function setHandler(options: ConfigOptions["set"]){
   //   key: string;
   //   value: string;
   //   globalopt: string | undefined
+  //   _: string[];
+  //   __?: string[];
   //  }
 }
 ```
