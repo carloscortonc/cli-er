@@ -322,6 +322,12 @@ describe("Cli.run", () => {
     c.run(["nms"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
   });
+  it("Calling run on namespace with help option invokes help-generation - default-command", () => {
+    const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
+    const c = new Cli({ nms: { kind: "namespace", default: "cmd", options: { cmd: { kind: "command" } } } });
+    c.run(["nms", "-h"]);
+    expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
+  });
   it("Calling run with version option invokes version-formatting", () => {
     const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();
     const c = new Cli(definition);
@@ -339,7 +345,7 @@ describe("Cli.run", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"] }));
+      .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"], rawLocation: [] }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["command_not_found"] } });
     c.run([]);
     expect(logger.error).toHaveBeenCalledWith("ERROR", "\n");
@@ -349,7 +355,7 @@ describe("Cli.run", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"] }));
+      .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"], rawLocation: [] }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: [] } });
     c.run([]);
     expect(logger.error).not.toHaveBeenCalled();
@@ -358,7 +364,7 @@ describe("Cli.run", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"] }));
+      .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"], rawLocation: [] }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition, { errors: { onExecuteCommand: ["command_not_found"] } });
     c.run([]);
@@ -368,7 +374,7 @@ describe("Cli.run", () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"] }));
+      .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"], rawLocation: [] }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition, { errors: { onExecuteCommand: [] } });
     c.run([]);
@@ -385,6 +391,7 @@ describe("Cli.run", () => {
       location: [],
       options: { help: true, _: [] },
       errors: ["CMD_NOT_FOUND", "OPT_NOT_FOUND"],
+      rawLocation: [],
     }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["option_not_found", "command_not_found"] } });
     c.run([]);
@@ -399,6 +406,7 @@ describe("Cli.run", () => {
       location: [],
       options: { _: [] },
       errors: [],
+      rawLocation: [],
     }));
     const c = new Cli(definition, { configFile: { names: ["file"] }, envPrefix: "CLIERTEST_" });
     c.run([]);

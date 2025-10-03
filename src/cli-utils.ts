@@ -202,12 +202,13 @@ export function parseArguments(params: {
   definition: Definition<DefinitionElement>;
   cliOptions: CliOptions;
   initial?: Partial<ParsingOutput["options"]>;
-}): ParsingOutput {
+}): ParsingOutput & { rawLocation: string[] } {
   const { args, definition, cliOptions } = params;
-  const output: ParsingOutput = {
+  const output: ReturnType<typeof parseArguments> = {
     location: [],
     options: Object.assign({ _: [] }, params.initial),
     errors: [],
+    rawLocation: [], // This will not include additional assumptions, like default namespace's command
   };
   const aliases: { [key: string]: DefinitionElement | string } = {};
   let argsToProcess = args;
@@ -257,7 +258,7 @@ export function parseArguments(params: {
             target: arg,
             kind: [Kind.NAMESPACE, Kind.COMMAND],
             definition,
-            rawLocation: output.location,
+            rawLocation: output.rawLocation,
             cliOptions,
           })!;
           const msg = "".concat(
@@ -274,12 +275,14 @@ export function parseArguments(params: {
           argsToProcess = argsToProcess.slice(1);
         }
         output.location.push(key);
+        output.rawLocation.push(key);
         commandFound = true;
         break;
       }
       // Namespaces will follow here
       argsToProcess = argsToProcess.slice(1);
       output.location.push(key);
+      output.rawLocation.push(key);
       const defaultCmd = definitionRef[key].default;
       // In case namespace defines a default command, check if what follows is an available command or not
       const commands = Object.values(definitionRef[key].options || {})
