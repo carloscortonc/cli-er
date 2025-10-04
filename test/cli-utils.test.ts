@@ -627,7 +627,7 @@ describe("parseArguments", () => {
       }),
     );
   });
-  it("Positional option (numerical, negative)", () => {
+  it("Positional option (only numerical(-)) - does not capture due to missing positional.true", () => {
     const { definition, options } = new Cli(
       { optLast: { positional: -1 }, optPrevLast: { positional: -2 } },
       baseConfig,
@@ -639,9 +639,27 @@ describe("parseArguments", () => {
         cliOptions: options,
       }),
     ).toStrictEqual({
-      options: { _: ["extra"], optLast: "opt-last", optPrevLast: "opt-prev-last" },
+      options: { _: ["extra", "opt-prev-last", "opt-last"] },
       location: [],
-      errors: ['Unknown option "extra"'],
+      errors: ['Unknown option "extra"', 'Unknown option "opt-prev-last"', 'Unknown option "opt-last"'],
+      rawLocation: [],
+    });
+  });
+  it("Positional option (true + numerical(-))", () => {
+    const { definition, options } = new Cli(
+      { captureAll: { positional: true }, optLast: { positional: -1 }, optPrevLast: { positional: -2 } },
+      baseConfig,
+    );
+    expect(
+      parseArguments({
+        args: ["capture-all", "opt-prev-last", "opt-last"],
+        definition: definition as Definition,
+        cliOptions: options,
+      }),
+    ).toStrictEqual({
+      options: { _: [], captureAll: ["capture-all"], optLast: "opt-last", optPrevLast: "opt-prev-last" },
+      location: [],
+      errors: [],
       rawLocation: [],
     });
   });
@@ -660,7 +678,7 @@ describe("parseArguments", () => {
       rawLocation: [],
     });
   });
-  it("Positional option (numerical & true) - numerical has precendence", () => {
+  it("Positional option (numerical(+) & true) - numerical(+) has precendence", () => {
     const { definition, options } = new Cli({ opt: { positional: true }, opt2: { positional: 1 } }, baseConfig);
     expect(
       parseArguments({
@@ -675,7 +693,7 @@ describe("parseArguments", () => {
       rawLocation: [],
     });
   });
-  it("Positional option (numerical-negative & true)", () => {
+  it("Positional option (numerical(-) & true)", () => {
     const { definition, options } = new Cli(
       { captureAll: { positional: true }, optLast: { positional: -1 } },
       baseConfig,
@@ -693,7 +711,7 @@ describe("parseArguments", () => {
       rawLocation: [],
     });
   });
-  it("Positional option (numerical-negative & true:required)", () => {
+  it("Positional option (numerical(-) & true) - single arg", () => {
     const { definition, options } = new Cli(
       { captureAll: { positional: true, required: true }, optLast: { positional: -1 } },
       baseConfig,
@@ -705,9 +723,9 @@ describe("parseArguments", () => {
         cliOptions: options,
       }),
     ).toStrictEqual({
-      options: { _: [], optLast: "opt-value" },
+      options: { _: [], captureAll: ["opt-value"] },
       location: [],
-      errors: ['Missing required option "captureAll"'],
+      errors: [],
       rawLocation: [],
     });
   });
