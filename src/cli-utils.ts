@@ -320,6 +320,8 @@ export function parseArguments(params: {
   enum Positional { TRUE = "1", FALSE = "0" }
   // Flag to ignore all positional options if the first one is misplaced (missing)
   let ignorePositional = false;
+  // Flag to indicate whether negative-positional is active (only after some positional.true has been set)
+  let positionalNActive = false;
 
   const finalArgs = flattenArguments(argsToProcess, defToProcess);
 
@@ -328,14 +330,20 @@ export function parseArguments(params: {
     const curr = finalArgs[i],
       next = finalArgs[i + 1];
     const optionKey = typeof aliases[curr] === "string" ? (aliases[curr] as string) : curr;
-    // Check for op<i> (for positive numbers) and op<i-length> (for negative numbers)
-    const strictPositional = positionalOptions[i] || positionalOptions[i - finalArgs.length];
+    // Check for op<i> (for positive numbers) and op<i-length> (for negative numbers, only if some position.true captured)
+    const strictPositional: DefinitionElement | undefined =
+      positionalOptions[i] || (positionalNActive ? positionalOptions[i - finalArgs.length] : undefined);
     // If an option-alias is found where a numeric-positional option was expected, discard all remaining numeric-positional options
     ignorePositional ||= strictPositional && aliases.hasOwnProperty(optionKey);
-    const positional = (!ignorePositional ? strictPositional : undefined) || positionalOptions.true;
-    const [optionDefinition, isPositional] = aliases.hasOwnProperty(optionKey)
+    // Track negative-positional in the current iteration
+    let tmpPNActive = false;
+    const positional: DefinitionElement | undefined =
+      (!ignorePositional ? strictPositional : undefined) || ((tmpPNActive = true), positionalOptions.true);
+    const [optionDefinition, isPositional]: [DefinitionElement, Positional] = aliases.hasOwnProperty(optionKey)
       ? [aliases[optionKey] as DefinitionElement, Positional.FALSE]
       : [positional, !!positional ? Positional.TRUE : Positional.FALSE];
+    // Active negative-positional flag only if positional.true present
+    positionalNActive ||= tmpPNActive && isPositional === Positional.TRUE;
     if (optionDefinition !== undefined) {
       const outputKey = optionDefinition.key!;
       // Mapping between whether a positional-option applies, and the value to be used in parsing
