@@ -208,22 +208,24 @@ describe("parseArguments", () => {
       },
     };
     expect(parseArguments({ args: ["--opt", "optvalue"], definition: d, cliOptions }).options.opt).toBe("optvalue");
-    expect(parseArguments({ args: ["--opt"], definition: d, cliOptions })).toStrictEqual({
-      options: { opt: "defaultvalue", _: [] },
-      errors: ['Missing value of type <string> for option "--opt"'],
-      location: expect.anything(),
-    });
+    expect(parseArguments({ args: ["--opt"], definition: d, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { opt: "defaultvalue", _: [] },
+        errors: ['Missing value of type <string> for option "--opt"'],
+      }),
+    );
     expect(
       parseArguments({
         args: ["--opt", "othervalue"],
         definition: { opt: { ...d.opt, enum: ["optv1", "optv2"] } },
         cliOptions,
       }),
-    ).toStrictEqual({
-      options: { opt: "defaultvalue", _: [] },
-      errors: ['Wrong value for option "--opt". Expected \'optv1 | optv2\' but found "othervalue"'],
-      location: expect.anything(),
-    });
+    ).toStrictEqual(
+      expect.objectContaining({
+        options: { opt: "defaultvalue", _: [] },
+        errors: ['Wrong value for option "--opt". Expected \'optv1 | optv2\' but found "othervalue"'],
+      }),
+    );
   });
   it("Parse BOOLEAN value", () => {
     const d: Definition<DefinitionElement> = {
@@ -251,22 +253,24 @@ describe("parseArguments", () => {
       "one",
       "two",
     ]);
-    expect(parseArguments({ args: ["--opt"], definition: d, cliOptions })).toStrictEqual({
-      options: { _: [] },
-      errors: ['Missing value of type <list> for option "--opt"'],
-      location: expect.anything(),
-    });
+    expect(parseArguments({ args: ["--opt"], definition: d, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Missing value of type <list> for option "--opt"'],
+      }),
+    );
     expect(
       parseArguments({
         args: ["--opt", "optv1,optv3"],
         definition: { opt: { ...d.opt, enum: ["optv1", "optv2"] } },
         cliOptions,
       }),
-    ).toStrictEqual({
-      options: { _: [] },
-      errors: ['Wrong value for option "--opt". Expected \'optv1 | optv2\' but found "optv3"'],
-      location: expect.anything(),
-    });
+    ).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Wrong value for option "--opt". Expected \'optv1 | optv2\' but found "optv3"'],
+      }),
+    );
   });
   it("Parse LIST value by repeated appearances", () => {
     const d: Definition<DefinitionElement> = {
@@ -288,46 +292,52 @@ describe("parseArguments", () => {
       opt: { kind: "option", type: "number", aliases: ["--opt"], key: "opt", enum: [1] },
     };
     expect(parseArguments({ args: ["--opt", "1"], definition: d, cliOptions }).options.opt).toBe(1);
-    expect(parseArguments({ args: ["--opt", "not-a-number"], definition: d, cliOptions })).toStrictEqual({
-      options: { _: [] },
-      errors: ['Wrong value for option "--opt". Expected <number> but found "not-a-number"'],
-      location: expect.anything(),
-    });
-    expect(parseArguments({ args: ["--opt"], definition: d, cliOptions })).toStrictEqual({
-      options: { _: [] },
-      errors: ['Missing value of type <number> for option "--opt"'],
-      location: expect.anything(),
-    });
+    expect(parseArguments({ args: ["--opt", "not-a-number"], definition: d, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Wrong value for option "--opt". Expected <number> but found "not-a-number"'],
+      }),
+    );
+    expect(parseArguments({ args: ["--opt"], definition: d, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Missing value of type <number> for option "--opt"'],
+      }),
+    );
     expect(
       parseArguments({ args: ["--opt", "5"], definition: { opt: { ...d.opt, enum: [1, 10, 20] } }, cliOptions }),
-    ).toStrictEqual({
-      options: { _: [] },
-      errors: ['Wrong value for option "--opt". Expected \'1 | 10 | 20\' but found "5"'],
-      location: expect.anything(),
-    });
+    ).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Wrong value for option "--opt". Expected \'1 | 10 | 20\' but found "5"'],
+      }),
+    );
   });
   it("Parse FLOAT value", () => {
     const d: Definition<DefinitionElement> = {
       opt: { kind: "option", type: "float", aliases: ["--opt"], key: "opt", enum: [1.5] },
     };
     expect(parseArguments({ args: ["--opt", "1.5"], definition: d, cliOptions }).options.opt).toBe(1.5);
-    expect(parseArguments({ args: ["--opt", "not-a-number"], definition: d, cliOptions })).toStrictEqual({
-      options: { _: [] },
-      errors: ['Wrong value for option "--opt". Expected <float> but found "not-a-number"'],
-      location: expect.anything(),
-    });
-    expect(parseArguments({ args: ["--opt"], definition: d, cliOptions })).toStrictEqual({
-      options: { _: [] },
-      errors: ['Missing value of type <float> for option "--opt"'],
-      location: expect.anything(),
-    });
+    expect(parseArguments({ args: ["--opt", "not-a-number"], definition: d, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Wrong value for option "--opt". Expected <float> but found "not-a-number"'],
+      }),
+    );
+    expect(parseArguments({ args: ["--opt"], definition: d, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Missing value of type <float> for option "--opt"'],
+      }),
+    );
     expect(
       parseArguments({ args: ["--opt", "0.5"], definition: { opt: { ...d.opt, enum: [0.3, 0.6, 0.9] } }, cliOptions }),
-    ).toStrictEqual({
-      options: { _: [] },
-      errors: ['Wrong value for option "--opt". Expected \'0.3 | 0.6 | 0.9\' but found "0.5"'],
-      location: expect.anything(),
-    });
+    ).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Wrong value for option "--opt". Expected \'0.3 | 0.6 | 0.9\' but found "0.5"'],
+      }),
+    );
   });
   it("Option with parser property", () => {
     const d = new Cli({
@@ -343,11 +353,12 @@ describe("parseArguments", () => {
         },
       },
     }).definition;
-    expect(parseArguments({ args: ["--opt", "not-a-date"], definition: d, cliOptions })).toStrictEqual({
-      options: { _: [] },
-      location: expect.anything(),
-      errors: ['Wrong value for option "--opt". Expected <date> but found "not-a-date"'],
-    });
+    expect(parseArguments({ args: ["--opt", "not-a-date"], definition: d, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Wrong value for option "--opt". Expected <date> but found "not-a-date"'],
+      }),
+    );
   });
   it("No arguments", () => {
     //Get completed definition from Cli
@@ -355,6 +366,7 @@ describe("parseArguments", () => {
       location: [],
       options: { globalOption: "globalvalue", _: [] },
       errors: [],
+      rawLocation: [],
     });
   });
   it("Command with no type", () => {
@@ -362,6 +374,7 @@ describe("parseArguments", () => {
       location: ["gcmd"],
       options: { globalOption: "globalvalue", _: [] },
       errors: [],
+      rawLocation: ["gcmd"],
     });
   });
   it("Namespace + command", () => {
@@ -370,11 +383,13 @@ describe("parseArguments", () => {
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: undefined, _: [] },
       errors: [],
+      rawLocation: ["nms", "cmd"],
     });
     expect(parseArguments({ args: ["nms", "cmd", "cmdValue"], definition: def, cliOptions })).toStrictEqual({
       location: ["nms", "cmd"],
       options: { globalOption: "globalvalue", cmd: "cmdValue", _: [] },
       errors: [],
+      rawLocation: ["nms", "cmd"],
     });
   });
   it("Namespace with default command", () => {
@@ -393,6 +408,7 @@ describe("parseArguments", () => {
       location: ["nms", "a"],
       options: { _: [] },
       errors: ['Missing required option "aa"'],
+      rawLocation: ["nms"],
     });
     expect(
       parseArguments({ args: ["nms", "--aa", "aa-value"], definition: c.definition, cliOptions: c.options }),
@@ -400,11 +416,13 @@ describe("parseArguments", () => {
       location: ["nms", "a"],
       options: { aa: "aa-value", _: [] },
       errors: [],
+      rawLocation: ["nms"],
     });
     expect(parseArguments({ args: ["nms", "b"], definition: c.definition, cliOptions: c.options })).toStrictEqual({
       location: ["nms", "b"],
       options: { _: [] },
       errors: [],
+      rawLocation: ["nms", "b"],
     });
     // With positional options
     c = new Cli({
@@ -420,6 +438,7 @@ describe("parseArguments", () => {
       location: ["nms", "a"],
       options: { c: "opt-value", _: [] },
       errors: [],
+      rawLocation: ["nms"],
     });
   });
   it("No args but rootCommand:string", () => {
@@ -435,6 +454,7 @@ describe("parseArguments", () => {
       options: expect.objectContaining({ _: [] }),
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
   it("[deprecated] Option with value property", () => {
@@ -453,97 +473,102 @@ describe("parseArguments", () => {
         },
       },
     }).definition as Definition<DefinitionElement>;
-    expect(parseArguments({ args: ["--opt", "optvalue"], definition: d, cliOptions })).toStrictEqual({
-      options: { opt: "optvalue-edited", test: "testvalue", _: [] },
-      location: expect.anything(),
-      errors: [],
-    });
+    expect(parseArguments({ args: ["--opt", "optvalue"], definition: d, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { opt: "optvalue-edited", test: "testvalue", _: [] },
+        errors: [],
+      }),
+    );
   });
   it("Returns error if wrong namespace/command provided", () => {
-    expect(parseArguments({ args: ["nms", "non-existent"], definition: def, cliOptions })).toStrictEqual({
-      options: expect.anything(),
-      location: expect.anything(),
-      errors: ['Command "non-existent" not found. Did you mean "cmd" ?', 'Unknown option "non-existent"'],
-    });
+    expect(parseArguments({ args: ["nms", "non-existent"], definition: def, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        errors: ['Command "non-existent" not found. Did you mean "cmd" ?', 'Unknown option "non-existent"'],
+      }),
+    );
   });
   it("Returns error if unknown options are found - without suggestion", () => {
     expect(
       parseArguments({ args: ["nms", "cmd", "cmdvalue", "unknown-option"], definition: def, cliOptions }),
-    ).toStrictEqual({
-      options: expect.anything(),
-      location: expect.anything(),
-      errors: ['Unknown option "unknown-option"'],
-    });
+    ).toStrictEqual(
+      expect.objectContaining({
+        errors: ['Unknown option "unknown-option"'],
+      }),
+    );
   });
   it("Returns error if unknown options are found - with suggestion", () => {
-    expect(parseArguments({ args: ["nms", "cmd", "cmdvalue", "--opr"], definition: def, cliOptions })).toStrictEqual({
-      options: expect.anything(),
-      location: expect.anything(),
-      errors: ['Unknown option "--opr". Did you mean "--opt" ?'],
-    });
+    expect(parseArguments({ args: ["nms", "cmd", "cmdvalue", "--opr"], definition: def, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        errors: ['Unknown option "--opr". Did you mean "--opt" ?'],
+      }),
+    );
   });
   it("Returns error if option has incorrect value", () => {
     expect(
       parseArguments({ args: ["nms", "cmd", "cmdvalue", "--opt", "true"], definition: def, cliOptions }),
-    ).toStrictEqual({
-      options: expect.anything(),
-      location: expect.anything(),
-      errors: ['Wrong value for option "--opt". Expected <number> but found "true"'],
-    });
+    ).toStrictEqual(
+      expect.objectContaining({
+        errors: ['Wrong value for option "--opt". Expected <number> but found "true"'],
+      }),
+    );
   });
   it("Option alias should have preference over other option values", () => {
-    expect(parseArguments({ args: ["nms", "cmd", "--opt", "1"], definition: def, cliOptions })).toStrictEqual({
-      options: { cmd: undefined, opt: 1, globalOption: "globalvalue", _: [] },
-      location: expect.anything(),
-      errors: [],
-    });
+    expect(parseArguments({ args: ["nms", "cmd", "--opt", "1"], definition: def, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        options: { cmd: undefined, opt: 1, globalOption: "globalvalue", _: [] },
+        errors: [],
+      }),
+    );
   });
   it("[Option.required] Return error if required option not provided", () => {
     const definition = new Cli({ opt: { required: true } }).definition;
-    expect(parseArguments({ args: [], definition: definition as Definition, cliOptions })).toStrictEqual({
-      options: expect.anything(),
-      location: [],
-      errors: ['Missing required option "opt"'],
-    });
+    expect(parseArguments({ args: [], definition: definition as Definition, cliOptions })).toStrictEqual(
+      expect.objectContaining({
+        errors: ['Missing required option "opt"'],
+      }),
+    );
   });
   describe("Option.requires", () => {
     it("Return error if some key in option.requires not present", () => {
       const definition = new Cli({ opt: { requires: ["not-present-1", "not-present-2"] } }).definition;
       expect(
         parseArguments({ args: ["--opt", "optvalue"], definition: definition as Definition, cliOptions }),
-      ).toStrictEqual({
-        options: expect.anything(),
-        location: [],
-        errors: ['Missing dependencies for option "opt": opt->not-present-1, opt->not-present-2'],
-      });
+      ).toStrictEqual(
+        expect.objectContaining({
+          errors: ['Missing dependencies for option "opt": opt->not-present-1, opt->not-present-2'],
+        }),
+      );
     });
     it("Error only reported if configured option is present", () => {
       const definition = new Cli({ opt: { requires: ["not-present-1", "not-present-2"] } }).definition;
-      expect(parseArguments({ args: [], definition: definition as Definition, cliOptions })).toStrictEqual({
-        options: expect.anything(),
-        location: [],
-        errors: [],
-      });
+      expect(parseArguments({ args: [], definition: definition as Definition, cliOptions })).toStrictEqual(
+        expect.objectContaining({
+          errors: [],
+        }),
+      );
     });
     it("Specify list using function", () => {
       const definition = new Cli({ opt: { requires: (v) => [(v as string).concat("__")] } }).definition;
       expect(
         parseArguments({ args: ["--opt", "optvalue"], definition: definition as Definition, cliOptions }),
-      ).toStrictEqual({
-        options: expect.anything(),
-        location: [],
-        errors: ['Missing dependencies for option "opt": opt->optvalue__'],
-      });
+      ).toStrictEqual(
+        expect.objectContaining({
+          location: [],
+          errors: ['Missing dependencies for option "opt": opt->optvalue__'],
+        }),
+      );
     });
     it("Do not return error if all keys present", () => {
       const definition = new Cli({ opt: { requires: ["opt"] } }).definition;
       expect(
         parseArguments({ args: ["--opt", "optvalue"], definition: definition as Definition, cliOptions }),
-      ).toStrictEqual({
-        options: expect.anything(),
-        location: [],
-        errors: [],
-      });
+      ).toStrictEqual(
+        expect.objectContaining({
+          location: [],
+          errors: [],
+          rawLocation: [],
+        }),
+      );
     });
   });
   it("Detect '--' delimiter", () => {
@@ -561,6 +586,7 @@ describe("parseArguments", () => {
       options: { opt: "optvalue", __: ["firstparam-a firstparam-b", "secondparam"], _: [] },
       location: ["nms", "cmd"],
       errors: [],
+      rawLocation: ["nms", "cmd"],
     });
   });
   it('Unknown option is included in "_"', () => {
@@ -571,6 +597,7 @@ describe("parseArguments", () => {
       options: { _: ["extra"] },
       location: [],
       errors: ['Command "extra" not found. Did you mean "cmd" ?', 'Unknown option "extra"'],
+      rawLocation: [],
     });
   });
   it("Positional option (numerical)", () => {
@@ -585,6 +612,7 @@ describe("parseArguments", () => {
       options: { _: ["extra"], opt: "optvalue", opt2: "opt2value" },
       location: [],
       errors: ['Unknown option "extra"'],
+      rawLocation: [],
     });
     expect(
       parseArguments({
@@ -592,13 +620,14 @@ describe("parseArguments", () => {
         definition: { opt: { ...definition.opt, enum: ["optv1", "optv2"] } },
         cliOptions,
       }),
-    ).toStrictEqual({
-      options: { _: [] },
-      errors: ['Wrong value for option "opt". Expected \'optv1 | optv2\' but found "optvalue"'],
-      location: expect.anything(),
-    });
+    ).toStrictEqual(
+      expect.objectContaining({
+        options: { _: [] },
+        errors: ['Wrong value for option "opt". Expected \'optv1 | optv2\' but found "optvalue"'],
+      }),
+    );
   });
-  it("Positional option (numerical, negative)", () => {
+  it("Positional option (only numerical(-)) - does not capture due to missing positional.true", () => {
     const { definition, options } = new Cli(
       { optLast: { positional: -1 }, optPrevLast: { positional: -2 } },
       baseConfig,
@@ -610,9 +639,28 @@ describe("parseArguments", () => {
         cliOptions: options,
       }),
     ).toStrictEqual({
-      options: { _: ["extra"], optLast: "opt-last", optPrevLast: "opt-prev-last" },
+      options: { _: ["extra", "opt-prev-last", "opt-last"] },
       location: [],
-      errors: ['Unknown option "extra"'],
+      errors: ['Unknown option "extra"', 'Unknown option "opt-prev-last"', 'Unknown option "opt-last"'],
+      rawLocation: [],
+    });
+  });
+  it("Positional option (true + numerical(-))", () => {
+    const { definition, options } = new Cli(
+      { captureAll: { positional: true }, optLast: { positional: -1 }, optPrevLast: { positional: -2 } },
+      baseConfig,
+    );
+    expect(
+      parseArguments({
+        args: ["capture-all", "opt-prev-last", "opt-last"],
+        definition: definition as Definition,
+        cliOptions: options,
+      }),
+    ).toStrictEqual({
+      options: { _: [], captureAll: ["capture-all"], optLast: "opt-last", optPrevLast: "opt-prev-last" },
+      location: [],
+      errors: [],
+      rawLocation: [],
     });
   });
   it("Positional option (true)", () => {
@@ -627,9 +675,10 @@ describe("parseArguments", () => {
       options: { _: [], opt: "optvalue2", popt: ["extra", "extra2", "extra3"] },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
-  it("Positional option (numerical & true) - numerical has precendence", () => {
+  it("Positional option (numerical(+) & true) - numerical(+) has precendence", () => {
     const { definition, options } = new Cli({ opt: { positional: true }, opt2: { positional: 1 } }, baseConfig);
     expect(
       parseArguments({
@@ -641,9 +690,10 @@ describe("parseArguments", () => {
       options: { _: [], opt: ["optvalue", "optvalue2"], opt2: "opt2value" },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
-  it("Positional option (numerical-negative & true)", () => {
+  it("Positional option (numerical(-) & true)", () => {
     const { definition, options } = new Cli(
       { captureAll: { positional: true }, optLast: { positional: -1 } },
       baseConfig,
@@ -658,9 +708,10 @@ describe("parseArguments", () => {
       options: { _: [], captureAll: ["extra-1", "extra-2"], optLast: "opt-last" },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
-  it("Positional option (numerical-negative & true:required)", () => {
+  it("Positional option (numerical(-) & true) - single arg", () => {
     const { definition, options } = new Cli(
       { captureAll: { positional: true, required: true }, optLast: { positional: -1 } },
       baseConfig,
@@ -672,9 +723,10 @@ describe("parseArguments", () => {
         cliOptions: options,
       }),
     ).toStrictEqual({
-      options: { _: [], optLast: "opt-value" },
+      options: { _: [], captureAll: ["opt-value"] },
       location: [],
-      errors: ['Missing required option "captureAll"'],
+      errors: [],
+      rawLocation: [],
     });
   });
   it("Positional option (numerical) non-required - conflicting with alias", () => {
@@ -685,6 +737,7 @@ describe("parseArguments", () => {
       options: { _: [], regopt: true },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
   it("Positional option (numerical) required - conflicting with alias", () => {
@@ -698,6 +751,7 @@ describe("parseArguments", () => {
       options: { _: [], regopt: true },
       location: [],
       errors: ['Missing required option "opt"'],
+      rawLocation: [],
     });
   });
   it("Multiple non-required positional options (numerical) - conflicting with alias", () => {
@@ -711,6 +765,7 @@ describe("parseArguments", () => {
       options: { _: [], regopt: false },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
   it("Asigning positional option via alias", () => {
@@ -725,6 +780,7 @@ describe("parseArguments", () => {
       options: { _: [], regopt: true, opt: "optvalue" },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
   it("Positional option inside command's options", () => {
@@ -739,6 +795,7 @@ describe("parseArguments", () => {
       options: { _: [], regopt: "regoptvalue", opt: "optvalue" },
       location: ["cmd"],
       errors: [],
+      rawLocation: ["cmd"],
     });
   });
   it("Parse {long-alias}={value}", () => {
@@ -753,6 +810,7 @@ describe("parseArguments", () => {
       options: { _: [], opt: "optvalue", opt2: "opt2value" },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
   it("Parse {short-alias}{value}", () => {
@@ -767,6 +825,7 @@ describe("parseArguments", () => {
       options: { _: [], opt: "optvalue", opt2: "opt2value" },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
   it("Parse multiple boolean short flags", () => {
@@ -779,6 +838,7 @@ describe("parseArguments", () => {
         options: { _: [], a: true, b: true, c: true },
         location: [],
         errors: [],
+        rawLocation: [],
       },
     );
     expect(
@@ -787,6 +847,7 @@ describe("parseArguments", () => {
       options: { _: [], a: true, b: true, c: true },
       location: [],
       errors: [],
+      rawLocation: [],
     });
     // Repeated aliases
     expect(
@@ -795,6 +856,7 @@ describe("parseArguments", () => {
       options: { _: [], a: true, b: true, c: true },
       location: [],
       errors: [],
+      rawLocation: [],
     });
   });
 });

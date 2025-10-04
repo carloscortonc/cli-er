@@ -116,7 +116,8 @@ export default class Cli {
    * @param {string[]} args list of arguments to be processed
    */
   parse(args: string[]): ParsingOutput {
-    return parseArguments({ args, definition: this.definition, cliOptions: this.options });
+    const po = parseArguments({ args, definition: this.definition, cliOptions: this.options });
+    return delete (po as Partial<ReturnType<typeof parseArguments>>)["rawLocation"], po;
   }
   /**
    * Run the provided argument list. This defaults to `process.argv.slice(2)`
@@ -125,7 +126,7 @@ export default class Cli {
    */
   run(args?: string[]): void | Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
-    const opts = parseArguments({
+    const { rawLocation, ...opts } = parseArguments({
       args: args_,
       definition: this.definition,
       cliOptions: this.options,
@@ -159,7 +160,7 @@ export default class Cli {
       if (onGenerateHelpErrors.length > 0) {
         Cli.logger.error(onGenerateHelpErrors[0].e, "\n");
       }
-      return generateScopedHelp(this.definition, opts.location, this.options);
+      return generateScopedHelp(this.definition, rawLocation, this.options);
     } else if (this.options.help.autoInclude) {
       delete opts.options.help;
     }
