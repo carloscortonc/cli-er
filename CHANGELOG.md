@@ -1,3 +1,11 @@
+## [0.18.1](https://github.com/carloscortonc/cli-er/compare/v0.18.0...v0.18.1) (2025-10-04)
+
+
+### Bug Fixes
+
+* priority on negative positional values ([#116](https://github.com/carloscortonc/cli-er/issues/116)) ([4b5d7ec](https://github.com/carloscortonc/cli-er/commit/4b5d7ecf17c21910b76ebbecebc87629fc261653))
+* wrong help generation when default command applied ([#115](https://github.com/carloscortonc/cli-er/issues/115)) ([9d396b8](https://github.com/carloscortonc/cli-er/commit/9d396b8c08acf3b68c6bbe21e99b0d9e0e2f475a))
+
 # [0.18.0](https://github.com/carloscortonc/cli-er/compare/v0.17.0...v0.18.0) (2025-09-26)
 
 
