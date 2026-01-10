@@ -100,15 +100,16 @@ export type Namespace = BaseElement & {
   default?: string;
 };
 
-export type Command = Pick<Option, "aliases"> & {
-  kind: `${Kind.COMMAND}`;
-  /** Nested options definition */
-  options?: Definition<Option>;
-  /** Action to be executed when matched */
-  action?: (out: ParsingOutput) => void;
-  /** Specify the `Usage` section to be used in the generated help */
-  usage?: string;
-};
+export type Command = BaseElement &
+  Pick<Option, "aliases"> & {
+    kind: `${Kind.COMMAND}`;
+    /** Nested options definition */
+    options?: Definition<Option>;
+    /** Action to be executed when matched */
+    action?: (out: ParsingOutput) => void;
+    /** Specify the `Usage` section to be used in the generated help */
+    usage?: string;
+  };
 
 export type Definition<T = Namespace | Command | Option> = {
   [key: string]: T;
