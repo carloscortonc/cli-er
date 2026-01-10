@@ -1,3 +1,10 @@
+## [0.18.2](https://github.com/carloscortonc/cli-er/compare/v0.18.1...v0.18.2) (2026-01-10)
+
+
+### Bug Fixes
+
+* remove default content when usage is provided ([#120](https://github.com/carloscortonc/cli-er/issues/120)) ([480c175](https://github.com/carloscortonc/cli-er/commit/480c1756ee193593ccbb0fa34ad876abffabae0a))
+
 ## [0.18.1](https://github.com/carloscortonc/cli-er/compare/v0.18.0...v0.18.1) (2025-10-04)
 
 
