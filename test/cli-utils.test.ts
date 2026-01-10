@@ -1087,7 +1087,7 @@ This is a custom footer
     generateScopedHelp(def, ["cmd"], cliOptions);
     expect(output).toStrictEqual(
       expect.stringContaining(`
-Usage:  cli-name cmd Custom Usage
+Usage:  cli-name Custom Usage
 `),
     );
   });

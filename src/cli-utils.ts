@@ -577,15 +577,14 @@ export function generateScopedHelp(
       .join(" ");
   };
 
-  const usageCommonHeader = [`${Cli.formatMessage("generate-help.usage")}:  ${cliOptions.cliName}`, location.join(" ")]
-    .filter((e) => e)
-    .join(" ");
+  const usagePrefix = `${Cli.formatMessage("generate-help.usage")}:  ${cliOptions.cliName}`;
+  const usageCommonHeader = [usagePrefix, location.join(" ")].filter((e) => e).join(" ");
 
   // Check whether options hint ("[OPTIONS]") should be included before or after positional-options
   const includeOptsHintBeforePositional = positionalOptions.some((p) => typeof p.index === "number" && p.index < 0);
   sections[HELP_SECTIONS.USAGE] =
     element?.kind === Kind.COMMAND && element.usage
-      ? usageCommonHeader.concat(" ", element.usage)
+      ? usagePrefix.concat(" ", element.usage)
       : [
           usageCommonHeader,
           formatKinds(existingKinds),
