@@ -1,0 +1,10 @@
+{
+  "name": "tail",
+  "version": "1.0.0",
+  "main": "tail.js",
+  "type": "module",
+  "author": "carloscortonc",
+  "dependencies": {
+    "cli-er": "0.19.0"
+  }
+}
