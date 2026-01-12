@@ -1,3 +1,4 @@
+import fs from "fs";
 import { Kind, Type, ValueParserInput, ValueParserOutput } from "./types";
 import Cli from ".";
 import { quote } from "./utils";
@@ -20,7 +21,7 @@ const validateEnum = (values: (string | number | undefined)[], opt: ValueParserI
 };
 
 /** Evaluate the value of an option */
-export default function parseOptionValue({ value, current, option }: ValueParserInput): ValueParserOutput {
+export default function parseOptionValue({ value: rawValue, current, option }: ValueParserInput): ValueParserOutput {
   const type = option.type as Type;
   const defaultParserOutput = {
     /* Calculated value */
@@ -29,18 +30,21 @@ export default function parseOptionValue({ value, current, option }: ValueParser
     next: undefined,
     /* Error found, if any */
     error:
-      value === undefined && option.kind === Kind.OPTION
+      rawValue === undefined && option.kind === Kind.OPTION
         ? Cli.formatMessage("option_missing_value", { type, option: option.key })
         : undefined,
   };
   const wrongValueError = Cli.formatMessage("option_wrong_value", {
     option: option.key,
     expected: `<${type}>`,
-    found: value!,
+    found: rawValue!,
   });
+  // Check whether we should read value from stdin
+  const value =
+    rawValue === "-" && option.stdin && !process.stdin.isTTY ? fs.readFileSync(0, "utf-8").trim() : rawValue;
 
   /** Implemented parsers */
-  const valueParsers: { [key in Type]: Partial<ValueParserOutput> | (() => Partial<ValueParserOutput>) } = {
+  const valueParsers: { [key in Type]: () => Partial<ValueParserOutput> } = {
     [Type.STRING]: () => ({
       value,
       error: defaultParserOutput.error || validateEnum([value], option),
@@ -73,7 +77,6 @@ export default function parseOptionValue({ value, current, option }: ValueParser
     },
   };
 
-  const currentTypeParser = valueParsers[type];
-  const parserOutput = typeof currentTypeParser === "function" ? currentTypeParser() : currentTypeParser;
+  const parserOutput = valueParsers[type]();
   return { ...defaultParserOutput, ...parserOutput };
 }

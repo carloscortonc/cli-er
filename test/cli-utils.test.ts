@@ -360,6 +360,27 @@ describe("parseArguments", () => {
       }),
     );
   });
+  describe("Option.stdin", () => {
+    it("No '-' provided", () => {
+      const d = new Cli({ opt: { stdin: true } }).definition;
+      expect(parseArguments({ args: [], definition: d, cliOptions }).options.opt).toBe(undefined);
+    });
+    it("'-' provided, isTTY=true", () => {
+      const i = process.stdin.isTTY;
+      process.stdin.isTTY = true;
+      const d = new Cli({ opt: { stdin: true } }).definition;
+      expect(parseArguments({ args: ["--opt", "-"], definition: d, cliOptions }).options.opt).toBe("-");
+      process.stdin.isTTY = i;
+    });
+    it("'-' provided, isTTY=undefined - read stdin", () => {
+      const i = process.stdin.isTTY;
+      process.stdin.isTTY = undefined as any;
+      jest.spyOn(fs, "readFileSync").mockImplementation(() => "stdin-value");
+      const d = new Cli({ opt: { stdin: true } }).definition;
+      expect(parseArguments({ args: ["--opt", "-"], definition: d, cliOptions }).options.opt).toBe("stdin-value");
+      process.stdin.isTTY = i;
+    });
+  });
   it("No arguments", () => {
     //Get completed definition from Cli
     expect(parseArguments({ args: [], definition: def, cliOptions })).toStrictEqual({
