@@ -57,6 +57,7 @@ type Option = BaseElement & {
   negatable?: boolean;
   default?: any;
   required?: boolean;
+  stdin?: boolean;
   type?: "string" | "boolean" | "list" | "number" | "float";
   enum?: (string | number)[];
   parser?: (input: ValueParserInput) => ValueParserOutput;
@@ -67,6 +68,7 @@ type Option = BaseElement & {
 - **positional**: enables [positional options](#positional-options). Default: `false`
 - **negatable**: whether to include [negated aliases](#negated-aliases) in boolean options. Default: `false`
 - **default**: default value for the option.
+- **stdin**: whether stdin is allowed. Read [below](#reading-from-stdin) how it behaves.
 - **required**: specifies an option as required, generating an error if a value is not provided. Default: `false`
 - **type**: type of option, to load the appropriate parser. Default: `string`
 - **enum**: restrict the possible option-values based on the given list. Available for option-types `string`, `list`, `number` and `float`.
@@ -114,6 +116,17 @@ new Cli({ debug: { type: "boolean", negatable: true }}, { cliName: "cli" })
 ```
 
 **Example**: [secondary-cli](/examples/options-only/secondary-cli.js)
+
+### Reading from stdin
+An option can be configured to read its value from stdin. For this to happen, the following conditions must be met:
+- The option is configured with `stdin: true`
+- The value provided for the option is `-` (based on [conventions](https://www.baeldung.com/linux/dash-in-command-line-parameters))
+- stdin data is available
+
+This forces a value `"-"` to be provided in order to read from stdin.
+If this not desired (many commands like `cat` or `tail` read from stdin without requiring this dash value), you could write the logic yourself, as demonstrated in this [`tail-v2`](/examples/tail/tail-v2.js) example.
+
+**Example**: [tail](/examples/tail/tail.js)
 
 ### Custom parser
 ```typescript

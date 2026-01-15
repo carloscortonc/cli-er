@@ -76,6 +76,10 @@ export type Option = BaseElement & {
   negatable?: boolean;
   /** Default value for the option */
   default?: OptionValue;
+  /** Whether stdin is allowed
+   * @default false
+   */
+  stdin?: boolean;
   /** Whether is required or not
    * @default false
    */
