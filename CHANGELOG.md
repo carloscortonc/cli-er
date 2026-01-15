@@ -1,3 +1,10 @@
+# [0.19.0](https://github.com/carloscortonc/cli-er/compare/v0.18.2...v0.19.0) (2026-01-15)
+
+
+### Features
+
+* support dash `-` for stdin ([#125](https://github.com/carloscortonc/cli-er/issues/125)) ([0432115](https://github.com/carloscortonc/cli-er/commit/04321154b6943f8c998b5bc204ef39616dc04dcd))
+
 ## [0.18.2](https://github.com/carloscortonc/cli-er/compare/v0.18.1...v0.18.2) (2026-01-10)
 
 
