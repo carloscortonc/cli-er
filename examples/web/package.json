@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "bundle": "browserify cli.js -p esmify --require ./fs.js:fs  --igv=__filename,__dirname,Buffer,global > cli.web.js",
-    "start": "bun index.html",
+    "start": "bunx http-server . -p 3000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
