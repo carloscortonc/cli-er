@@ -4,8 +4,9 @@
   "main": "cli.js",
   "type": "module",
   "scripts": {
-    "bundle": "browserify cli.js -p esmify --require ./fs.js:fs  --igv=__filename,__dirname,Buffer,global > cli.web.js",
-    "start": "bunx http-server . -p 3000",
+    "build": "npm --prefix .. ci && npm --prefix .. run build && node scripts/browserify.js > ${OUTPUT_DIR:-dist}/cli.web.js",
+    "bundle": "rm -rf dist && cp -R public/. dist/ && npm run build && node scripts/inject-base.cjs",
+    "start": "OUTPUT_DIR=public npm run build && bunx http-server public -p 3000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

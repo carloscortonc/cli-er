@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- base-inject -->
+    <link rel="shortcut icon" href="./assets/favicon.ico" />
+    <script>
+      window.CLI_COLUMNS = 100;
+      // List of available commands
+      window.CLI_COMMAND_LIST = ["commands", "help"];
+    </script>
+    <script src="./cli.web.js"></script>
+    <style>
+      :root {
+        --text-color: #e0dede;
+      }
+      * {
+        font-family: monospace;
+        font-size: 15px;
+      }
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+      .header {
+        margin-bottom: 40px;
+        text-align: center;
+      }
+      .title {
+        font-size: 17px;
+      }
+      .title > span {
+        font-size: inherit;
+        font-weight: bolder;
+      }
+      .hint {
+        font-size: 14px;
+      }
+      .hint > span {
+        font-size: inherit;
+        font-style: italic;
+      }
+      body {
+        background: #212221;
+        color: var(--text-color);
+        margin: 20px 40px;
+        width: calc(100% - 80px);
+      }
+      .input-wrapper {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 4px;
+      }
+      #input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        outline: none;
+        color: var(--text-color);
+      }
+      #output.error {
+        color: #d96464;
+      }
+    </style>
+    <title>Cli on the Web</title>
+  </head>
+  <body>
+    <div class="header">
+      <p class="title"><span>cli-er</span> - Modular Command-Line Interface Builder</p>
+      <p class="hint">Type <span>commands</span> to get a list of available commands</p>
+    </div>
+    <div class="input-wrapper">$<input type="text" id="input" /></div>
+    <pre id="output"></pre>
+    <script type="module">
+      window.CLI_COMMANDS = {};
+      for (const c of CLI_COMMAND_LIST) {
+        const spec = await import(`./commands/${c}.js`).then((r) => r.default);
+        spec && (window.CLI_COMMANDS[c] = spec);
+      }
+
+      // Create handler for command actions
+      const blobSource = "export default (...args) => window.CLI_ACTION_REF(...args);";
+      const blob = new Blob([blobSource], { type: "text/javascript" });
+      const url = URL.createObjectURL(blob);
+      require("url").pathToFileURL = () => ({ href: url });
+
+      let [i, o] = ["input", "output"].map((id) => document.getElementById(id));
+      document.addEventListener("click", () => i.focus());
+      // Capture cli output
+      process.stdout.write = (v) => (o.classList.remove("error"), (o.innerText = v));
+      process.stderr.write = (v) => (o.classList.add("error"), (o.innerText = v));
+
+      i.addEventListener("keydown", (e) => {
+        if (e.key == "Enter") {
+          const [cmd, ...args] = i.value.split(" ");
+          if (!cmd) return;
+          i.value = "";
+
+          const cliSpec = CLI_COMMANDS[cmd];
+          if (!cliSpec) {
+            return process.stderr.write(`Command not found: "${cmd}"`);
+          }
+
+          window.CLI_ACTION_REF = cliSpec[2];
+          new Cli(cliSpec[0], { ...cliSpec[1], cliName: cmd }).run(args);
+        }
+      });
+    </script>
+  </body>
+</html>
