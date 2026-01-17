@@ -1,7 +1,7 @@
 export default [
   {},
   { cliDescription: "List available commands" },
-  (p) => {
-    Cli.logger.log("[Command::action]", p);
+  () => {
+    Cli.logger.log("Available commands: ", Object.keys(CLI_COMMANDS).join(", "));
   },
 ];

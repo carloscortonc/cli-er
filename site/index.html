@@ -6,7 +6,7 @@
     <script>
       window.CLI_COLUMNS = 100;
       // List of available commands
-      window.CLI_COMMAND_LIST = ["commands"];
+      window.CLI_COMMAND_LIST = ["commands", "help"];
     </script>
     <script src="./cli.web.js"></script>
     <style>
@@ -26,9 +26,21 @@
       }
       .header {
         margin-bottom: 40px;
+        text-align: center;
       }
-      .cli-name {
+      .title {
+        font-size: 17px;
+      }
+      .title > span {
+        font-size: inherit;
         font-weight: bolder;
+      }
+      .hint {
+        font-size: 14px;
+      }
+      .hint > span {
+        font-size: inherit;
+        font-style: italic;
       }
       body {
         background: #212221;
@@ -56,46 +68,44 @@
     <title>Cli on the Web</title>
   </head>
   <body>
-    <p class="header"><span class="cli-name">cli-er</span> - Modular Command-Line Interface Builder</p>
+    <div class="header">
+      <p class="title"><span>cli-er</span> - Modular Command-Line Interface Builder</p>
+      <p class="hint">Type <span>commands</span> to get a list of available commands</p>
+    </div>
     <div class="input-wrapper">$<input type="text" id="input" /></div>
     <pre id="output"></pre>
     <script type="module">
-      /* window.CLI_COMMANDS = {};
-      for(const c of CLI_COMMAND_LIST){
-        const spec  = await import(`./commands/${c}.js`).then(r => r.default);
+      window.CLI_COMMANDS = {};
+      for (const c of CLI_COMMAND_LIST) {
+        const spec = await import(`./commands/${c}.js`).then((r) => r.default);
         spec && (window.CLI_COMMANDS[c] = spec);
-      } */
-      // import definition from "./definition.json" with { type: "json"};
-      import spec from "./commands/commands.js";
-      window.CLI_ACTION_REF = spec[2];
-      const blobSource = "export default window.CLI_ACTION_REF;";
+      }
+
+      // Create handler for command actions
+      const blobSource = "export default (...args) => window.CLI_ACTION_REF(...args);";
       const blob = new Blob([blobSource], { type: "text/javascript" });
       const url = URL.createObjectURL(blob);
       require("url").pathToFileURL = () => ({ href: url });
 
-      //   import test from "./command.js";
-      //   console.log(def);
       let [i, o] = ["input", "output"].map((id) => document.getElementById(id));
       document.addEventListener("click", () => i.focus());
       // Capture cli output
       process.stdout.write = (v) => (o.classList.remove("error"), (o.innerText = v));
       process.stderr.write = (v) => (o.classList.add("error"), (o.innerText = v));
 
-      //   const definition = await fetch("./definition.json").then((r) => r.json());
-      //   const definition = { cmd: { kind: "command", action: console.log } };
-      // const cli = new Cli(definition, { cliName: "web-cli" });
-      const cli = new Cli(spec[0], spec[1]);
       i.addEventListener("keydown", (e) => {
         if (e.key == "Enter") {
-          const args = i.value.split(" ");
+          const [cmd, ...args] = i.value.split(" ");
+          if (!cmd) return;
           i.value = "";
-          /* if (args[0] !== "docker") {
-            // import("./command.js").then((r) => console.log(r.default));
-            // import("./definition.json", { with: { type: "json" } }).then((r) => console.log(r.default));
-            return Cli.logger.error(`Command not found "${args[0]}"`);
-          } */
 
-          cli.run(args.slice(1));
+          const cliSpec = CLI_COMMANDS[cmd];
+          if (!cliSpec) {
+            return process.stderr.write(`Command not found: "${cmd}"`);
+          }
+
+          window.CLI_ACTION_REF = cliSpec[2];
+          new Cli(cliSpec[0], cliSpec[1]).run(args);
         }
       });
     </script>

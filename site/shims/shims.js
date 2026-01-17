@@ -7,6 +7,3 @@ window.process = {
   env: {},
   exit: noop,
 };
-var require = require || {};
-Object.assign(require, { main: {} });
-Object.assign(require.main, { filename: "$" });

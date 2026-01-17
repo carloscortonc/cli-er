@@ -4,7 +4,7 @@
   "main": "cli.js",
   "type": "module",
   "scripts": {
-    "bundle": "browserify cli.js -p esmify --require ./shims/fs.js:fs --require ./shims/url.js:url --igv=__filename,__dirname,Buffer,global > cli.web.js",
+    "bundle": "node browserify.js",
     "start": "bunx http-server . -p 3000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
