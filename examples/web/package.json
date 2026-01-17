@@ -1,0 +1,21 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "main": "cli.js",
+  "type": "module",
+  "scripts": {
+    "bundle": "browserify cli.js -p esmify --require ./fs.js:fs  --igv=__filename,__dirname,Buffer,global > cli.web.js",
+    "start": "bunx http-server . -p 3000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "browserify": "^17.0.1",
+    "browserify-fs": "^1.0.0",
+    "cli-er": "^0.19.0",
+    "esmify": "^2.1.1"
+  }
+}
