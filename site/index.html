@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      window.CLI_COLUMNS = 100;
+      // List of available commands
+      window.CLI_COMMAND_LIST = ["commands"];
+    </script>
+    <script src="./cli.web.js"></script>
+    <style>
+      :root {
+        --text-color: #e0dede;
+      }
+      * {
+        font-family: monospace;
+        font-size: 15px;
+      }
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+      .header {
+        margin-bottom: 40px;
+      }
+      .cli-name {
+        font-weight: bolder;
+      }
+      body {
+        background: #212221;
+        color: var(--text-color);
+        margin: 20px 40px;
+        width: calc(100% - 80px);
+      }
+      .input-wrapper {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 4px;
+      }
+      #input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        outline: none;
+        color: var(--text-color);
+      }
+      #output.error {
+        color: #d96464;
+      }
+    </style>
+    <title>Cli on the Web</title>
+  </head>
+  <body>
+    <p class="header"><span class="cli-name">cli-er</span> - Modular Command-Line Interface Builder</p>
+    <div class="input-wrapper">$<input type="text" id="input" /></div>
+    <pre id="output"></pre>
+    <script type="module">
+      /* window.CLI_COMMANDS = {};
+      for(const c of CLI_COMMAND_LIST){
+        const spec  = await import(`./commands/${c}.js`).then(r => r.default);
+        spec && (window.CLI_COMMANDS[c] = spec);
+      } */
+      // import definition from "./definition.json" with { type: "json"};
+      import spec from "./commands/commands.js";
+      window.CLI_ACTION_REF = spec[2];
+      const blobSource = "export default window.CLI_ACTION_REF;";
+      const blob = new Blob([blobSource], { type: "text/javascript" });
+      const url = URL.createObjectURL(blob);
+      require("url").pathToFileURL = () => ({ href: url });
+
+      //   import test from "./command.js";
+      //   console.log(def);
+      let [i, o] = ["input", "output"].map((id) => document.getElementById(id));
+      document.addEventListener("click", () => i.focus());
+      // Capture cli output
+      process.stdout.write = (v) => (o.classList.remove("error"), (o.innerText = v));
+      process.stderr.write = (v) => (o.classList.add("error"), (o.innerText = v));
+
+      //   const definition = await fetch("./definition.json").then((r) => r.json());
+      //   const definition = { cmd: { kind: "command", action: console.log } };
+      // const cli = new Cli(definition, { cliName: "web-cli" });
+      const cli = new Cli(spec[0], spec[1]);
+      i.addEventListener("keydown", (e) => {
+        if (e.key == "Enter") {
+          const args = i.value.split(" ");
+          i.value = "";
+          /* if (args[0] !== "docker") {
+            // import("./command.js").then((r) => console.log(r.default));
+            // import("./definition.json", { with: { type: "json" } }).then((r) => console.log(r.default));
+            return Cli.logger.error(`Command not found "${args[0]}"`);
+          } */
+
+          cli.run(args.slice(1));
+        }
+      });
+    </script>
+  </body>
+</html>
