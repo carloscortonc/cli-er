@@ -54,16 +54,20 @@
         display: flex;
         align-items: center;
         width: 100%;
-        gap: 4px;
+        gap: 8px;
       }
       #input {
         width: 100%;
         border: none;
         background: transparent;
         outline: none;
+        padding: 0;
         color: var(--text-color);
       }
-      #output.error {
+      #output > pre {
+        margin: 6px 0 10px;
+      }
+      #output > pre.error {
         color: #d96464;
       }
     </style>
@@ -74,9 +78,10 @@
       <p class="title"><span>cli-er</span> - Modular Command-Line Interface Builder</p>
       <p class="hint">Type <span>commands</span> to get a list of available commands</p>
     </div>
+    <div id="output"></div>
     <div class="input-wrapper">$<input type="text" id="input" /></div>
-    <pre id="output"></pre>
     <script type="module">
+      import * as renderer from "./renderer.js";
       window.CLI_COMMANDS = {};
       for (const c of CLI_COMMAND_LIST) {
         const spec = await import(`./commands/${c}.js`).then((r) => r.default);
@@ -91,15 +96,21 @@
 
       let [i, o] = ["input", "output"].map((id) => document.getElementById(id));
       document.addEventListener("click", () => i.focus());
+
       // Capture cli output
-      process.stdout.write = (v) => (o.classList.remove("error"), (o.innerText = v));
-      process.stderr.write = (v) => (o.classList.add("error"), (o.innerText = v));
+      process.stdout.write = (v) => renderer.renderOutput(v, false);
+      process.stderr.write = (v) => renderer.renderOutput(v, true);
 
       i.addEventListener("keydown", (e) => {
         if (e.key == "Enter") {
           const [cmd, ...args] = i.value.split(" ");
           if (!cmd) return;
+          renderer.renderInput(i.value);
           i.value = "";
+          // Handle special commands
+          if (cmd === "clear") {
+            return renderer.clearOutput();
+          }
 
           const cliSpec = CLI_COMMANDS[cmd];
           if (!cliSpec) {
