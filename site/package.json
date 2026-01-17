@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "npm --prefix .. ci && npm --prefix .. run build && node scripts/browserify.js > ${OUTPUT_DIR:-dist}/cli.web.js",
-    "bundle": "rm -rf dist && cp -R src/. dist/ && npm run build && node scripts/inject-base.cjs",
-    "start": "OUTPUT_DIR=src npm run build && bunx http-server src -p 3000",
+    "bundle": "rm -rf dist && cp -R public/. dist/ && npm run build && node scripts/inject-base.cjs",
+    "start": "OUTPUT_DIR=public npm run build && bunx http-server public -p 3000",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
