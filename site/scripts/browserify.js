@@ -1,5 +1,4 @@
 import browserify from "browserify";
-import fs from "fs";
 
 const b = browserify({
   entries: ["cli.js"],
@@ -20,4 +19,4 @@ b.require("./shims/fs.js", { expose: "fs" });
 b.require("./shims/url.js", { expose: "url" });
 
 // bundle output
-b.bundle().pipe(fs.createWriteStream("cli.web.js"));
+b.bundle().pipe(process.stdout);

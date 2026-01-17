@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- base-inject -->
     <script>
       window.CLI_COLUMNS = 100;
       // List of available commands
@@ -105,7 +106,7 @@
           }
 
           window.CLI_ACTION_REF = cliSpec[2];
-          new Cli(cliSpec[0], cliSpec[1]).run(args);
+          new Cli(cliSpec[0], { ...cliSpec[1], cliName: cmd }).run(args);
         }
       });
     </script>
