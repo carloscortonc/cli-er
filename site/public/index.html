@@ -88,7 +88,7 @@
       import * as renderer from "./renderer.js";
       import * as history from "./history.js";
 
-      const builtins = { history: history.spec };
+      const builtins = { history: history.spec, clear: renderer.clearSpec };
       window.CLI_COMMANDS = {};
       for (const c of CLI_COMMAND_LIST.concat(Object.keys(builtins))) {
         const builtin = builtins[c];
@@ -116,10 +116,6 @@
           renderer.renderInput(i.value);
           history.add(i.value);
           i.value = "";
-          // Handle special commands
-          if (cmd === "clear") {
-            return renderer.clearOutput();
-          }
 
           const cliSpec = CLI_COMMANDS[cmd];
           if (!cliSpec) {

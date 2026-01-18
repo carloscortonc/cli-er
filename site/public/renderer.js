@@ -27,3 +27,5 @@ export function updateOutput(value) {
 export function clearOutput(e = o) {
   e.innerHTML = "";
 }
+
+export const clearSpec = [{}, { cliDescription: "Clear the terminal screen", help: { hidden: true } }, clearOutput];
