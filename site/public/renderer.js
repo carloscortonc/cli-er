@@ -7,6 +7,11 @@ export function renderInput(value) {
   o.appendChild(input);
 }
 
+export function updateInputValue(value) {
+  i.value = value;
+  i.setSelectionRange(value.length, value.length);
+}
+
 export function renderOutput(value, error) {
   const e = document.createElement("pre");
   e.innerText = value;

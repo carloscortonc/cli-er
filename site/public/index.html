@@ -81,10 +81,15 @@
     <div id="output"></div>
     <div class="input-wrapper">$<input type="text" id="input" /></div>
     <script type="module">
+      import handleKey from "./key-handler.js";
       import * as renderer from "./renderer.js";
+      import * as history from "./history.js";
+
+      const builtins = { history: history.spec };
       window.CLI_COMMANDS = {};
-      for (const c of CLI_COMMAND_LIST) {
-        const spec = await import(`./commands/${c}.js`).then((r) => r.default);
+      for (const c of CLI_COMMAND_LIST.concat(Object.keys(builtins))) {
+        const builtin = builtins[c];
+        const spec = builtin || (await import(`./commands/${c}.js`).then((r) => r.default));
         spec && (window.CLI_COMMANDS[c] = spec);
       }
 
@@ -101,11 +106,12 @@
       process.stdout.write = (v) => renderer.renderOutput(v, false);
       process.stderr.write = (v) => renderer.renderOutput(v, true);
 
-      i.addEventListener("keydown", (e) => {
-        if (e.key == "Enter") {
+      handleKey(i, {
+        Enter: () => {
           const [cmd, ...args] = i.value.split(" ");
           if (!cmd) return;
           renderer.renderInput(i.value);
+          history.add(i.value);
           i.value = "";
           // Handle special commands
           if (cmd === "clear") {
@@ -119,7 +125,19 @@
 
           window.CLI_ACTION_REF = cliSpec[2];
           new Cli(cliSpec[0], { ...cliSpec[1], cliName: cmd }).run(args);
-        }
+        },
+        ArrowUp: (e) => {
+          e.preventDefault();
+          let p = history.previous();
+          if (!p) return;
+          renderer.updateInputValue(p);
+        },
+        ArrowDown: (e) => {
+          e.preventDefault();
+          let n = history.next();
+          if (!n) return;
+          renderer.updateInputValue(n);
+        },
       });
     </script>
   </body>
