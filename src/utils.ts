@@ -111,6 +111,13 @@ export function merge(target: TObject, ...srcValues: TObject[]) {
       }, []),
     );
   }
+  // Include source properties not defined in target
+  for (const s of srcValues) {
+    for (const key in s) {
+      if (key in target) continue;
+      target[key] = s[key];
+    }
+  }
 }
 
 /**
