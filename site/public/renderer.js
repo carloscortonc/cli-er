@@ -4,6 +4,7 @@ export function renderInput(value) {
   const input = document.createElement("div");
   input.className = "input-wrapper";
   input.innerHTML = `$<span>${value}</span>`;
+  clearOutput(oa);
   o.appendChild(input);
 }
 
@@ -28,4 +29,8 @@ export function clearOutput(e = o) {
   e.innerHTML = "";
 }
 
-export const clearSpec = [{}, { cliDescription: "Clear the terminal screen", help: { hidden: true } }, clearOutput];
+export const clearSpec = [
+  {},
+  { cliDescription: "Clear the terminal screen", help: { hidden: true } },
+  () => clearOutput(),
+];
