@@ -12,7 +12,7 @@ export function cmd(params) {
   let end = Math.min(CLI_HISTORY.length - 1, start + size);
 
   let output = CLI_HISTORY.slice(start, end)
-    .map((curr, i) => "".concat((start + i + 1 - historyStart).toString().padStart(3, " "), " ", curr))
+    .map((curr, i) => "".concat((start + i + 1 - historyStart).toString().padStart(3, " "), "  ", curr))
     .join("\n");
   Cli.logger.log(output);
 }
