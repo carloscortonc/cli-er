@@ -64,7 +64,7 @@
         padding: 0;
         color: var(--text-color);
       }
-      #output > pre {
+      pre {
         margin: 6px 0 10px;
       }
       #output > pre.error {
@@ -79,7 +79,10 @@
       <p class="hint">Type <span>commands</span> to get a list of available commands</p>
     </div>
     <div id="output"></div>
-    <div class="input-wrapper">$<input type="text" id="input" /></div>
+    <div class="input-wrapper">
+      $<input type="text" id="input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    </div>
+    <pre id="output-after"></pre>
     <script type="module">
       import handleKey from "./key-handler.js";
       import * as renderer from "./renderer.js";
@@ -99,12 +102,12 @@
       const url = URL.createObjectURL(blob);
       require("url").pathToFileURL = () => ({ href: url });
 
-      let [i, o] = ["input", "output"].map((id) => document.getElementById(id));
+      let [i, o, oa] = ["input", "output", "output-after"].map((id) => document.getElementById(id));
       document.addEventListener("click", () => i.focus());
 
       // Capture cli output
-      process.stdout.write = (v) => renderer.renderOutput(v, false);
-      process.stderr.write = (v) => renderer.renderOutput(v, true);
+      process.stdout.write = (v) => renderer.renderOutput(v);
+      process.stderr.write = (v) => renderer.renderOutput(v, { error: true });
 
       handleKey(i, {
         Enter: () => {
@@ -125,6 +128,16 @@
 
           window.CLI_ACTION_REF = cliSpec[2];
           new Cli(cliSpec[0], { ...cliSpec[1], cliName: cmd }).run(args);
+        },
+        Tab: (e) => {
+          e.preventDefault();
+          const candidates = Object.keys(CLI_COMMANDS).filter((k) => k.startsWith(i.value));
+          if (!candidates.length) return;
+          if (candidates.length === 1) {
+            i.value = candidates[0];
+            return renderer.clearOutput(oa);
+          }
+          renderer.updateOutput(candidates.join("  "));
         },
         ArrowUp: (e) => {
           e.preventDefault();

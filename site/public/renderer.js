@@ -1,4 +1,4 @@
-let [i, o] = ["input", "output"].map((id) => document.getElementById(id));
+let [i, o, oa] = ["input", "output", "output-after"].map((id) => document.getElementById(id));
 
 export function renderInput(value) {
   const input = document.createElement("div");
@@ -12,13 +12,18 @@ export function updateInputValue(value) {
   i.setSelectionRange(value.length, value.length);
 }
 
-export function renderOutput(value, error) {
+export function renderOutput(value, { error } = {}) {
   const e = document.createElement("pre");
   e.innerText = value;
   error && (e.className = "error");
   o.appendChild(e);
+  clearOutput(oa);
 }
 
-export function clearOutput() {
-  o.innerHTML = "";
+export function updateOutput(value) {
+  oa.innerText = value;
+}
+
+export function clearOutput(e = o) {
+  e.innerHTML = "";
 }
