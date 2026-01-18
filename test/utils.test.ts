@@ -151,6 +151,11 @@ describe("merge", () => {
       p3: { p3p1: "p3p1-target", p3p2: "p3p2-source1", p31: { p32p1: "p32p1-source2", p32p2: "p32p2-target" } },
     });
   });
+  it("Include source properties not present in target", () => {
+    const target = { a: { b: { c: 1 } } };
+    merge(target, { a: { b: { d: 2 } } });
+    expect(target).toStrictEqual({ a: { b: { c: 1, d: 2 } } });
+  });
 });
 
 describe("clone", () => {
