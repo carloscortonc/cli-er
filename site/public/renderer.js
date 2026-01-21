@@ -1,4 +1,4 @@
-let [i, o, oa] = ["input", "output", "output-after"].map((id) => document.getElementById(id));
+let [s, i, o, oa] = ["shell", "input", "output", "output-after"].map((id) => document.getElementById(id));
 
 export function renderInput(value) {
   const input = document.createElement("div");
@@ -19,6 +19,7 @@ export function renderOutput(value, { error } = {}) {
   error && (e.className = "error");
   o.appendChild(e);
   clearOutput(oa);
+  s.scrollTop = s.scrollHeight;
 }
 
 export function updateOutput(value) {

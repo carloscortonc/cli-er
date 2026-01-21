@@ -8,7 +8,8 @@ export function cmd(params) {
     return Cli.logger.log("History cleared");
   }
   let size = 20;
-  let start = Math.max(historyStart, params.n !== undefined ? params.n - 1 : CLI_HISTORY.length - size);
+  params.n ||= size * -1;
+  let start = Math.max(historyStart, params.n > 0 ? params.n - 1 : CLI_HISTORY.length + params.n - 1);
   let end = Math.min(CLI_HISTORY.length - 1, start + size);
 
   let output = CLI_HISTORY.slice(start, end)
