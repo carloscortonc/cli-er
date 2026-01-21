@@ -11,98 +11,11 @@
 
       window.CLI_COMMANDS = {};
       for (const c of CLI_COMMAND_LIST) {
-        const spec = await import(`./commands/${c}.js`).then((r) => r.default);
+        const spec = await import(/* @vite-ignore */ `./commands/${c}.js`).then((r) => r.default);
         spec && (window.CLI_COMMANDS[c] = spec);
       }
     </script>
     <script src="/cli.web.js"></script>
-    <style>
-      :root {
-        --text-color: #e0dede;
-      }
-      * {
-        font-family: monospace;
-        font-size: 15px;
-      }
-      html,
-      body {
-        height: 100%;
-        width: 100%;
-        margin: 0;
-        overflow: hidden;
-      }
-      body {
-        background: #212221;
-        color: var(--text-color);
-        margin: 20px 40px;
-        width: calc(100% - 80px);
-        height: calc(100% - 40px);
-      }
-      .page {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-      }
-      .header {
-        flex-shrink: 0;
-        margin-bottom: 40px;
-        text-align: center;
-      }
-      .title {
-        font-size: 17px;
-      }
-      .title > span {
-        font-size: inherit;
-        font-weight: bolder;
-      }
-      .hint {
-        font-size: 14px;
-      }
-      .hint > span {
-        font-size: inherit;
-        font-style: italic;
-      }
-      #shell {
-        flex-grow: 1;
-        overflow-y: auto;
-      }
-      #shell::-webkit-scrollbar {
-        width: 9px;
-        height: 12px;
-      }
-      #shell::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      #shell::-webkit-scrollbar-thumb {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-radius: 6px;
-        border: 3px solid transparent;
-      }
-      #shell::-webkit-scrollbar-thumb:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-      }
-      .input-wrapper {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        gap: 8px;
-      }
-      #input {
-        width: 100%;
-        border: none;
-        background: transparent;
-        outline: none;
-        padding: 0;
-        color: var(--text-color);
-      }
-      pre {
-        margin: 6px 0 10px;
-        white-space: pre-wrap;
-      }
-      #output > pre.error {
-        color: #d96464;
-      }
-    </style>
     <title>Cli on the Web</title>
   </head>
   <body>
@@ -119,70 +32,6 @@
         <pre id="output-after"></pre>
       </div>
     </div>
-
-    <script type="module">
-      import handleKey from "/src/key-handler.js";
-      import * as renderer from "/src/renderer.js";
-      import * as history from "/src/history.js";
-
-      const builtins = { history: history.spec, clear: renderer.clearSpec };
-      for (const c of Object.keys(builtins)) {
-        window.CLI_COMMANDS[c] = builtins[c];
-      }
-
-      // Create handler for command actions
-      const blobSource = "export default (...args) => window.CLI_ACTION_REF(...args);";
-      const blob = new Blob([blobSource], { type: "text/javascript" });
-      const url = URL.createObjectURL(blob);
-      require("url").pathToFileURL = () => ({ href: url });
-
-      let [i, o, oa] = ["input", "output", "output-after"].map((id) => document.getElementById(id));
-      document.addEventListener("click", () => i.focus());
-      o.addEventListener("click", (e) => e.stopPropagation());
-
-      // Capture cli output
-      process.stdout.write = (v) => renderer.renderOutput(v);
-      process.stderr.write = (v) => renderer.renderOutput(v, { error: true });
-
-      handleKey(i, {
-        Enter: () => {
-          const [cmd, ...args] = i.value.split(" ");
-          if (!cmd) return;
-          renderer.renderInput(i.value);
-          history.add(i.value);
-          i.value = "";
-
-          const cliSpec = CLI_COMMANDS[cmd];
-          if (!cliSpec) {
-            return process.stderr.write(`Command not found: "${cmd}"`);
-          }
-
-          window.CLI_ACTION_REF = cliSpec[2];
-          new Cli(cliSpec[0], { ...cliSpec[1], cliName: cmd }).run(args);
-        },
-        Tab: (e) => {
-          e.preventDefault();
-          const candidates = Object.keys(CLI_COMMANDS).filter((k) => k.startsWith(i.value));
-          if (!candidates.length) return;
-          if (candidates.length === 1) {
-            i.value = candidates[0];
-            return renderer.clearOutput(oa);
-          }
-          renderer.updateOutput(candidates.join("  "));
-        },
-        ArrowUp: (e) => {
-          e.preventDefault();
-          let p = history.previous();
-          if (!p) return;
-          renderer.updateInputValue(p);
-        },
-        ArrowDown: (e) => {
-          e.preventDefault();
-          let n = history.next();
-          if (!n) return;
-          renderer.updateInputValue(n);
-        },
-      });
-    </script>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

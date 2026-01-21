@@ -1,0 +1,85 @@
+:root {
+  --text-color: #e0dede;
+}
+* {
+  font-family: monospace;
+  font-size: 15px;
+}
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+body {
+  background: #212221;
+  color: var(--text-color);
+  margin: 20px 40px;
+  width: calc(100% - 80px);
+  height: calc(100% - 40px);
+}
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.header {
+  flex-shrink: 0;
+  margin-bottom: 40px;
+  text-align: center;
+}
+.title {
+  font-size: 17px;
+}
+.title > span {
+  font-size: inherit;
+  font-weight: bolder;
+}
+.hint {
+  font-size: 14px;
+}
+.hint > span {
+  font-size: inherit;
+  font-style: italic;
+}
+#shell {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+#shell::-webkit-scrollbar {
+  width: 9px;
+  height: 12px;
+}
+#shell::-webkit-scrollbar-track {
+  background: transparent;
+}
+#shell::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 3px solid transparent;
+}
+#shell::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+#input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+  color: var(--text-color);
+}
+pre {
+  margin: 6px 0 10px;
+  white-space: pre-wrap;
+}
+#output > pre.error {
+  color: #d96464;
+}
