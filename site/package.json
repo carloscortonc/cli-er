@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "npm --prefix .. ci && npm --prefix .. run build && node scripts/browserify.js > ${OUTPUT_DIR:-dist}/cli.web.js",
-    "bundle": "npm run build && vite build --base=cli-er",
+    "bundle": "mkdir dist && npm run build && vite build --base=cli-er",
     "start": "OUTPUT_DIR=public npm run build && vite",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
