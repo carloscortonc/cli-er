@@ -1,6 +1,7 @@
 import handleKey from "./key-handler.js";
 import * as renderer from "./renderer.js";
 import * as history from "./history.js";
+import "./cli.web.js";
 import "./index.css";
 
 const builtins = { history: history.spec, clear: renderer.clearSpec };

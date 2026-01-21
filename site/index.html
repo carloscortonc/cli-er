@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="shortcut icon" href="/assets/favicon.ico" />
     <script type="module" vite-ignore="true">
+      window.require = null;
       window.CLI_COLUMNS = 100;
       // List of available commands
       window.CLI_COMMAND_LIST = ["commands", "help"];
@@ -15,7 +16,6 @@
         spec && (window.CLI_COMMANDS[c] = spec);
       }
     </script>
-    <script type="module" src="/cli.web.js"></script>
     <title>Cli on the Web</title>
   </head>
   <body>
