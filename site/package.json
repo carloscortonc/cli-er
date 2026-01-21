@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "npm --prefix .. ci && npm --prefix .. run build && node scripts/browserify.js > ${OUTPUT_DIR:-dist}/cli.web.js",
-    "bundle": "rm -rf dist && cp -R public/. dist/ && npm run build && node scripts/inject-base.cjs",
-    "start": "OUTPUT_DIR=public npm run build && bunx http-server public -p 3000",
+    "bundle": "npm run build && vite build --base=cli-er",
+    "start": "OUTPUT_DIR=public npm run build && vite",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,5 +18,7 @@
     "browserify-fs": "^1.0.0",
     "cli-er": "^0.19.0",
     "esmify": "^2.1.1"
+  },
+  "devDependencies": {
   }
 }

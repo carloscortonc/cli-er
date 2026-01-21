@@ -3,14 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- base-inject -->
-    <link rel="shortcut icon" href="./assets/favicon.ico" />
-    <script>
+    <link rel="shortcut icon" href="/assets/favicon.ico" />
+    <script type="module" vite-ignore="true">
       window.CLI_COLUMNS = 100;
       // List of available commands
       window.CLI_COMMAND_LIST = ["commands", "help"];
+
+      window.CLI_COMMANDS = {};
+      for (const c of CLI_COMMAND_LIST) {
+        const spec = await import(`./commands/${c}.js`).then((r) => r.default);
+        spec && (window.CLI_COMMANDS[c] = spec);
+      }
     </script>
-    <script src="./cli.web.js"></script>
+    <script src="/cli.web.js"></script>
     <style>
       :root {
         --text-color: #e0dede;
@@ -114,17 +119,15 @@
         <pre id="output-after"></pre>
       </div>
     </div>
+
     <script type="module">
-      import handleKey from "./key-handler.js";
-      import * as renderer from "./renderer.js";
-      import * as history from "./history.js";
+      import handleKey from "/src/key-handler.js";
+      import * as renderer from "/src/renderer.js";
+      import * as history from "/src/history.js";
 
       const builtins = { history: history.spec, clear: renderer.clearSpec };
-      window.CLI_COMMANDS = {};
-      for (const c of CLI_COMMAND_LIST.concat(Object.keys(builtins))) {
-        const builtin = builtins[c];
-        const spec = builtin || (await import(`./commands/${c}.js`).then((r) => r.default));
-        spec && (window.CLI_COMMANDS[c] = spec);
+      for (const c of Object.keys(builtins)) {
+        window.CLI_COMMANDS[c] = builtins[c];
       }
 
       // Create handler for command actions
