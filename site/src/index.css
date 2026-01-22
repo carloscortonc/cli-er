@@ -68,6 +68,9 @@ body {
   width: 100%;
   gap: 8px;
 }
+#sprompt.executing {
+  display: none;
+}
 #input {
   width: 100%;
   border: none;
@@ -79,6 +82,10 @@ body {
 pre {
   margin: 6px 0 10px;
   white-space: pre-wrap;
+  line-height: 20px;
+}
+pre[data-id] {
+  margin-bottom: 0;
 }
 #output > pre.error {
   color: #d96464;

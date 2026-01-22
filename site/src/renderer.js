@@ -1,9 +1,14 @@
-let [s, i, o, oa] = ["shell", "input", "output", "output-after"].map((id) => document.getElementById(id));
+let [s, i, sp, o, oa] = ["shell", "input", "sprompt", "output", "output-after"].map((id) =>
+  document.getElementById(id),
+);
+
+const OUTPUT_ID = "exec";
 
 export function renderInput(value) {
   const input = document.createElement("div");
   input.className = "input-wrapper";
   input.innerHTML = `$<span>${value}</span>`;
+  sp.classList.add("executing");
   clearOutput(oa);
   o.appendChild(input);
 }
@@ -14,12 +19,24 @@ export function updateInputValue(value) {
 }
 
 export function renderOutput(value, { error } = {}) {
-  const e = document.createElement("pre");
-  e.innerText = value;
+  const r = document.querySelector(`#output>pre[data-id="${OUTPUT_ID}"]`) || undefined;
+  const e = r || document.createElement("pre");
+  let c = e.innerText;
+  e.innerText = c.concat(c ? "\n" : "", value);
   error && (e.className = "error");
-  o.appendChild(e);
+  if (!r) {
+    e.setAttribute("data-id", OUTPUT_ID);
+    o.appendChild(e);
+  }
   clearOutput(oa);
   s.scrollTop = s.scrollHeight;
+}
+
+export function flushOutput() {
+  let e = document.querySelector(`#output>pre[data-id="${OUTPUT_ID}"]`);
+  if (!e) return;
+  e.removeAttribute("data-id");
+  sp.classList.remove("executing");
 }
 
 export function updateOutput(value) {

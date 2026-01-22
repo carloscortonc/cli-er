@@ -1,6 +1,7 @@
 import handleKey from "./key-handler.js";
 import * as renderer from "./renderer.js";
 import * as history from "./history.js";
+import execute from "./bash/interpreter.js";
 import "./cli.web.js";
 import "./index.css";
 
@@ -20,16 +21,22 @@ document.addEventListener("click", () => i.focus());
 o.addEventListener("click", (e) => e.stopPropagation());
 
 // Capture cli output
-process.stdout.write = (v) => renderer.renderOutput(v);
-process.stderr.write = (v) => renderer.renderOutput(v, { error: true });
+const r = (...args) => renderer.renderOutput(...args);
+process.stdout.write = (v) => r(v);
+process.stderr.write = (v) => r(v, { error: true });
 
 handleKey(i, {
   Enter: () => {
-    const [cmd, ...args] = i.value.split(" ");
-    if (!cmd) return;
-    renderer.renderInput(i.value);
-    history.add(i.value);
+    let inputValue = i.value;
+    if (!inputValue) return;
+    history.add(inputValue);
+    renderer.renderInput(inputValue);
     i.value = "";
+    execute(inputValue).finally(() => {
+      renderer.flushOutput();
+    });
+    /* const [cmd, ...args] = i.value.split(" ");
+    if (!cmd) return;
 
     const cliSpec = CLI_COMMANDS[cmd];
     if (!cliSpec) {
@@ -37,7 +44,7 @@ handleKey(i, {
     }
 
     window.CLI_ACTION_REF = cliSpec[2];
-    new Cli(cliSpec[0], { ...cliSpec[1], cliName: cmd }).run(args);
+    new Cli(cliSpec[0], { ...cliSpec[1], cliName: cmd }).run(args); */
   },
   Tab: (e) => {
     e.preventDefault();
