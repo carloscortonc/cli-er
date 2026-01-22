@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "site",
   "version": "1.0.0",
   "main": "cli.js",
   "type": "module",
@@ -17,7 +17,8 @@
     "browserify": "^17.0.1",
     "browserify-fs": "^1.0.0",
     "cli-er": "^0.19.0",
-    "esmify": "^2.1.1"
+    "esmify": "^2.1.1",
+    "ohm-js": "^17.3.0"
   },
   "devDependencies": {
     "vite": "^7.3.1"
