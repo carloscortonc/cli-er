@@ -21,8 +21,7 @@ export function updateInputValue(value) {
 export function renderOutput(value, { error } = {}) {
   const r = document.querySelector(`#output>pre[data-id="${OUTPUT_ID}"]`) || undefined;
   const e = r || document.createElement("pre");
-  let c = e.innerText;
-  e.innerText = c.concat(c ? "\n" : "", value);
+  e.innerText = e.innerText.concat(value);
   error && (e.className = "error");
   if (!r) {
     e.setAttribute("data-id", OUTPUT_ID);
@@ -33,10 +32,10 @@ export function renderOutput(value, { error } = {}) {
 }
 
 export function flushOutput() {
+  sp.classList.remove("executing");
   let e = document.querySelector(`#output>pre[data-id="${OUTPUT_ID}"]`);
   if (!e) return;
   e.removeAttribute("data-id");
-  sp.classList.remove("executing");
 }
 
 export function updateOutput(value) {

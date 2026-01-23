@@ -7,8 +7,9 @@
     <script type="module" vite-ignore="true">
       window.require = null;
       window.CLI_COLUMNS = 100;
+      window.FS_FILES = {};
       // List of available commands
-      window.CLI_COMMAND_LIST = ["commands", "help"];
+      window.CLI_COMMAND_LIST = ["commands", "help", "echo"];
 
       window.CLI_COMMANDS = {};
       for (const c of CLI_COMMAND_LIST) {
@@ -21,8 +22,11 @@
   <body>
     <div class="page">
       <div class="header">
-        <p class="title"><span>cli-er</span> - Modular Command-Line Interface Builder</p>
-        <p class="hint">Type <span>commands</span> to get a list of available commands</p>
+        <div class="main">
+          <p class="title"><span>cli-er</span> - Modular Command-Line Interface Builder</p>
+          <p class="hint">Type <span>commands</span> to get a list of available commands</p>
+        </div>
+        <a href="https://github.com/carloscortonc/cli-er" target="_blank"><div class="icon github"></div></a>
       </div>
       <div id="shell">
         <div id="output"></div>

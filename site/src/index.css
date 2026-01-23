@@ -1,9 +1,9 @@
 :root {
-  --text-color: #e0dede;
+  --text-color: #c2c2c2;
 }
 * {
   font-family: monospace;
-  font-size: 15px;
+  font-size: 14px;
 }
 html,
 body {
@@ -25,12 +25,26 @@ body {
   height: 100%;
 }
 .header {
-  flex-shrink: 0;
-  margin-bottom: 40px;
+  margin: 14px 0 40px;
+  display: flex;
+}
+.main {
   text-align: center;
+  flex: auto;
+}
+.icon {
+  height: 30px;
+  width: 30px;
+  cursor: pointer;
+}
+.icon.github {
+  mask: url("/assets/github.svg") no-repeat center;
+  mask-size: contain;
+  background: var(--text-color);
 }
 .title {
   font-size: 17px;
+  margin-top: 0;
 }
 .title > span {
   font-size: inherit;
@@ -67,6 +81,7 @@ body {
   align-items: center;
   width: 100%;
   gap: 8px;
+  margin-bottom: 4px;
 }
 #sprompt.executing {
   display: none;
@@ -80,7 +95,7 @@ body {
   color: var(--text-color);
 }
 pre {
-  margin: 6px 0 10px;
+  margin: 2px 0 6px;
   white-space: pre-wrap;
   line-height: 20px;
 }

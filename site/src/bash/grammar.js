@@ -11,12 +11,11 @@ export const grammar = ohm.grammar(String.raw`
                 | Paren
     Paren      = "(" OrStatement ")" -- paren
                 | Expr
-    Expr   = keyword (spaces Arg)+ -- args
-           | keyword -- alone
-    Arg = "-"* Value
-    Value = keyword | number
-    keyword = ~"-" ~number (letter | "-" | ".")+
-    number = digit+
+    Expr   = Keyword (spaces arg)+ -- args
+           | Keyword -- alone
+    Keyword = ~"-" ~digit word
+    arg = (letter | digit | "-" | "." )+
+    word = (letter | "-" | ".")+
   }
 `);
 
@@ -39,13 +38,13 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
   Expr_alone(cmd) {
     return { type: "cmd", cmd: cmd.ast(), args: [] };
   },
-  Arg(f, w) {
-    return "".concat(f.sourceString, w.sourceString);
-  },
-  Value(v) {
+  Keyword(v) {
     return v.ast();
   },
-  keyword(w) {
+  arg(w) {
+    return w.sourceString;
+  },
+  word(w) {
     return w.sourceString;
   },
   _iter(...children) {

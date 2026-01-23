@@ -35,16 +35,6 @@ handleKey(i, {
     execute(inputValue).finally(() => {
       renderer.flushOutput();
     });
-    /* const [cmd, ...args] = i.value.split(" ");
-    if (!cmd) return;
-
-    const cliSpec = CLI_COMMANDS[cmd];
-    if (!cliSpec) {
-      return process.stderr.write(`Command not found: "${cmd}"`);
-    }
-
-    window.CLI_ACTION_REF = cliSpec[2];
-    new Cli(cliSpec[0], { ...cliSpec[1], cliName: cmd }).run(args); */
   },
   Tab: (e) => {
     e.preventDefault();

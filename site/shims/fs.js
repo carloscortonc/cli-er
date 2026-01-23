@@ -1,8 +1,5 @@
 module.exports = {
-  readFileSync: () => undefined,
-  existsSync: (p) => {
-    console.log("[existsSync]", p);
-    return true;
-  },
+  readFileSync: (fd) => FS_FILES?.[fd],
+  existsSync: () => true,
   realpathSync: () => "",
 };
