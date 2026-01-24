@@ -13,7 +13,9 @@
 
       window.CLI_COMMANDS = {};
       for (const c of CLI_COMMAND_LIST) {
-        const spec = await import(/* @vite-ignore */ `./commands/${c}.js`).then((r) => r.default);
+        const spec = await import(/* @vite-ignore */ `./commands/${c}.js`)
+          .then((r) => r.default)
+          .catch(() => undefined);
         spec && (window.CLI_COMMANDS[c] = spec);
       }
     </script>
