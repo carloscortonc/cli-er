@@ -5,7 +5,7 @@ async function executeAst(node) {
     const cliSpec = CLI_COMMANDS[node.cmd];
     console.log(`[execute::cmd] ${node.cmd} args=${JSON.stringify(node.args)}`);
     if (!cliSpec) {
-      process.stderr.write(`cliersh: command not found: "${node.cmd}"`);
+      process.stderr.write(`cliersh: command not found: "${node.cmd}"\n`);
       return process.exit(1);
     }
     window.CLI_ACTION_REF = cliSpec[2];
@@ -15,19 +15,20 @@ async function executeAst(node) {
     c.options.help.template =
       cliSpec[1].help?.template || "{usage}\n{description}\n{namespaces}\n{commands}\n{options}";
 
-    await c.run(node.args);
-    if (typeof process.exitCode !== "number") process.exitCode = 0;
+    // Reset exitCode before executing command
+    process.exitCode = 0;
+    await c.run(node.args).then(() => process.exit(process.exitCode));
   }
   if (node.type === "and") {
     for (const child of node.args) {
       await executeAst(child);
-      if (process.exitCode !== 0) break;
+      if (process.lastExitCode !== 0) break;
     }
   }
   if (node.type === "or") {
     for (const child of node.args) {
       await executeAst(child);
-      if (process.exitCode === 0) break;
+      if (process.lastExitCode === 0) break;
     }
   }
   if (node.type === "pipe") {

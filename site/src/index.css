@@ -102,6 +102,6 @@ pre {
 pre[data-id] {
   margin-bottom: 0;
 }
-#output > pre.error {
+#output > pre > span.error {
   color: #d96464;
 }

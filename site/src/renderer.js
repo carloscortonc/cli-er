@@ -18,11 +18,19 @@ export function updateInputValue(value) {
   i.setSelectionRange(value.length, value.length);
 }
 
+function createElement(tag, props) {
+  let e = document.createElement(tag);
+  for (let p in props) {
+    e[p] = props[p];
+  }
+  return e;
+}
+
 export function renderOutput(value, { error } = {}) {
   const r = document.querySelector(`#output>pre[data-id="${OUTPUT_ID}"]`) || undefined;
   const e = r || document.createElement("pre");
-  e.innerText = e.innerText.concat(value);
-  error && (e.className = "error");
+  const l = createElement("span", { innerText: value, ...(error && { className: "error" }) });
+  e.appendChild(l);
   if (!r) {
     e.setAttribute("data-id", OUTPUT_ID);
     o.appendChild(e);

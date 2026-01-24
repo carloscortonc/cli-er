@@ -6,5 +6,5 @@ window.process = {
   cwd: () => "",
   env: {},
   exitCode: 0,
-  exit: (c = 0) => (process.exitCode = c),
+  exit: (c = 0) => ((process.exitCode = c), (process.lastExitCode = c)),
 };
