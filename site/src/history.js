@@ -18,14 +18,14 @@ export function cmd(params) {
   Cli.logger.log(output);
 }
 
-export const spec = [
-  {
+export const spec = {
+  definition: {
     n: { type: "number", positional: 0, description: "Start at index n" },
     c: { type: "boolean", description: "Clear the history list" },
   },
-  { cliDescription: "Command line history" },
-  cmd,
-];
+  cliOptions: { cliDescription: "Command line history" },
+  action: cmd,
+};
 
 export function add(value) {
   CLI_HISTORY.push(value);

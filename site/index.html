@@ -6,17 +6,27 @@
     <link rel="shortcut icon" href="/assets/favicon.ico" />
     <script type="module" vite-ignore="true">
       window.require = null;
+      window.CLI_COMMANDS = {};
       window.CLI_COLUMNS = 100;
       window.FS_FILES = {};
-      // List of available commands
-      window.CLI_COMMAND_LIST = ["commands", "help", "echo"];
+    </script>
+    <script type="module" src="/src/main.js"></script>
+    <script type="module" vite-ignore="true">
+      const remoteBase =
+        location.hostname === "localhost"
+          ? "http://localhost:8000"
+          : "https://cdn.jsdelivr.net/gh/carloscortonc/cli-er@develop";
+      const remote = (path) => remoteBase.concat("/", path);
 
-      window.CLI_COMMANDS = {};
-      for (const c of CLI_COMMAND_LIST) {
-        const spec = await import(/* @vite-ignore */ `./commands/${c}.js`)
+      // List of available commands
+      const commands = ["/commands/commands", "/commands/help", "/commands/echo", remote("examples/docker/definition")];
+
+      for (const c of commands) {
+        const spec = await import(/* @vite-ignore */ `${c}.js`)
           .then((r) => r.default)
-          .catch(() => undefined);
-        spec && (window.CLI_COMMANDS[c] = spec);
+          .catch((e) => (console.log(e), undefined));
+        spec &&
+          (window.CLI_COMMANDS[spec.cliOptions.cliName || c.split("/").find((_, i, l) => i == l.length - 1)] = spec);
       }
     </script>
     <title>Cli on the Web</title>
@@ -39,6 +49,5 @@
         <pre id="output-after"></pre>
       </div>
     </div>
-    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

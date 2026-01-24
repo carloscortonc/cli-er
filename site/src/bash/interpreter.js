@@ -17,7 +17,8 @@ async function executeAst(node) {
 
     // Reset exitCode before executing command
     process.exitCode = 0;
-    await c.run(node.args).then(() => process.exit(process.exitCode));
+    await c.run(node.args);
+    process.exit(process.exitCode);
   }
   if (node.type === "and") {
     for (const child of node.args) {

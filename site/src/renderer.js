@@ -54,8 +54,8 @@ export function clearOutput(e = o) {
   e.innerHTML = "";
 }
 
-export const clearSpec = [
-  {},
-  { cliDescription: "Clear the terminal screen", help: { hidden: true } },
-  () => clearOutput(),
-];
+export const clearSpec = {
+  definition: {},
+  cliOptions: { cliDescription: "Clear the terminal screen", help: { hidden: true } },
+  action: () => clearOutput(),
+};

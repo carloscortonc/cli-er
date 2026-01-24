@@ -44,7 +44,7 @@ Aliases to be used for help option</br>
 ##### `help.description`
 Description for the option
 ##### `help.template`
-Template to be used when generating help. There are five distinct sections: **usage**, **description**, **namespaces**, **commands** and **options**. This can be used to include a header/footer, change the order of the sections, or remove a section altogether. If a section has no content, it will be removed along with any line-breaks that follow. You can see a use-case for this in the [docker example](/examples/docker/docker.js#L130)</br>
+Template to be used when generating help. There are five distinct sections: **usage**, **description**, **namespaces**, **commands** and **options**. This can be used to include a header/footer, change the order of the sections, or remove a section altogether. If a section has no content, it will be removed along with any line-breaks that follow. You can see a use-case for this in the [docker example](/examples/docker/definition.js#L133)</br>
 **Default**: `\n{usage}\n{description}\n{namespaces}\n{commands}\n{options}\n`
 
 #### `version`
@@ -64,7 +64,7 @@ If a string is provided, it will be used as the default command to execute </br>
 **Default**: `true`
 
 #### `logger`
-Logger to be used by the cli. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](/examples/docker/docker.js#L133).</br>
+Logger to be used by the cli. It contains two methods, `log` and `error`, that can be used to add a prefix to the log (e.g. "error ") or change the output color, as demonstrated in this [docker example](/examples/docker/docker.js#L8).</br>
 **Default**: [/src/cli-logger.ts](/src/cli-logger.ts)
 
 #### `cliName`
