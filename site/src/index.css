@@ -1,5 +1,6 @@
 :root {
-  --text-color: #c2c2c2;
+  --bg-color: #212221;
+  --fg-color: #c2c2c2;
 }
 * {
   font-family: monospace;
@@ -13,11 +14,15 @@ body {
   overflow: hidden;
 }
 body {
-  background: #212221;
-  color: var(--text-color);
+  background: var(--bg-color);
+  color: var(--fg-color);
   margin: 20px 40px;
   width: calc(100% - 80px);
   height: calc(100% - 40px);
+}
+body.light {
+  --bg-color: #eaeaea;
+  --fg-color: #474747;
 }
 .page {
   display: flex;
@@ -32,6 +37,10 @@ body {
   text-align: center;
   flex: auto;
 }
+.actions {
+  display: flex;
+  gap: 12px;
+}
 .icon {
   height: 30px;
   width: 30px;
@@ -40,7 +49,12 @@ body {
 .icon.github {
   mask: url("/assets/github.svg") no-repeat center;
   mask-size: contain;
-  background: var(--text-color);
+  background: var(--fg-color);
+}
+.icon.theme {
+  mask: url("/assets/theme.svg") no-repeat center;
+  mask-size: contain;
+  background: var(--fg-color);
 }
 .title {
   font-size: 17px;
@@ -92,7 +106,7 @@ body {
   background: transparent;
   outline: none;
   padding: 0;
-  color: var(--text-color);
+  color: var(--fg-color);
 }
 pre {
   margin: 2px 0 6px;

@@ -16,9 +16,12 @@ const blob = new Blob([blobSource], { type: "text/javascript" });
 const url = URL.createObjectURL(blob);
 require("url").pathToFileURL = () => ({ href: url });
 
-let [i, o, oa] = ["input", "output", "output-after"].map((id) => document.getElementById(id));
+let [i, o, oa, lm] = ["input", "output", "output-after", "theme"].map((id) => document.getElementById(id));
 document.addEventListener("click", () => i.focus());
 o.addEventListener("click", (e) => e.stopPropagation());
+lm.addEventListener("click", () =>
+  document.body.classList[document.body.classList.contains("light") ? "remove" : "add"]("light"),
+);
 
 // Capture cli output
 const r = (...args) => renderer.renderOutput(...args);
