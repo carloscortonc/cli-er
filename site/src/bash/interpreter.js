@@ -1,13 +1,38 @@
 import { grammar, semantics } from "./grammar.js";
+import ExecWorker from "./exec-worker?worker";
+import { serialize } from "./serializer.js";
+import run from "./cli-runner.js";
+
+const execWorker = new ExecWorker();
 
 async function executeAst(node) {
   if (node.type === "cmd") {
     const cliSpec = CLI_COMMANDS[node.cmd];
     console.log(`[execute::cmd] ${node.cmd} args=${JSON.stringify(node.args)}`);
+
     if (!cliSpec) {
       process.stderr.write(`cliersh: command not found: "${node.cmd}"\n`);
       return process.exit(1);
     }
+
+    // Handle "builtins" that need access to internals (e.g. renderer), and would not otherwise work from web-worker
+    if (cliSpec.builtin) {
+      await run({ name: node.cmd, cliSpec, args: node.args });
+      return process.exit(process.exitCode);
+    }
+
+    return new Promise((resolve) => {
+      execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args: node.args, env: process.env, cliHandlerUrl }));
+
+      execWorker.onmessage = ({ data }) => {
+        if (data.type === "output") {
+          process[data.stream].write(data.value);
+        } else if (data.type === "exit") {
+          process.exit(data.exitCode);
+          resolve();
+        }
+      };
+    });
     window.CLI_ACTION_REF = cliSpec.action;
     //TODO capture output into FD[1], capture error into FD[2]
     const c = new Cli(cliSpec.definition || {}, { ...cliSpec.cliOptions, cliName: node.cmd });

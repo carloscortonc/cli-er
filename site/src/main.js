@@ -2,19 +2,21 @@ import handleKey from "./key-handler.js";
 import * as renderer from "./renderer.js";
 import * as history from "./history.js";
 import execute from "./bash/interpreter.js";
+import { commands } from "./builtins";
 import "./cli.web.js";
 import "./index.css";
 
-const builtins = { history: history.spec, clear: renderer.clearSpec };
+const builtins = { history: history.spec, clear: renderer.clearSpec, commands };
 for (const c of Object.keys(builtins)) {
+  builtins[c].builtin = true;
   window.CLI_COMMANDS[c] = builtins[c];
 }
 
 // Create handler for command actions
-const blobSource = "export default (...args) => window.CLI_ACTION_REF(...args);";
+const blobSource = "export default (...args) => globalThis.CLI_ACTION_REF(...args);";
 const blob = new Blob([blobSource], { type: "text/javascript" });
-const url = URL.createObjectURL(blob);
-require("url").pathToFileURL = () => ({ href: url });
+window.cliHandlerUrl = URL.createObjectURL(blob);
+require("url").pathToFileURL = () => ({ href: cliHandlerUrl });
 
 let [i, o, oa, lm] = ["input", "output", "output-after", "theme"].map((id) => document.getElementById(id));
 document.addEventListener("click", () => i.focus());

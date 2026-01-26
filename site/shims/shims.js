@@ -1,6 +1,7 @@
-window.process = {
+globalThis.require = undefined;
+globalThis.process = {
   argv: [],
-  stdout: { columns: window.CLI_COLUMNS || 50, write: console.log },
+  stdout: { columns: globalThis.CLI_COLUMNS || 50, write: console.log },
   stdin: { isTTY: true },
   stderr: { write: console.log },
   cwd: () => "",

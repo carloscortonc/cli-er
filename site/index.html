@@ -19,19 +19,16 @@
       const remote = (path) => remoteBase.concat("/", path);
 
       // List of available commands
-      const commands = [
-        "./commands/commands",
-        "./commands/help",
-        "./commands/echo",
-        remote("examples/docker/definition"),
-      ];
+      const commands = ["./commands/help", "./commands/echo", remote("examples/docker/definition")];
 
       for (const c of commands) {
         const spec = await import(/* @vite-ignore */ `${c}.js`)
           .then((r) => r.default)
           .catch((e) => (console.log(e), undefined));
-        spec &&
-          (window.CLI_COMMANDS[spec.cliOptions.cliName || c.split("/").find((_, i, l) => i == l.length - 1)] = spec);
+        if (spec) {
+          const specKey = spec.cliOptions.cliName || c.split("/").find((_, i, l) => i == l.length - 1);
+          window.CLI_COMMANDS[specKey] = { ...spec, builtin: false };
+        }
       }
     </script>
     <title>Cli on the Web</title>
