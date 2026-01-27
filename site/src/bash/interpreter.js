@@ -33,17 +33,6 @@ async function executeAst(node) {
         }
       };
     });
-    window.CLI_ACTION_REF = cliSpec.action;
-    //TODO capture output into FD[1], capture error into FD[2]
-    const c = new Cli(cliSpec.definition || {}, { ...cliSpec.cliOptions, cliName: node.cmd });
-    // Update default help template
-    c.options.help.template =
-      cliSpec.cliOptions.help?.template || "{usage}\n{description}\n{namespaces}\n{commands}\n{options}";
-
-    // Reset exitCode before executing command
-    process.exitCode = 0;
-    await c.run(node.args);
-    process.exit(process.exitCode);
   }
   if (node.type === "and") {
     for (const child of node.args) {

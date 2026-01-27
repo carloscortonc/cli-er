@@ -11,10 +11,14 @@ export const grammar = ohm.grammar(String.raw`
                 | Paren
     Paren      = "(" OrStatement ")" -- paren
                 | Expr
-    Expr   = Keyword (spaces arg)+ -- args
+    Expr   = Keyword (spaces Quoted)+ -- args
            | Keyword -- alone
     Keyword = ~"-" ~digit word
-    arg = (letter | digit | "-" | "." )+
+    Quoted = "\"" #(quotedChar)* "\"" -- quoted
+          | arg
+    quotedChar = scaped | ~"\"" ~"\\" any
+    arg = (letter | digit | "-" | ".")+
+    scaped = "\\" ("n" | "\"" | "\\" )
     word = (letter | "-" | ".")+
   }
 `);
@@ -41,8 +45,17 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
   Keyword(v) {
     return v.ast();
   },
-  arg(w) {
-    return w.sourceString;
+  Quoted_quoted(_lq, s, _rq) {
+    return s.children.reduce((acc, e) => acc.concat(e.ast()), "");
+  },
+  quotedChar(q) {
+    return q.ctorName == "scaped" ? q.ast() : q.sourceString;
+  },
+  arg(a) {
+    return a.sourceString;
+  },
+  scaped(_s, l) {
+    return l.sourceString;
   },
   word(w) {
     return w.sourceString;
