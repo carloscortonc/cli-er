@@ -14,15 +14,18 @@ export const grammar = ohm.grammar(String.raw`
     Expr   = (Assignment spaces)* Keyword (spaces Quoted)* -- expr
            | Assignment
     Assignment = Keyword ~space "=" ~space Quoted
-    Keyword = ~"-" ~digit word
-    Quoted = "\"" (InnerExpr | QuotedText)* "\"" -- quoted
+    Quoted = "\"" (InnerExpr | Expansion | QuotedText)* "\"" -- quoted
           | InnerExpr
+          | Expansion
           | arg
     InnerExpr = "$(" OrStatement ")"
+    Expansion = "$" word
     QuotedText = #( scaped | ~("\"" | "\\" | "$") any )+
-    arg = (letter | digit | "-" | ".")+
+    Keyword = ~"-" ~digit word
+    arg = word_char+
     scaped = "\\" ("n" | "\"" | "\\" )
-    word = (letter | "-" | "." | "_" )+
+    word = word_char+
+    word_char = letter | digit | "-" | "." | "_" | ":" | "$"
   }
 `);
 
@@ -44,6 +47,9 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
   },
   Assignment(k, _, v) {
     return { type: "env", args: [k.ast(), v.ast()] };
+  },
+  Expansion(_, k) {
+    return { type: "expansion", args: [k.ast()] };
   },
   Keyword(v) {
     return v.ast();

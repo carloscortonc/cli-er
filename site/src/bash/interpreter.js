@@ -43,12 +43,18 @@ async function executeAst(node) {
     }
     process.env[r[0]] = r[1];
   }
+  if (node.type === "expansion") {
+    const v = node.args[0];
+    // https://www.gnu.org/software/bash/manual/bash.html#Special-Parameters-1
+    return process.env[v];
+  }
   if (node.type === "cmd") {
     const cliSpec = CLI_COMMANDS[node.cmd];
     const args = [];
     // Process arguments
     for (const arg of node.args) {
-      args.push(await executeAst(arg));
+      let av = await executeAst(arg);
+      av !== undefined && args.push(av);
     }
     const env = { ...process.env };
     // Process environment variables
