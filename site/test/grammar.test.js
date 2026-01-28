@@ -116,6 +116,13 @@ assertResult('echo "1$(echo 2 && echo 2)"', {
   ],
   env: [],
 });
+// Quoted without quotes
+assertResult("echo $(echo 1)", {
+  type: "cmd",
+  cmd: "echo",
+  args: [{ type: "cmd", cmd: "echo", args: ["1"], env: [] }],
+  env: [],
+});
 // Assignment
 assertResult("test=1", {
   type: "env",

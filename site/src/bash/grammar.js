@@ -13,9 +13,10 @@ export const grammar = ohm.grammar(String.raw`
                 | Expr
     Expr   = (Assignment spaces)* Keyword (spaces Quoted)* -- expr
            | Assignment
-    Assignment = Keyword ~space "=" ~space (Quoted | InnerExpr)
+    Assignment = Keyword ~space "=" ~space Quoted
     Keyword = ~"-" ~digit word
     Quoted = "\"" (InnerExpr | QuotedText)* "\"" -- quoted
+          | InnerExpr
           | arg
     InnerExpr = "$(" OrStatement ")"
     QuotedText = #( scaped | ~("\"" | "\\" | "$") any )+
