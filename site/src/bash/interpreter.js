@@ -33,13 +33,30 @@ async function executeAst(node) {
     }
     return args.join("");
   }
+  if (node.type === "env") {
+    const arg1 = node.args[1];
+    // Wrap value with "quoted" node-type to reuse logic for capturing output
+    const v = typeof arg1 !== "string" && arg1.type !== "quote" ? { type: "quote", args: [arg1] } : arg1;
+    const r = [node.args[0], await executeAst(v)];
+    if (node.cmd === true) {
+      return r;
+    }
+    process.env[r[0]] = r[1];
+  }
   if (node.type === "cmd") {
     const cliSpec = CLI_COMMANDS[node.cmd];
     const args = [];
+    // Process arguments
     for (const arg of node.args) {
       args.push(await executeAst(arg));
     }
-    console.log(`[execute::cmd] ${node.cmd} args=${JSON.stringify(args)}`);
+    const env = { ...process.env };
+    // Process environment variables
+    for (const e of node.env) {
+      const [k, v] = await executeAst({ ...e, cmd: true });
+      env[k] = v;
+    }
+    console.log(`[execute::cmd] ${node.cmd} args=${JSON.stringify(args)} env=${JSON.stringify(env)}`);
 
     if (!cliSpec) {
       process.stderr.write(`cliersh: command not found: "${node.cmd}"\n`);

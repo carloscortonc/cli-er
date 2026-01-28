@@ -11,8 +11,9 @@ export const grammar = ohm.grammar(String.raw`
                 | Paren
     Paren      = "(" OrStatement ")" -- paren
                 | Expr
-    Expr   = Keyword (spaces Quoted)+ -- args
-           | Keyword -- alone
+    Expr   = (Assignment spaces)* Keyword (spaces Quoted)* -- expr
+           | Assignment
+    Assignment = Keyword ~space "=" ~space (Quoted | InnerExpr)
     Keyword = ~"-" ~digit word
     Quoted = "\"" (InnerExpr | QuotedText)* "\"" -- quoted
           | arg
@@ -20,7 +21,7 @@ export const grammar = ohm.grammar(String.raw`
     QuotedText = #( scaped | ~("\"" | "\\" | "$") any )+
     arg = (letter | digit | "-" | ".")+
     scaped = "\\" ("n" | "\"" | "\\" )
-    word = (letter | "-" | ".")+
+    word = (letter | "-" | "." | "_" )+
   }
 `);
 
@@ -37,11 +38,11 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
   Paren_paren(_, e, __) {
     return e.ast();
   },
-  Expr_args(cmd, _, t) {
-    return { type: "cmd", cmd: cmd.ast(), args: t.ast().flat() };
+  Expr_expr(a, _s, cmd, _s2, t) {
+    return { type: "cmd", cmd: cmd.ast(), args: t.ast().flat(), env: a.ast() };
   },
-  Expr_alone(cmd) {
-    return { type: "cmd", cmd: cmd.ast(), args: [] };
+  Assignment(k, _, v) {
+    return { type: "env", args: [k.ast(), v.ast()] };
   },
   Keyword(v) {
     return v.ast();
