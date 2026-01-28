@@ -1,6 +1,19 @@
 :root {
   --bg-color: #212221;
   --fg-color: #c2c2c2;
+  --v-margin: 20px;
+  --h-margin: 40px;
+  --icon-size: 30px;
+}
+@media (max-width: 500px) {
+  :root {
+    --v-margin: 20px;
+    --h-margin: 15px;
+    --icon-size: 25px;
+  }
+  .header > .actions {
+    gap: 4px;
+  }
 }
 * {
   font-family: monospace;
@@ -16,9 +29,9 @@ body {
 body {
   background: var(--bg-color);
   color: var(--fg-color);
-  margin: 20px 40px;
-  width: calc(100% - 80px);
-  height: calc(100% - 40px);
+  margin: var(--v-margin) var(--h-margin);
+  width: calc(100% - 2 * var(--h-margin));
+  height: calc(100% - 2 * var(--v-margin));
 }
 body.light {
   --bg-color: #eaeaea;
@@ -42,8 +55,8 @@ body.light {
   gap: 12px;
 }
 .icon {
-  height: 30px;
-  width: 30px;
+  height: var(--icon-size);
+  width: var(--icon-size);
   cursor: pointer;
 }
 .icon.github {
