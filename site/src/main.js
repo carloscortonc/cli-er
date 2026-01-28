@@ -2,13 +2,13 @@ import handleKey from "./key-handler.js";
 import * as renderer from "./renderer.js";
 import * as history from "./history.js";
 import execute from "./bash/interpreter.js";
-import { commands } from "./builtins";
+import * as builtincmds from "./builtins";
 import "./cli.web.js";
 import "./index.css";
 
-const builtins = { history: history.spec, clear: renderer.clearSpec, commands };
+const builtins = { history: history.spec, clear: renderer.clearSpec, ...builtincmds };
 for (const c of Object.keys(builtins)) {
-  builtins[c].builtin = true;
+  builtins[c].builtin ??= true;
   window.CLI_COMMANDS[c] = builtins[c];
 }
 

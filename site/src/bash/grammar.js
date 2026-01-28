@@ -14,9 +14,10 @@ export const grammar = ohm.grammar(String.raw`
     Expr   = Keyword (spaces Quoted)+ -- args
            | Keyword -- alone
     Keyword = ~"-" ~digit word
-    Quoted = "\"" #(quotedChar)* "\"" -- quoted
+    Quoted = "\"" (InnerExpr | QuotedText)* "\"" -- quoted
           | arg
-    quotedChar = scaped | ~"\"" ~"\\" any
+    InnerExpr = "$(" OrStatement ")"
+    QuotedText = #( scaped | ~("\"" | "\\" | "$") any )+
     arg = (letter | digit | "-" | ".")+
     scaped = "\\" ("n" | "\"" | "\\" )
     word = (letter | "-" | ".")+
@@ -37,7 +38,7 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
     return e.ast();
   },
   Expr_args(cmd, _, t) {
-    return { type: "cmd", cmd: cmd.ast(), args: t.ast() };
+    return { type: "cmd", cmd: cmd.ast(), args: t.ast().flat() };
   },
   Expr_alone(cmd) {
     return { type: "cmd", cmd: cmd.ast(), args: [] };
@@ -46,10 +47,13 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
     return v.ast();
   },
   Quoted_quoted(_lq, s, _rq) {
-    return s.children.reduce((acc, e) => acc.concat(e.ast()), "");
+    return { type: "quote", args: s.children.map((e) => e.ast()) };
   },
-  quotedChar(q) {
-    return q.ctorName == "scaped" ? q.ast() : q.sourceString;
+  QuotedText(q) {
+    return q.children.map((c) => (c.ctorName !== "any" ? c.ast() : c.sourceString)).join("");
+  },
+  InnerExpr(_s, expr, _e) {
+    return expr.ast();
   },
   arg(a) {
     return a.sourceString;

@@ -66,10 +66,40 @@ assertResult("(echo 1 || echo 2) && echo 3", {
   ],
 });
 // Quoted
-assertResult('echo some value "some value"', { type: "cmd", cmd: "echo", args: ["some", "value", "some value"] });
+assertResult('echo some value "some value"', {
+  type: "cmd",
+  cmd: "echo",
+  args: ["some", "value", { type: "quote", args: ["some value"] }],
+});
 // Quoted with logic operators
-assertResult('echo "some || value"', { type: "cmd", cmd: "echo", args: ["some || value"] });
+assertResult('echo "some || value"', { type: "cmd", cmd: "echo", args: [{ type: "quote", args: ["some || value"] }] });
 // Quoted with scape sequence
-assertResult('echo "some \\" value"', { type: "cmd", cmd: "echo", args: ['some " value'] });
+assertResult('echo "some \\" value"', { type: "cmd", cmd: "echo", args: [{ type: "quote", args: ['some " value'] }] });
 // Quoted with unknown scape sequence (error)
 assertResult('echo "some \\w value"', undefined);
+// Quoted expr
+assertResult('echo "1$(echo 2)"', {
+  type: "cmd",
+  cmd: "echo",
+  args: [{ type: "quote", args: ["1", { type: "cmd", cmd: "echo", args: ["2"] }] }],
+});
+// Quoted complex expr
+assertResult('echo "1$(echo 2 && echo 2)"', {
+  type: "cmd",
+  cmd: "echo",
+  args: [
+    {
+      type: "quote",
+      args: [
+        "1",
+        {
+          type: "and",
+          args: [
+            { type: "cmd", cmd: "echo", args: ["2"] },
+            { type: "cmd", cmd: "echo", args: ["2"] },
+          ],
+        },
+      ],
+    },
+  ],
+});

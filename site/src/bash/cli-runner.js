@@ -1,5 +1,9 @@
 // Create a new Cli instance and run it with the provided arguments
 export default async function run({ name, cliSpec, args }) {
+  // For builtins, hide help option if not set otherwise
+  if (cliSpec.builtin !== undefined && cliSpec.cliOptions?.help?.hidden === undefined) {
+    cliSpec.cliOptions.help = { ...cliSpec.cliOptions.help, hidden: true };
+  }
   const c = new Cli(cliSpec.definition || {}, { ...cliSpec.cliOptions, cliName: name });
   // Update default help template
   c.options.help.template =

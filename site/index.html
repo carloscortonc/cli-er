@@ -27,7 +27,7 @@
           .catch((e) => (console.log(e), undefined));
         if (spec) {
           const specKey = spec.cliOptions.cliName || c.split("/").find((_, i, l) => i == l.length - 1);
-          window.CLI_COMMANDS[specKey] = { ...spec, builtin: false };
+          window.CLI_COMMANDS[specKey] = { ...spec, builtin: undefined };
         }
       }
     </script>

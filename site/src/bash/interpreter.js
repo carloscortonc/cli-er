@@ -5,10 +5,41 @@ import run from "./cli-runner.js";
 
 const execWorker = new ExecWorker();
 
+const capture = () => {
+  const ow = process.stdout.write;
+  let buffer = "";
+  process.stdout.write = (v) => (buffer += v);
+
+  return () => {
+    process.stdout.write = ow;
+    return buffer;
+  };
+};
+
 async function executeAst(node) {
+  if (typeof node === "string") {
+    return node;
+  }
+  if (node.type === "quote") {
+    const args = [];
+    for (const arg of node.args) {
+      if (typeof arg === "string") {
+        args.push(arg);
+        continue;
+      }
+      const free = capture();
+      await executeAst(arg);
+      args.push(free());
+    }
+    return args.join("");
+  }
   if (node.type === "cmd") {
     const cliSpec = CLI_COMMANDS[node.cmd];
-    console.log(`[execute::cmd] ${node.cmd} args=${JSON.stringify(node.args)}`);
+    const args = [];
+    for (const arg of node.args) {
+      args.push(await executeAst(arg));
+    }
+    console.log(`[execute::cmd] ${node.cmd} args=${JSON.stringify(args)}`);
 
     if (!cliSpec) {
       process.stderr.write(`cliersh: command not found: "${node.cmd}"\n`);
@@ -17,12 +48,12 @@ async function executeAst(node) {
 
     // Handle "builtins" that need access to internals (e.g. renderer), and would not otherwise work from web-worker
     if (cliSpec.builtin) {
-      await run({ name: node.cmd, cliSpec, args: node.args });
+      await run({ name: node.cmd, cliSpec, args });
       return process.exit(process.exitCode);
     }
 
     return new Promise((resolve) => {
-      execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args: node.args, env: process.env, cliHandlerUrl }));
+      execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, env: process.env, cliHandlerUrl }));
 
       execWorker.onmessage = ({ data }) => {
         if (data.type === "output") {
