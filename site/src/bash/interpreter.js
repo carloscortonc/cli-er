@@ -70,7 +70,7 @@ async function executeAst(node) {
     }
 
     return new Promise((resolve) => {
-      execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, env: process.env, cliHandlerUrl }));
+      execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, env, cliHandlerUrl }));
 
       execWorker.onmessage = ({ data }) => {
         if (data.type === "output") {
