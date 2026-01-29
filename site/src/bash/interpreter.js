@@ -46,7 +46,6 @@ async function executeAst(node) {
   if (node.type === "expansion") {
     const v = node.args[0];
     // https://www.gnu.org/software/bash/manual/bash.html#Special-Parameters-1
-    if (!v) return "$";
     if (v === "0") return process.env.SHELL;
     if (v == "?") return process.lastExitCode.toString();
     if (v == "$") return "0001";

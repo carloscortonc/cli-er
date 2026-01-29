@@ -80,10 +80,10 @@ assertResult('echo "some || value"', {
   env: [],
 });
 // Quoted with scape sequence
-assertResult('echo "some \\" value"', {
+assertResult('echo "some \\" \\$exp value"', {
   type: "cmd",
   cmd: "echo",
-  args: [{ type: "quote", args: ['some " value'] }],
+  args: [{ type: "quote", args: ['some " $exp value'] }],
   env: [],
 });
 // Quoted with unknown scape sequence (error)
@@ -152,11 +152,18 @@ assertResult("echo $e", {
   args: [{ type: "expansion", args: ["e"] }],
   env: [],
 });
-// Expansion - empty
+// Expansion empty = arg
 assertResult("echo $", {
   type: "cmd",
   cmd: "echo",
-  args: [{ type: "expansion", args: [""] }],
+  args: ["$"],
+  env: [],
+});
+// Expansion quoted - empty = quote
+assertResult('echo "$"', {
+  type: "cmd",
+  cmd: "echo",
+  args: [{ type: "quote", args: ["$"] }],
   env: [],
 });
 // Expansion inside quotes

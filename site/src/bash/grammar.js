@@ -19,8 +19,8 @@ export const grammar = ohm.grammar(String.raw`
           | Expansion
           | arg
     InnerExpr = "$(" OrStatement ")"
-    Expansion = "$" (word | "?")?
-    QuotedText = #( scaped | ~("\"" | "\\" | "$") any )+
+    Expansion = "$" (word | "?")
+    QuotedText = #( scaped | ~("\"" | "\\") ~("$" word) ~("$(") any )+
     Keyword = ~"-" ~digit word
     arg = word_char+
     scaped = "\\" ("n" | "\"" | "\\" | "$")
