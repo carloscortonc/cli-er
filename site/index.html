@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="/assets/favicon.ico" />
+    <script type="module" vite-ignore="true">
+      window.require = null;
+      window.CLI_COMMANDS = {};
+      window.CLI_COLUMNS = 100;
+      window.FS_FILES = {};
+    </script>
+    <script type="module" src="/src/main.js"></script>
+    <script type="module" vite-ignore="true">
+      const remoteBase =
+        location.hostname === "localhost"
+          ? "http://localhost:8000"
+          : "https://cdn.jsdelivr.net/gh/carloscortonc/cli-er@develop";
+      const remote = (path) => remoteBase.concat("/", path);
+
+      // List of available commands
+      const commands = ["./commands/help", "./commands/echo", remote("examples/docker/definition")];
+
+      for (const c of commands) {
+        const spec = await import(/* @vite-ignore */ `${c}.js`)
+          .then((r) => r.default)
+          .catch((e) => (console.log(e), undefined));
+        if (spec) {
+          const specKey = spec.cliOptions.cliName || c.split("/").find((_, i, l) => i == l.length - 1);
+          window.CLI_COMMANDS[specKey] = { ...spec, builtin: undefined };
+        }
+      }
+    </script>
+    <title>Cli on the Web</title>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <div class="main">
+          <p class="title"><span>cli-er</span> - Modular Command-Line Interface Builder</p>
+          <p class="hint">Type <span>commands</span> to get a list of available commands</p>
+        </div>
+        <div class="actions">
+          <div id="theme" class="icon theme"></div>
+          <a href="https://github.com/carloscortonc/cli-er" target="_blank"><div class="icon github"></div></a>
+        </div>
+      </div>
+      <div id="shell">
+        <div id="output"></div>
+        <div class="input-wrapper">
+          <span id="sprompt">$</span>
+          <input type="text" id="input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        </div>
+        <pre id="output-after"></pre>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,134 @@
+:root {
+  --bg-color: #212221;
+  --fg-color: #c2c2c2;
+  --v-margin: 20px;
+  --h-margin: 40px;
+  --icon-size: 30px;
+}
+@media (max-width: 500px) {
+  :root {
+    --v-margin: 20px;
+    --h-margin: 15px;
+    --icon-size: 25px;
+  }
+  .header > .actions {
+    gap: 4px;
+  }
+}
+* {
+  font-family: monospace;
+  font-size: 14px;
+}
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+body {
+  background: var(--bg-color);
+  color: var(--fg-color);
+  margin: var(--v-margin) var(--h-margin);
+  width: calc(100% - 2 * var(--h-margin));
+  height: calc(100% - 2 * var(--v-margin));
+}
+body.light {
+  --bg-color: #eaeaea;
+  --fg-color: #474747;
+}
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.header {
+  margin: 14px 0 40px;
+  display: flex;
+}
+.main {
+  text-align: center;
+  flex: auto;
+}
+.actions {
+  display: flex;
+  gap: 12px;
+}
+.icon {
+  height: var(--icon-size);
+  width: var(--icon-size);
+  cursor: pointer;
+}
+.icon.github {
+  mask: url("/assets/github.svg") no-repeat center;
+  mask-size: contain;
+  background: var(--fg-color);
+}
+.icon.theme {
+  mask: url("/assets/theme.svg") no-repeat center;
+  mask-size: contain;
+  background: var(--fg-color);
+}
+.title {
+  font-size: 17px;
+  margin-top: 0;
+}
+.title > span {
+  font-size: inherit;
+  font-weight: bolder;
+}
+.hint {
+  font-size: 14px;
+}
+.hint > span {
+  font-size: inherit;
+  font-style: italic;
+}
+#shell {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+#shell::-webkit-scrollbar {
+  width: 9px;
+  height: 12px;
+}
+#shell::-webkit-scrollbar-track {
+  background: transparent;
+}
+#shell::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 3px solid transparent;
+}
+#shell::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+#sprompt.executing {
+  display: none;
+}
+#input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+  color: var(--fg-color);
+}
+pre {
+  margin: 2px 0 6px;
+  white-space: pre-wrap;
+  line-height: 20px;
+}
+pre[data-id] {
+  margin-bottom: 0;
+}
+#output > pre > span.error {
+  color: #d96464;
+}
