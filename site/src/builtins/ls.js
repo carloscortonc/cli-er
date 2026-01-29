@@ -1,4 +1,4 @@
-import * as fs from "../fs.js";
+import fs from "../fs.js";
 
 export const ls = {
   definition: {},

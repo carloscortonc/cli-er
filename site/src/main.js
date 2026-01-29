@@ -1,7 +1,7 @@
 import handleKey from "./key-handler.js";
 import * as renderer from "./renderer.js";
 import * as history from "./history.js";
-import * as fs from "./fs.js";
+import fs from "./fs.js";
 import execute from "./bash/interpreter.js";
 import * as builtincmds from "./builtins";
 import "./cli.web.js";
