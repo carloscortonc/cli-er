@@ -30,6 +30,11 @@ const r = (...args) => renderer.renderOutput(...args);
 process.stdout.write = (v) => r(v);
 process.stderr.write = (v) => r(v, { error: true });
 
+// Setup initial env values
+Object.assign(process.env, {
+  SHELL: "cliersh",
+});
+
 handleKey(i, {
   Enter: () => {
     let inputValue = i.value;

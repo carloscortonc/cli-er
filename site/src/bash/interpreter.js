@@ -23,8 +23,8 @@ async function executeAst(node) {
   if (node.type === "quote") {
     const args = [];
     for (const arg of node.args) {
-      if (typeof arg === "string") {
-        args.push(arg);
+      if (typeof arg === "string" || arg.type === "expansion") {
+        args.push(await executeAst(arg));
         continue;
       }
       const free = capture();
@@ -46,6 +46,10 @@ async function executeAst(node) {
   if (node.type === "expansion") {
     const v = node.args[0];
     // https://www.gnu.org/software/bash/manual/bash.html#Special-Parameters-1
+    if (!v) return "$";
+    if (v === "0") return process.env.SHELL;
+    if (v == "?") return process.lastExitCode.toString();
+    if (v == "$") return "0001";
     return process.env[v];
   }
   if (node.type === "cmd") {

@@ -152,6 +152,13 @@ assertResult("echo $e", {
   args: [{ type: "expansion", args: ["e"] }],
   env: [],
 });
+// Expansion - empty
+assertResult("echo $", {
+  type: "cmd",
+  cmd: "echo",
+  args: [{ type: "expansion", args: [""] }],
+  env: [],
+});
 // Expansion inside quotes
 assertResult('echo "one and $e"', {
   type: "cmd",

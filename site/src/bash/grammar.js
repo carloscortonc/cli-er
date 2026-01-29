@@ -19,11 +19,11 @@ export const grammar = ohm.grammar(String.raw`
           | Expansion
           | arg
     InnerExpr = "$(" OrStatement ")"
-    Expansion = "$" word
+    Expansion = "$" (word | "?")?
     QuotedText = #( scaped | ~("\"" | "\\" | "$") any )+
     Keyword = ~"-" ~digit word
     arg = word_char+
-    scaped = "\\" ("n" | "\"" | "\\" )
+    scaped = "\\" ("n" | "\"" | "\\" | "$")
     word = word_char+
     word_char = letter | digit | "-" | "." | "_" | ":" | "$"
   }
@@ -49,7 +49,7 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
     return { type: "env", args: [k.ast(), v.ast()] };
   },
   Expansion(_, k) {
-    return { type: "expansion", args: [k.ast()] };
+    return { type: "expansion", args: [k.sourceString] };
   },
   Keyword(v) {
     return v.ast();
