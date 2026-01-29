@@ -1,6 +1,8 @@
 import { grammar, semantics } from "./grammar.js";
 import ExecWorker from "./exec-worker?worker";
 import { serialize } from "./serializer.js";
+import kernel from "../kernel.js";
+import fs from "../fs.js";
 import run from "./cli-runner.js";
 
 const execWorker = new ExecWorker();
@@ -48,7 +50,7 @@ async function executeAst(node) {
     // https://www.gnu.org/software/bash/manual/bash.html#Special-Parameters-1
     if (v === "0") return process.env.SHELL;
     if (v == "?") return process.lastExitCode.toString();
-    if (v == "$") return "0001";
+    if (v == "$") return kernel.getpid();
     return process.env[v];
   }
   if (node.type === "cmd") {
@@ -78,8 +80,11 @@ async function executeAst(node) {
       return process.exit(process.exitCode);
     }
 
+    // Create and object containing required process properties for the worker
+    const p = { env, stdout: { columns: process.stdout.columns }, stdin: { isTTY: process.stdin.isTTY } };
+
     return new Promise((resolve) => {
-      execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, env, cliHandlerUrl }));
+      execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, process: p, cliHandlerUrl }));
 
       execWorker.onmessage = ({ data }) => {
         if (data.type === "output") {
@@ -104,8 +109,10 @@ async function executeAst(node) {
     }
   }
   if (node.type === "pipe") {
+    const free = capture();
     await executeAst(node.args[0]);
-    //TODO store otuput (FD[1]) in FD[0]
+    // Write captured value into cpid's fd=0 (stdin)
+    await fs.writeFile(fs.getProcessFdPath(0), free());
     process.stdin.isTTY = false;
     await executeAst(node.args[1]);
     process.stdin.isTTY = true;

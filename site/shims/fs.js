@@ -1,5 +1,5 @@
 module.exports = {
-  readFileSync: (fd) => FS_FILES?.[fd],
+  readFileSync: () => "",
   existsSync: () => true,
   realpathSync: () => "",
 };

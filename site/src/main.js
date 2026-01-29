@@ -38,7 +38,8 @@ Object.assign(process.env, {
 });
 
 // Initialize FS
-fs.init({ "/README.md": "hello", "/users/guest/info.txt": "" });
+await fs.init({ "/README.md": "hello" });
+require("fs").readFileSync = fs.readFileSync.bind(fs);
 
 handleKey(i, {
   Enter: () => {
