@@ -1,6 +1,7 @@
 import handleKey from "./key-handler.js";
 import * as renderer from "./renderer.js";
 import * as history from "./history.js";
+import * as fs from "./fs.js";
 import execute from "./bash/interpreter.js";
 import * as builtincmds from "./builtins";
 import "./cli.web.js";
@@ -33,7 +34,11 @@ process.stderr.write = (v) => r(v, { error: true });
 // Setup initial env values
 Object.assign(process.env, {
   SHELL: "cliersh",
+  USER: "guest",
 });
+
+// Initialize FS
+fs.init({ "/README.md": "hello", "/users/guest/info.txt": "" });
 
 handleKey(i, {
   Enter: () => {
