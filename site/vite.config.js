@@ -9,4 +9,7 @@ export default {
     // Avoid replacing "process.env" references
     "process.env": "process.env",
   },
+  worker: {
+    format: "es",
+  },
 };
