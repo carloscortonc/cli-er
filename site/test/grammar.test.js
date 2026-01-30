@@ -96,14 +96,14 @@ assertResult('echo "1$(echo 2)"', {
   env: [],
 });
 // Quoted complex expr
-assertResult('echo "1$(echo 2 && echo 2)"', {
+assertResult('echo "1 $(echo 2 && echo 2)  3"', {
   type: "cmd",
   cmd: "echo",
   args: [
     {
       type: "quote",
       args: [
-        "1",
+        "1 ",
         {
           type: "and",
           args: [
@@ -111,6 +111,7 @@ assertResult('echo "1$(echo 2 && echo 2)"', {
             { type: "cmd", cmd: "echo", args: ["2"], env: [] },
           ],
         },
+        "  3",
       ],
     },
   ],
