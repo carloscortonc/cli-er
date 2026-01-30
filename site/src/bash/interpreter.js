@@ -8,6 +8,7 @@ import run from "./cli-runner.js";
 
 const execWorker = new ExecWorker();
 
+// MAYBE simplify: handle fds in a local object, and leave filesystem just for FD=0 (required from webworker)
 /** Read from `opts.fds` and clear them. Render `opts.render` */
 const flush = async (opts = { fds: [1, 2], render: [1, 2] }) => {
   const o = await Promise.all(opts.fds.map((fd) => fs.readFile(fs.getProcessFdPath(fd)).then((v) => [fd, v]))).then(
@@ -132,7 +133,8 @@ async function executeAst(node, opts = {}) {
 export default async function execute(input) {
   const r = grammar.match(input);
   if (!r.succeeded()) {
-    process.stderr.write(r.message);
+    // Render error directly
+    renderer.renderOutput(r.message, { error: true });
   }
   const ast = semantics(r).ast();
   return executeAst(ast);
