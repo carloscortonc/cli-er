@@ -4,8 +4,10 @@ const root = await navigator.storage.getDirectory();
 
 class FileSystem {
   cwd = "/";
-  // Store a dedicated handle for stdin fd (`/proc/{PID}/fd/0`) to be used in `readFileSync`
+  // Store a dedicated handle for stdin fd (stdout and stderr are sent to main thread) to be used in `readFileSync`
   stdinHandle = null;
+  // Pending write operation
+  wp = Promise.resolve();
 
   getCwd() {
     return this.cwd;
@@ -34,16 +36,62 @@ class FileSystem {
     return `/proc/${kernel.getpid()}/fd/${fd}`;
   }
 
-  async writeFile(path, content) {
-    const handle = await this.#getFileHandle(path, true);
-    const writable = await handle.createWritable();
-    await writable.write(content);
-    await writable.close();
+  async writeFile(path, content, opts = {}) {
+    this.wp = this.wp.then(() => this.#writeFile(path, content, opts));
+    return this.wp;
   }
 
   async readFile(path) {
+    await this.wp;
+    return this.#readFile(path);
+  }
+
+  async #readFile(path) {
     const handle = await this.#getFileHandle(path);
-    return handle.getFile().then((f) => f.text());
+    return handle
+      .getFile()
+      .then((f) => f.text())
+      .then((r) => {
+        return r.slice(r.indexOf("\n") + 1);
+      });
+  }
+
+  async #writeFile(path, content, opts) {
+    let c;
+    // Check if file needs to be read (regenerating metadata)
+    if (opts.metadata || !opts.concat) {
+      const e = opts.concat ? await this.#readFile(path) : "";
+      c = `${JSON.stringify(opts.metadata || {})}\n${e}${content}`;
+    } else {
+      c = content;
+    }
+    return this.#writeRawFileContent(path, c, opts);
+  }
+
+  /** Get file metadata by reading stream until a "\n" is found */
+  async getFileMetadata(path) {
+    const reader = (await this.#getFileHandle(path).then((h) => h.getFile())).stream().getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) return buffer;
+      buffer += decoder.decode(value, { stream: true });
+      if (buffer.indexOf("\n") !== -1) break;
+    }
+    try {
+      return JSON.parse(buffer.slice(0, buffer.indexOf("\n")));
+    } catch {
+      return {};
+    }
+  }
+
+  async #writeRawFileContent(path, content, opts) {
+    const handle = await this.#getFileHandle(path, true);
+    const position = opts.concat ? (await handle.getFile()).size : undefined;
+    const writable = await handle.createWritable({ keepExistingData: opts.concat });
+    await writable.write({ type: "write", data: content, position });
+    await writable.close();
   }
 
   /** Compatibility method with original `fs.readFileSync`
@@ -60,7 +108,8 @@ class FileSystem {
     const fileSize = this.stdinHandle.getSize();
     const buffer = new DataView(new ArrayBuffer(fileSize));
     this.stdinHandle.read(buffer, { at: 0 });
-    return new TextDecoder("utf-8").decode(new Uint8Array(buffer.buffer));
+    const content = new TextDecoder("utf-8").decode(new Uint8Array(buffer.buffer));
+    return content.slice(content.indexOf("\n"));
   }
 
   async readDir(path) {
@@ -78,8 +127,8 @@ class FileSystem {
     for (const f in fileMap) {
       await this.writeFile(f, fileMap[f]);
     }
-    // Create empty fd=0 file
-    await this.writeFile(this.getProcessFdPath(0), "");
+    // Create empty fd=0,1,2 file
+    await Promise.all([0, 1, 2].map((fd) => this.writeFile(this.getProcessFdPath(fd), "")));
   }
 
   // Create a stdin handle for web-worker
