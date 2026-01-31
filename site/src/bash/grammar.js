@@ -55,7 +55,18 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
     return v.ast();
   },
   Quoted_quoted(_lq, s, _rq) {
-    return { type: "quote", args: s.children.map((e) => e.ast()) };
+    const args = s.children.map((c) => {
+      let v = c.ast();
+      // Spaces are lost in QuotedText when appearing after InnerExpr
+      // As temporary workaround, include any preceding spaces into QuotedText value
+      if (c.ctorName === "QuotedText") {
+        let i = c.source.startIdx - 1;
+        for (i; s.source.sourceString[i] == " "; i--);
+        v = "".concat(" ".repeat(c.source.startIdx - 1 - i), v);
+      }
+      return v;
+    });
+    return { type: "quote", args };
   },
   QuotedText(q) {
     return q.children.map((c) => (c.ctorName !== "any" ? c.ast() : c.sourceString)).join("");

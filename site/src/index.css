@@ -110,6 +110,9 @@ body.light {
   gap: 8px;
   margin-bottom: 4px;
 }
+.input-wrapper > span {
+  white-space: pre;
+}
 #sprompt.executing {
   display: none;
 }

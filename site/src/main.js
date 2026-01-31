@@ -26,20 +26,19 @@ lm.addEventListener("click", () =>
   document.body.classList[document.body.classList.contains("light") ? "remove" : "add"]("light"),
 );
 
-// Capture cli output
-const r = (...args) => renderer.renderOutput(...args);
-process.stdout.write = (v) => r(v);
-process.stderr.write = (v) => r(v, { error: true });
+// Initialize FS
+await fs.init({ "/README.md": "hello" });
+require("fs").readFileSync = fs.readFileSync.bind(fs);
+
+// Capture cli output, send it to the corresponding fd
+process.stdout.write = (v) => fs.writeFile(fs.getProcessFdPath(1), v, { concat: true });
+process.stderr.write = (v) => fs.writeFile(fs.getProcessFdPath(2), v, { concat: true });
 
 // Setup initial env values
 Object.assign(process.env, {
   SHELL: "cliersh",
   USER: "guest",
 });
-
-// Initialize FS
-await fs.init({ "/README.md": "hello" });
-require("fs").readFileSync = fs.readFileSync.bind(fs);
 
 handleKey(i, {
   Enter: () => {
