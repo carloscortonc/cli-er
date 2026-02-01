@@ -46,6 +46,12 @@ class FileSystem {
     return this.#readFile(path);
   }
 
+  // https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system#deleting_a_file_or_folder
+  async deleteFile(path) {
+    await this.wp;
+    const h = await this.#getFileHandle(path);
+    return h.remove();
+  }
   async #readFile(path) {
     const handle = await this.#getFileHandle(path);
     return handle
@@ -127,13 +133,13 @@ class FileSystem {
     for (const f in fileMap) {
       await this.writeFile(f, fileMap[f]);
     }
-    // Create empty fd=0,1,2 file
-    await Promise.all([0, 1, 2].map((fd) => this.writeFile(this.getProcessFdPath(fd), "")));
   }
 
   // Create a stdin handle for web-worker
   async wwPrepareStdinHandle() {
-    this.stdinHandle = await this.#getFileHandle(this.getProcessFdPath(0)).then((h) => h.createSyncAccessHandle());
+    this.stdinHandle = await this.#getFileHandle(this.getProcessFdPath(0), true).then((h) =>
+      h.createSyncAccessHandle(),
+    );
     // Return cleanup function
     return () => this.stdinHandle.close();
   }

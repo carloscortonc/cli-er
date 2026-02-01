@@ -4,6 +4,7 @@ import * as history from "./history.js";
 import fs from "./fs.js";
 import execute from "./bash/interpreter.js";
 import * as builtincmds from "./builtins";
+import kernel from "./kernel.js";
 import "./cli.web.js";
 import "./index.css";
 
@@ -27,12 +28,15 @@ lm.addEventListener("click", () =>
 );
 
 // Initialize FS
-await fs.init({ "/README.md": "hello" });
+await fs.init({ "/README.md": "Hello" });
 require("fs").readFileSync = fs.readFileSync.bind(fs);
 
-// Capture cli output, send it to the corresponding fd
-process.stdout.write = (v) => fs.writeFile(fs.getProcessFdPath(1), v, { concat: true });
-process.stderr.write = (v) => fs.writeFile(fs.getProcessFdPath(2), v, { concat: true });
+// Define `stdin.isTTY` as if kernel's fd=0's type is TTY
+Object.defineProperty(process.stdin, "isTTY", {
+  get() {
+    return kernel.getFD(0)?.type === "TTY";
+  },
+});
 
 // Setup initial env values
 Object.assign(process.env, {
