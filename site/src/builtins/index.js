@@ -4,3 +4,4 @@ export * from "./printenv";
 export * from "./pwd";
 export * from "./ls";
 export * from "./cd";
+export * from "./cat";
