@@ -1,7 +1,7 @@
-import fs from "../fs";
+import path from "../path";
 
 export const pwd = {
   definition: {},
   cliOptions: {},
-  action: () => process.stdout.write(fs.getCwd()),
+  action: () => process.stdout.write(path.getCwd()),
 };
