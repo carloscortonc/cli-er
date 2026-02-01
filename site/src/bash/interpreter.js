@@ -16,14 +16,12 @@ const execWorker = new ExecWorker();
 async function executeAst(node, opts = {}) {
   try {
     if (typeof node === "string") {
-      // TODO output to stdout (1), were it should be piped
       return node;
     }
     if (node.type === "quote") {
       FDStack.push(1, new FileDescriptor("PIPE"));
       const args = [];
       for (const arg of node.args) {
-        // Usar en todos igual: capturar, flush(1)
         if (typeof arg === "string" || arg.type === "expansion") {
           args.push(await executeAst(arg));
           continue;
@@ -116,12 +114,12 @@ async function executeAst(node, opts = {}) {
       // Write captured value (fd=1) into fd=0 (stdin)
       FDStack.push(0, pipe);
       await fs.writeFile(fs.getProcessFdPath(0), pipe.buffer);
-      // process.stdin.isTTY = false;
+
       await executeAst(node.args[1], opts);
+
       // Remove fd=0 (stdin)
       FDStack.pop(0);
       await fs.deleteFile(fs.getProcessFdPath(0));
-      // process.stdin.isTTY = true;
     }
   } finally {
     FDStack.flush();

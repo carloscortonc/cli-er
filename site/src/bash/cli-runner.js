@@ -4,7 +4,11 @@ export default async function run({ name, cliSpec, args }) {
   if (cliSpec.builtin !== undefined && cliSpec.cliOptions?.help?.hidden === undefined) {
     cliSpec.cliOptions.help = { ...cliSpec.cliOptions.help, hidden: true };
   }
-  const c = new Cli(cliSpec.definition || {}, { ...cliSpec.cliOptions, cliName: name });
+  const c = new Cli(cliSpec.definition || {}, {
+    logger: { error: (...m) => process.stderr.write("".concat(name, ": ", m.join(""))) },
+    ...cliSpec.cliOptions,
+    cliName: name,
+  });
   // Update default help template
   c.options.help.template =
     cliSpec.cliOptions.help?.template || "{usage}\n{description}\n{namespaces}\n{commands}\n{options}";
