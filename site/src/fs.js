@@ -1,21 +1,13 @@
 import kernel from "./kernel.js";
+import pathmodule from "./path.js";
 
 const root = await navigator.storage.getDirectory();
 
 class FileSystem {
-  cwd = "/";
   // Store a dedicated handle for stdin fd (stdout and stderr are sent to main thread) to be used in `readFileSync`
   stdinHandle = null;
   // Pending write operation
   wp = Promise.resolve();
-
-  getCwd() {
-    return this.cwd;
-  }
-
-  setCwd(cwd) {
-    this.cwd = cwd;
-  }
 
   async #getDirHandle(pathOrParts, create) {
     const parts = Array.isArray(pathOrParts) ? pathOrParts : pathOrParts.split("/").filter(Boolean);
@@ -52,6 +44,17 @@ class FileSystem {
     const h = await this.#getFileHandle(path);
     return h.remove();
   }
+
+  async info(path) {
+    const target = pathmodule.basename(path);
+    const parent = pathmodule.resolve(path, "..");
+    if (parent == path) {
+      return { type: "directory", name: path };
+    }
+    const dir = await this.readDir(parent);
+    return dir.find((e) => e.name === target);
+  }
+
   async #readFile(path) {
     const handle = await this.#getFileHandle(path);
     return handle
