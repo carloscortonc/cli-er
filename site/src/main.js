@@ -3,7 +3,8 @@ import handleKey from "./key-handler.js";
 import * as renderer from "./renderer.js";
 import * as history from "./history.js";
 import fs from "./fs.js";
-import execute from "./bash/interpreter.js";
+import path from "./path.js";
+import { execute, prompt } from "./bash";
 import * as builtincmds from "./builtins";
 import kernel from "./kernel.js";
 import "./index.css";
@@ -20,7 +21,9 @@ const blob = new Blob([blobSource], { type: "text/javascript" });
 window.cliHandlerUrl = URL.createObjectURL(blob);
 require("url").pathToFileURL = () => ({ href: cliHandlerUrl });
 
-let [i, o, oa, lm] = ["input", "output", "output-after", "theme"].map((id) => document.getElementById(id));
+let [i, sp, o, oa, lm] = ["input", "sprompt", "output", "output-after", "theme"].map((id) =>
+  document.getElementById(id),
+);
 document.addEventListener("click", () => i.focus());
 o.addEventListener("click", (e) => e.stopPropagation());
 lm.addEventListener("click", () =>
@@ -28,8 +31,11 @@ lm.addEventListener("click", () =>
 );
 
 // Initialize FS
-await fs.init({ "/README.md": "Hello" });
+await fs.init({ "/users/guest/README.md": "Welcome!" });
 require("fs").readFileSync = fs.readFileSync.bind(fs);
+
+// Initialize path
+path.setCwd("/");
 
 // Define `stdin.isTTY` as if kernel's fd=0's type is TTY
 Object.defineProperty(process.stdin, "isTTY", {
@@ -42,7 +48,17 @@ Object.defineProperty(process.stdin, "isTTY", {
 Object.assign(process.env, {
   SHELL: "cliersh",
   USER: "guest",
+  PS1: "\\u:\\w $",
 });
+
+// Method for updating bash prompt
+const updatePrompt = () => {
+  let p = prompt();
+  if (window.CLI_PROMPT === p) return;
+  window.CLI_PROMPT = p;
+  sp.innerText = p;
+};
+updatePrompt();
 
 handleKey(i, {
   Enter: () => {
@@ -52,6 +68,7 @@ handleKey(i, {
     renderer.renderInput(inputValue);
     i.value = "";
     execute(inputValue).finally(() => {
+      updatePrompt();
       renderer.flushOutput();
     });
   },

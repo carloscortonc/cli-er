@@ -128,7 +128,7 @@ async function executeAst(node, opts = {}) {
   }
 }
 
-export default async function execute(input) {
+export async function execute(input) {
   const r = grammar.match(input);
   if (!r.succeeded()) {
     // Render error directly

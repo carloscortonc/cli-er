@@ -7,7 +7,7 @@ const OUTPUT_ID = "exec";
 export function renderInput(value) {
   const input = document.createElement("div");
   input.className = "input-wrapper";
-  input.innerHTML = `$<span>${value}</span>`;
+  input.innerHTML = `${window.CLI_PROMPT}<span>${value}</span>`;
   sp.classList.add("executing");
   clearOutput(oa);
   o.appendChild(input);
