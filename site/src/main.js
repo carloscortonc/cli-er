@@ -1,3 +1,4 @@
+import "./cli.web.js";
 import handleKey from "./key-handler.js";
 import * as renderer from "./renderer.js";
 import * as history from "./history.js";
@@ -5,7 +6,6 @@ import fs from "./fs.js";
 import execute from "./bash/interpreter.js";
 import * as builtincmds from "./builtins";
 import kernel from "./kernel.js";
-import "./cli.web.js";
 import "./index.css";
 
 const builtins = { history: history.spec, clear: renderer.clearSpec, ...builtincmds };
