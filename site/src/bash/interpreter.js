@@ -27,7 +27,9 @@ async function executeAst(node, opts = {}) {
           continue;
         }
         await executeAst(arg);
-        args.push(kernel.getFD(1).flush());
+        // Remove trailing new-lines (https://www.gnu.org/software/bash/manual/bash.html#Command-Substitution-1)
+        const buffer = kernel.getFD(1).flush().replace(/\n?$/, "");
+        args.push(buffer);
       }
       FDStack.pop(1);
       return args.join("");
