@@ -361,6 +361,7 @@ export function parseArguments(params: {
           ...(optionDefinition as Option),
           key: isPositional === Positional.TRUE ? optionDefinition.key! : curr,
         },
+        truePositional: !!positionalOptions.true,
         format: () =>
           deprecationWarning({
             property: "Option.parser::format",

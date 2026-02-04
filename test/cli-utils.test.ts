@@ -775,6 +775,17 @@ describe("parseArguments", () => {
       rawLocation: [],
     });
   });
+  it("Positional=true non-required - conflicting with alias", () => {
+    const { definition, options } = new Cli({ opt: { positional: true }, regopt: { type: "boolean" } }, baseConfig);
+    expect(
+      parseArguments({ args: ["--regopt", "value"], definition: definition as Definition, cliOptions: options }),
+    ).toStrictEqual({
+      options: { _: [], regopt: true, opt: ["value"] },
+      location: [],
+      errors: [],
+      rawLocation: [],
+    });
+  });
   it("Multiple non-required positional options (numerical) - conflicting with alias", () => {
     const { definition, options } = new Cli(
       { opt1: { positional: 0 }, opt2: { positional: 1 }, regopt: { type: "boolean" } },
