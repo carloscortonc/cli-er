@@ -1,4 +1,4 @@
-import kernel from "./kernel.js";
+import kernel from "./kernel";
 import pathmodule from "./path.js";
 
 const root = await navigator.storage.getDirectory();

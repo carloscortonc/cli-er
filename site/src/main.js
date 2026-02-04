@@ -6,7 +6,7 @@ import fs from "./fs.js";
 import path from "./path.js";
 import { execute, prompt } from "./bash";
 import * as builtincmds from "./builtins";
-import kernel from "./kernel.js";
+import kernel, { Signal } from "./kernel";
 import "./index.css";
 
 const builtins = { history: history.spec, clear: renderer.clearSpec, ...builtincmds };
@@ -71,6 +71,13 @@ handleKey(i, {
       updatePrompt();
       renderer.flushOutput();
     });
+  },
+  c: (e) => {
+    if (!e.ctrlKey) return;
+    kernel.kill(Signal.SIGINT);
+    i.value = "";
+    renderer.renderOutput("^C");
+    renderer.flushOutput();
   },
   Tab: (e) => {
     e.preventDefault();

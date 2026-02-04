@@ -125,9 +125,8 @@ body.light {
   color: var(--fg-color);
 }
 pre {
-  margin: 2px 0 6px;
+  margin: 6px 0;
   white-space: pre-wrap;
-  line-height: 20px;
 }
 pre[data-id] {
   margin-bottom: 0;

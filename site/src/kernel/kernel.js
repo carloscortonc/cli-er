@@ -1,6 +1,7 @@
 class Kernel {
   cpid = 1;
   fds = { 0: undefined, 1: undefined, 2: undefined };
+  processmap = {};
 
   getpid() {
     return this.cpid;
@@ -13,24 +14,14 @@ class Kernel {
   setFD(fd, value) {
     this.fds[fd] = value;
   }
-}
 
-export class FileDescriptor {
-  buffer = "";
-  type = undefined;
-
-  constructor(type) {
-    this.type = type;
+  registerProcess(w) {
+    this.processmap[this.cpid] = w;
   }
 
-  write(v) {
-    this.buffer += v;
-  }
-
-  flush() {
-    const v = this.buffer;
-    this.buffer = "";
-    return v;
+  kill(signal) {
+    if (!this.processmap[this.cpid]) return;
+    this.processmap[this.cpid].postMessage(JSON.stringify({ type: "signal", value: signal }));
   }
 }
 

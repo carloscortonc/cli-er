@@ -8,7 +8,13 @@ process.stdout.write = (value) => postMessage({ type: "output", stream: "stdout"
 process.stderr.write = (value) => postMessage({ type: "output", stream: "stderr", value });
 
 self.onmessage = async (e) => {
-  const { name, cliSpec, args, process: p, cliHandlerUrl } = deserialize(e.data);
+  const data = deserialize(e.data);
+  if (data.type === "signal") {
+    postMessage({ type: "exit", exitCode: 128 + data.value });
+    return self.close();
+  }
+
+  const { name, cliSpec, args, process: p, cliHandlerUrl } = data;
 
   // Merge incoming process-data into process object
   merge(process, p);
