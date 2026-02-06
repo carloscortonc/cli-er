@@ -1,4 +1,5 @@
 export * from "./commands";
+export * from "./echo";
 export * from "./sleep";
 export * from "./printenv";
 export * from "./pwd";

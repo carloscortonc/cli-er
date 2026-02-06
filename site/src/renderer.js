@@ -7,7 +7,7 @@ const OUTPUT_ID = "exec";
 export function renderInput(value) {
   const input = document.createElement("div");
   input.className = "input-wrapper";
-  input.innerHTML = `${window.CLI_PROMPT}<span>${value}</span>`;
+  input.innerHTML = `<span>${window.CLI_PROMPT}</span><span>${value}</span>`;
   sp.classList.add("executing");
   clearOutput(oa);
   o.appendChild(input);
@@ -26,11 +26,25 @@ function createElement(tag, props) {
   return e;
 }
 
+export const parseColor = (v) => {
+  return v.replaceAll(
+    /\e\[(?:(?<id1>\d)?;)?(?<id2>\d{2,})m(?<v>.+?)(?<!\\)\e\[0m/g,
+    '<span class="color-$<id2> color-mode-$<id1>">$<v></span>',
+  );
+};
+
+export const scapeColor = (v) => v.replace(/\e\[0m/g, "\\$&");
+
 export function renderOutput(value, { error } = {}) {
   const r = document.querySelector(`#output>pre[data-id="${OUTPUT_ID}"]`) || undefined;
   const e = r || document.createElement("pre");
-  const l = createElement("span", { innerText: value, ...(error && { className: "error" }) });
-  e.appendChild(l);
+  if (error) {
+    const l = createElement("span", { innerHTML: value, ...(error && { className: "error" }) });
+    e.appendChild(l);
+  } else {
+    const l = parseColor(value, error);
+    e.insertAdjacentHTML("beforeend", l);
+  }
   if (!r) {
     e.setAttribute("data-id", OUTPUT_ID);
     o.appendChild(e);

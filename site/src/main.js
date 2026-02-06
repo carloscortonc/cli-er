@@ -48,15 +48,15 @@ Object.defineProperty(process.stdin, "isTTY", {
 Object.assign(process.env, {
   SHELL: "cliersh",
   USER: "guest",
-  PS1: "\\u:\\w $",
+  PS1: `\e[0;32m\\u\e[0m:\e[0;34m\\w $\e[0m`,
 });
 
 // Method for updating bash prompt
 const updatePrompt = () => {
   let p = prompt();
   if (window.CLI_PROMPT === p) return;
-  window.CLI_PROMPT = p;
-  sp.innerText = p;
+  window.CLI_PROMPT = renderer.parseColor(p);
+  sp.innerHTML = window.CLI_PROMPT;
 };
 updatePrompt();
 

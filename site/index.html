@@ -19,7 +19,7 @@
       const remote = (path) => remoteBase.concat("/", path);
 
       // List of available commands
-      const commands = ["./commands/help", "./commands/echo", remote("examples/docker/definition")];
+      const commands = ["./commands/help", remote("examples/docker/definition")];
 
       for (const c of commands) {
         const spec = await import(/* @vite-ignore */ `${c}.js`)

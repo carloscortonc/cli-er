@@ -134,3 +134,32 @@ pre[data-id] {
 #output > pre > span.error {
   color: #d96464;
 }
+/* output colors */
+span.color-31 {
+  color: #d64545;
+}
+span.color-32 {
+  color: #65b265;
+}
+span.color-33 {
+  color: #cbcb56;
+}
+span.color-34 {
+  color: #4a80e4;
+}
+span.color-35 {
+  color: #9f289f;
+}
+span.color-36 {
+  color: #51c9c9;
+}
+span.color-37 {
+  color: white;
+}
+/* color modes */
+span.color-mode-0 {
+  font-weight: bold;
+}
+span.color-mode-4 {
+  text-decoration: underline;
+}
