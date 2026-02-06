@@ -19,6 +19,14 @@ class Path {
     );
   }
 
+  relative(from, to) {
+    const r = this.resolve(from, to);
+    const parts = [from, r].map((e) => e.split("/").filter(Boolean));
+    const i = parts[1].findIndex((e, index) => e !== parts[0][index]) ?? parts[0].length - 1;
+    const base = i > parts[0].length - 1 ? ["."] : Array.from({ length: parts[0].length - i }, () => "..");
+    return base.concat(parts[1].slice(i)).join("/");
+  }
+
   basename(path) {
     if (path === "/") return "/";
     return /[^\/]+$/.exec(path)?.[0];

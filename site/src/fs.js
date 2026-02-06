@@ -45,6 +45,12 @@ class FileSystem {
     return h.remove();
   }
 
+  async createDir(path, create) {
+    const parts = path.split("/").filter(Boolean);
+    const existsParent = await this.#getDirHandle(parts.slice(0, parts.length - 1), false).catch(() => false);
+    return this.#getDirHandle(path, create || existsParent);
+  }
+
   async info(path) {
     const target = pathmodule.basename(path);
     const parent = pathmodule.resolve(path, "..");
