@@ -1,9 +1,11 @@
 export class FileDescriptor {
   buffer = "";
   type = undefined;
+  metadata = {};
 
-  constructor(type) {
+  constructor(type, metadata) {
     this.type = type;
+    this.metadata = metadata;
   }
 
   write(v) {

@@ -1,5 +1,6 @@
 import kernel, { FileDescriptor } from "../kernel";
 import * as renderer from "../renderer";
+import fs from "../fs";
 
 /**
  * Object containing a stack for each FD.
@@ -28,12 +29,15 @@ class FileDescriptorStack {
     return v;
   }
 
-  flush() {
+  async flush() {
     for (const fd of [2, 1]) {
       const d = kernel.getFD(fd);
       if (d.type === "TTY") {
         const buffer = d.flush();
         buffer && renderer.renderOutput(buffer.replace(/\n?$/, "\n"), { error: fd == 2 });
+      } else if (d.type === "FILE") {
+        const buffer = d.flush();
+        await fs.writeFile(d.metadata.name, buffer, { concat: true });
       }
     }
   }

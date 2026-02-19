@@ -174,3 +174,19 @@ assertResult('echo "one and $e"', {
   args: [{ type: "quote", args: ["one and ", { type: "expansion", args: ["e"] }] }],
   env: [],
 });
+// Redirect ">"
+assertResult("echo 1 > test", {
+  type: "redirect",
+  args: [
+    { op: ">", value: "test" },
+    { type: "cmd", cmd: "echo", args: ["1"], env: [] },
+  ],
+});
+// Redirect ">>"
+assertResult("echo 1 >> test", {
+  type: "redirect",
+  args: [
+    { op: ">>", value: "test" },
+    { type: "cmd", cmd: "echo", args: ["1"], env: [] },
+  ],
+});

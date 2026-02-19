@@ -117,7 +117,7 @@ async function executeAst(node) {
       FDStack.push(1, new FileDescriptor("PIPE"));
       await executeAst(node.args[0], { flush: false });
       const pipe = FDStack.pop(1);
-      FDStack.flush();
+      await FDStack.flush();
 
       // Write captured value (fd=1) into fd=0 (stdin)
       FDStack.push(0, pipe);
@@ -129,8 +129,16 @@ async function executeAst(node) {
       FDStack.pop(0);
       await fs.deleteFile(fs.getProcessFdPath(0));
     }
+    if (node.type === "redirect") {
+      const [{ op, value }, expr] = node.args;
+      await fs.writeFile(value, "", { concat: op === ">>" && (await fs.info(value)) });
+      FDStack.push(1, new FileDescriptor("FILE", { name: value }));
+      await executeAst(expr);
+      await FDStack.flush();
+      FDStack.pop(1);
+    }
   } finally {
-    FDStack.flush();
+    await FDStack.flush();
   }
 }
 

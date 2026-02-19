@@ -7,13 +7,16 @@ export const grammar = ohm.grammar(String.raw`
                 | AndStatement
     AndStatement = AndStatement ("&&" PipeStatement)* -- and
                 | PipeStatement
-    PipeStatement = PipeStatement ("|" Paren)* -- pipe
-                | Paren
+    PipeStatement = PipeStatement ("|" Redir)* -- pipe
+                | Redir
+    Redir = Paren Redirect -- redir
+          | Paren
     Paren      = "(" OrStatement ")" -- paren
                 | Expr
     Expr   = (Assignment spaces)* Keyword (spaces Quoted)* -- expr
            | Assignment
     Assignment = Keyword ~space "=" ~space Quoted
+    Redirect = (">" ~">" | ">>") arg
     Quoted = "\"" (InnerExpr | Expansion | QuotedText)* "\"" -- quoted
           | InnerExpr
           | Expansion
@@ -39,6 +42,9 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
   PipeStatement_pipe(a, _, b) {
     return { type: "pipe", args: [a.ast(), ...b.ast()] };
   },
+  Redir_redir(e, r) {
+    return { type: "redirect", args: [r.ast(), e.ast()] };
+  },
   Paren_paren(_, e, __) {
     return e.ast();
   },
@@ -47,6 +53,10 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
   },
   Assignment(k, _, v) {
     return { type: "env", args: [k.ast(), v.ast()] };
+  },
+  // https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html#Redirections-1
+  Redirect(op, v) {
+    return { op: op.sourceString, value: v.ast() };
   },
   Expansion(_, k) {
     return { type: "expansion", args: [k.sourceString] };
