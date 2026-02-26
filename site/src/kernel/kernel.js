@@ -7,6 +7,10 @@ class Kernel {
     return this.cpid;
   }
 
+  gethostname() {
+    return window.location.hostname;
+  }
+
   getFD(fd) {
     return this.fds[fd];
   }

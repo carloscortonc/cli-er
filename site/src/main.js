@@ -48,7 +48,7 @@ Object.defineProperty(process.stdin, "isTTY", {
 Object.assign(process.env, {
   SHELL: "cliersh",
   USER: "guest",
-  PS1: `\e[0;32m\\u\e[0m:\e[0;34m\\w $\e[0m`,
+  PS1: `\e[0;32m\\u@\\H\e[0m:\e[0;34m\\w $\e[0m`,
 });
 
 // Method for updating bash prompt
