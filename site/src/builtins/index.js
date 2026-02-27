@@ -7,3 +7,4 @@ export * from "./ls";
 export * from "./cd";
 export * from "./cat";
 export * from "./mkdir";
+export * from "./clier";

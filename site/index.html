@@ -19,15 +19,20 @@
       const remote = (path) => remoteBase.concat("/", path);
 
       // List of available commands
-      const commands = ["./commands/help", remote("examples/docker/definition")];
+      const commands = [
+        "./commands/help",
+        remote("examples/docker/definition"),
+        remote("examples/webpack-cli/definition"),
+      ];
 
       for (const c of commands) {
-        const spec = await import(/* @vite-ignore */ `${c}.js`)
+        const source = `${c}.js`;
+        const spec = await import(/* @vite-ignore */ source)
           .then((r) => r.default)
           .catch((e) => (console.log(e), undefined));
         if (spec) {
           const specKey = spec.cliOptions.cliName || c.split("/").find((_, i, l) => i == l.length - 1);
-          window.CLI_COMMANDS[specKey] = { ...spec, builtin: undefined };
+          window.CLI_COMMANDS[specKey] = { ...spec, source, builtin: undefined };
         }
       }
     </script>

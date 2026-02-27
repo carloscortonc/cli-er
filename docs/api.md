@@ -75,7 +75,7 @@ This method has three main behaviours: print version, print help and execute a c
 
 If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](/docs/cli-options.md#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](/examples/docker/definition.js#L130)).
 
-You also use `CliOptions.rootCommand` to define a default command to execute, when no command/namespace is supplied (check this [webpack-cli example](/examples/webpack-cli)).
+You also use `CliOptions.rootCommand` to define a default command to execute, when no command/namespace is supplied (check this [webpack-cli example](https://carloscortonc.github.io/cli-er/?cmd=webpack)).
 
 ### [Typescript] Typing command's options
 When defining a command handler inside a script file, in order to have typed options the following steps are needed:

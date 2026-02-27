@@ -7,5 +7,6 @@ globalThis.process = {
   cwd: () => "",
   env: {},
   exitCode: 0,
+  lastExitCode: 0,
   exit: (c = 0) => ((process.exitCode = c), (process.lastExitCode = c)),
 };

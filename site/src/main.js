@@ -102,3 +102,16 @@ handleKey(i, {
     renderer.updateInputValue(n);
   },
 });
+
+// Check query for command value
+let q = new URLSearchParams(window.location.search).get("cmd") || "commands";
+if (q) {
+  const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+  await delay(500);
+  for (let l of q.slice("")) {
+    i.value += l;
+    await delay(30);
+  }
+  await delay(200);
+  i.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+}
