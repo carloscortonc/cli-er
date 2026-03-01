@@ -89,7 +89,7 @@ body.light {
   overflow-y: auto;
 }
 #shell::-webkit-scrollbar {
-  width: 9px;
+  width: 7px;
   height: 12px;
 }
 #shell::-webkit-scrollbar-track {
@@ -97,11 +97,15 @@ body.light {
 }
 #shell::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
+  border-radius: 3px;
   border: 3px solid transparent;
 }
 #shell::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 0.2);
+}
+#size-ref {
+  position: absolute;
+  visibility: hidden;
 }
 .input-wrapper {
   display: flex;

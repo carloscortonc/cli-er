@@ -21,7 +21,7 @@ const blob = new Blob([blobSource], { type: "text/javascript" });
 window.cliHandlerUrl = URL.createObjectURL(blob);
 require("url").pathToFileURL = () => ({ href: cliHandlerUrl });
 
-let [i, sp, o, oa, lm] = ["input", "sprompt", "output", "output-after", "theme"].map((id) =>
+let [i, sp, o, oa, lm, sr] = ["input", "sprompt", "output", "output-after", "theme", "size-ref"].map((id) =>
   document.getElementById(id),
 );
 document.addEventListener("click", () => i.focus());
@@ -29,6 +29,13 @@ o.addEventListener("click", (e) => e.stopPropagation());
 lm.addEventListener("click", () =>
   document.body.classList[document.body.classList.contains("light") ? "remove" : "add"]("light"),
 );
+// Handle resize
+const updateColumns = () => {
+  const charW = sr.getBoundingClientRect().width;
+  process.stdout.columns = Math.floor(o.clientWidth / charW);
+};
+updateColumns();
+window.addEventListener("resize", updateColumns);
 
 // Initialize FS
 await fs.init({ "/users/guest/README.md": "Welcome!" });
@@ -63,9 +70,11 @@ updatePrompt();
 handleKey(i, {
   Enter: () => {
     let inputValue = i.value;
-    if (!inputValue) return;
-    history.add(inputValue);
     renderer.renderInput(inputValue);
+    if (!inputValue) {
+      return renderer.flushOutput();
+    }
+    history.add(inputValue);
     i.value = "";
     execute(inputValue).finally(() => {
       updatePrompt();
