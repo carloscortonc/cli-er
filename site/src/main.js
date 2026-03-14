@@ -38,7 +38,7 @@ updateColumns();
 window.addEventListener("resize", updateColumns);
 
 // Initialize FS
-await fs.init({ "/users/guest/README.md": "Welcome!" });
+await fs.init({ "/users/guest/README.md": "Welcome!" }).catch(() => {});
 require("fs").readFileSync = fs.readFileSync.bind(fs);
 
 // Initialize path
