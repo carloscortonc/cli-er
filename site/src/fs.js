@@ -138,7 +138,8 @@ class FileSystem {
 
   /** Create initial FS structure */
   async init(fileMap) {
-    await root.remove();
+    // TODO change to `removeEntry()` for compatibility
+    await root.remove().catch(() => {});
     for (const f in fileMap) {
       await this.writeFile(f, fileMap[f]);
     }
