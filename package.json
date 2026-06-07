@@ -28,11 +28,11 @@
     "test": "npx tsc && jest --silent && npm run smoke-test",
     "format": "prettier --write ."
   },
-  "dependencies": {},
   "devDependencies": {
     "@saithodev/semantic-release-backmerge": "^2.1.2",
     "@semantic-release/changelog": "^6.0.1",
     "@semantic-release/git": "^10.0.1",
+    "@semantic-release/npm": "^13.1.5",
     "@swc/core": "^1.13.0",
     "@types/jest": "^28.0.0",
     "@types/node": "20.19.4",
