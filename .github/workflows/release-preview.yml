@@ -1,0 +1,12 @@
+name: release-preview
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+jobs:
+  release-preview:
+    uses: ./.github/workflows/release-base.yml
+    with:
+      dry_run: true
+    secrets: inherit

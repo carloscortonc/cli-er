@@ -21,7 +21,12 @@ const validateEnum = (values: (string | number | undefined)[], opt: ValueParserI
 };
 
 /** Evaluate the value of an option */
-export default function parseOptionValue({ value: rawValue, current, option }: ValueParserInput): ValueParserOutput {
+export default function parseOptionValue({
+  value: rawValue,
+  current,
+  option,
+  truePositional,
+}: ValueParserInput & { truePositional?: boolean }): ValueParserOutput {
   const type = option.type as Type;
   const defaultParserOutput = {
     /* Calculated value */
@@ -50,7 +55,8 @@ export default function parseOptionValue({ value: rawValue, current, option }: V
       error: defaultParserOutput.error || validateEnum([value], option),
     }),
     [Type.BOOLEAN]: () => ({
-      value: ["true", undefined].includes(value),
+      // If an option exist with positional=true, only use "false" value as false
+      value: ["true", undefined].includes(value) || (truePositional && value !== "false"),
       next: ["true", "false"].includes(value as string) ? 1 : 0,
       error: undefined,
     }),

@@ -17,16 +17,16 @@ jobs:
           node-version: 20
 
       - name: Setup cache for dist
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: dist
           key: dist-${{ github.run_id }}
 
       - name: Install dependencies
-        run: yarn --frozen-lockfile --ignore-engines
+        run: npm ci
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
   test:
     needs: build
@@ -41,7 +41,7 @@ jobs:
           fetch-depth: 0
 
       - name: Restore dist cache
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: dist
           key: dist-${{ github.run_id }}
@@ -52,10 +52,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: yarn --frozen-lockfile --ignore-engines
+        run: npm ci
 
       - name: Test
-        run: yarn test
+        run: npm run test
 
       # type-testing library is only supported on node >=20.9
       - name: Test types (node version agnostic)

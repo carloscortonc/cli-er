@@ -1,0 +1,26 @@
+{
+  "name": "site",
+  "version": "1.0.0",
+  "main": "cli.js",
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix .. ci && npm --prefix .. run build && node scripts/browserify.js > ./src/cli.web.js",
+    "bundle": "npm run build && vite build --base=/cli-er",
+    "start": "npm run build && (npx http-server .. --port=8000 --cors &) && vite",
+    "test": "node --test ./test/**"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "browserify": "^17.0.1",
+    "browserify-fs": "^1.0.0",
+    "cli-er": "^0.19.0",
+    "esmify": "^2.1.1",
+    "ohm-js": "^17.3.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}

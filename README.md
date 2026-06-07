@@ -24,6 +24,8 @@
   <a href="./docs/definition.md">Definition</a>
   <span>&nbsp;·&nbsp;</span>
   <a href="./docs/cli-options.md">Options</a>
+  <span>&nbsp;·&nbsp;</span>
+  <a href="https://carloscortonc.github.io/cli-er/">Live demo</a>
 </h4>
 
 _cli.js_:
