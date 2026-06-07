@@ -1,0 +1,50 @@
+const isPreview = !!process.env.DRY_RUN;
+
+module.exports = {
+  branches: ["main"],
+  plugins: [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        releaseRules: [
+          { breaking: true, release: "major" },
+          { type: "feat", release: "minor" },
+          { type: "fix", release: "patch" },
+          { type: "docs", release: false },
+          { type: "site", release: false },
+          { type: "perf", release: "patch" },
+          { type: "refactor", release: "patch" },
+        ],
+      },
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        writerOpts: {
+          types: [
+            { type: "feat", section: "Features" },
+            { type: "fix", section: "Bug Fixes" },
+            { type: "docs", section: "Documentation" },
+            { type: "site", section: "Site Changes" },
+            { type: "perf", section: "Performance Improvements" },
+            { type: "refactor", section: "Code Refactoring" },
+          ],
+          commitGroupsSort: ["feat", "fix", "perf", "docs", "site"],
+        },
+      },
+    ],
+    "@semantic-release/changelog",
+    ...(isPreview ? [] : ["@semantic-release/npm"]),
+    "semantic-release-export-data",
+    ["@semantic-release/git", { message: "chore(release): ${nextRelease.version}" }],
+    [
+      "@saithodev/semantic-release-backmerge",
+      {
+        branches: [{ from: "main", to: "develop" }],
+        backmergeStrategy: "merge",
+        message: "chore(release): ${nextRelease.version} - sync main to develop",
+      },
+    ],
+    ["@semantic-release/github", { successComment: false, failComment: false }],
+  ],
+};
