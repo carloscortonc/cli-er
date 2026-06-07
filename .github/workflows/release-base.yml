@@ -38,6 +38,7 @@ jobs:
           GITHUB_REF=$GITHUB_HEAD_REF
           npx semantic-release --dry-run --no-ci --branches $GITHUB_REF --debug
         env:
+          DRY_RUN: true
           GITHUB_REF: ${{ github.head_ref }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
