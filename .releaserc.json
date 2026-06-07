@@ -33,6 +33,7 @@
     ],
     "@semantic-release/changelog",
     "@semantic-release/npm",
+    "semantic-release-export-data",
     ["@semantic-release/git", { "message": "chore(release): ${nextRelease.version}" }],
     [
       "@saithodev/semantic-release-backmerge",

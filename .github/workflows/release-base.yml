@@ -1,0 +1,63 @@
+name: release-base
+on:
+  workflow_call:
+    inputs:
+      dry_run:
+        required: true
+        type: boolean
+
+jobs:
+  release-base:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write # to enable use of OIDC for npm provenance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+
+      - name: Release Preview
+        if: ${{ inputs.dry_run == true }}
+        id: release-preview
+        run: |
+          # Unset variables for semantic-release to believe we are not in a PR
+          #  (https://github.com/semantic-release/env-ci/blob/master/services/github.js)
+          unset GITHUB_EVENT_NAME
+          unset GITHUB_EVENT_PATH
+          GITHUB_REF=$GITHUB_HEAD_REF
+          npx semantic-release --dry-run --no-ci --branches $GITHUB_REF --debug
+        env:
+          GITHUB_REF: ${{ github.head_ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release summary
+        if: ${{ inputs.dry_run == true }}
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.number }}
+          body: |
+            ### 📦 Semantic Release Summary
+
+            - Version: **${{ steps.release-preview.outputs.new-release-version }}**
+            - Tag: **${{ steps.release-preview.outputs.new-release-git-tag }}**
+
+            ---
+
+            ${{ steps.release-preview.outputs.new-release-release-notes }}
+
+      - name: Semantic Release
+        if: ${{ inputs.dry_run == false }}
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

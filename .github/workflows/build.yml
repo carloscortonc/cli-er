@@ -23,10 +23,10 @@ jobs:
           key: dist-${{ github.run_id }}
 
       - name: Install dependencies
-        run: yarn --frozen-lockfile --ignore-engines
+        run: npm ci
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
   test:
     needs: build
@@ -52,10 +52,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: yarn --frozen-lockfile --ignore-engines
+        run: npm ci
 
       - name: Test
-        run: yarn test
+        run: npm run test
 
       # type-testing library is only supported on node >=20.9
       - name: Test types (node version agnostic)
