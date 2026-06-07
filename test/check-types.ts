@@ -1,4 +1,4 @@
-/* This file is intended for testing library types. The assertions made here will be tested via `yarn tsc` in "test" script */
+/* This file is intended for testing library types. The assertions made here will be tested via `npx tsc` in "test" script */
 import Cli, { type Definition } from "../dist";
 
 /* Option can not declare nested options */
