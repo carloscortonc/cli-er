@@ -55,7 +55,7 @@ jobs:
 
             ---
 
-            ${{ steps.release-preview.outputs.new-release-release-notes }}
+            ${{ steps.release-preview.outputs.new-release-notes }}
 
       - name: Semantic Release
         if: ${{ inputs.dry_run == false }}
