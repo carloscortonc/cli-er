@@ -40,7 +40,7 @@ module.exports = {
     [
       "@saithodev/semantic-release-backmerge",
       {
-        branches: [{ from: "main", to: "develop" }],
+        backmergeBranches: [{ from: "main", to: "develop" }],
         backmergeStrategy: "merge",
         message: "chore(release): ${nextRelease.version} - sync main to develop",
       },
