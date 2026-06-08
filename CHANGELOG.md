@@ -1,3 +1,11 @@
+## [0.19.1](https://github.com/carloscortonc/cli-er/compare/v0.19.0...v0.19.1) (2026-06-08)
+
+
+### Bug Fixes
+
+* boolean opt with other positional=true ([9f5bf07](https://github.com/carloscortonc/cli-er/commit/9f5bf0708704fe1bdcb2dba36bdaa84d42ae3142))
+* incorrect merge of cliOptions ([#130](https://github.com/carloscortonc/cli-er/issues/130)) ([6706a65](https://github.com/carloscortonc/cli-er/commit/6706a65f62977e7d190e3b91f1a0b9a12b346e0d))
+
 # [0.19.0](https://github.com/carloscortonc/cli-er/compare/v0.18.2...v0.19.0) (2026-01-15)
 
 
