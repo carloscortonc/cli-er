@@ -295,6 +295,21 @@ describe("Cli.run", () => {
     c.run(["cmd"]);
     expect(action).toHaveBeenCalled();
   });
+  it("async-action - await and capture error", async () => {
+    const action = jest.fn(async () => {
+      throw new Error("error-message");
+    });
+    const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
+    const c = new Cli({
+      cmd: {
+        kind: "command",
+        action,
+      },
+    });
+    await c.run(["cmd"]);
+    expect(action).toHaveBeenCalled();
+    expect(errorlogger).toHaveBeenCalledWith("error-message");
+  });
   it("Calling run with help option invokes help-generation", () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
     const c = new Cli(definition);

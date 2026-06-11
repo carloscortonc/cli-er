@@ -110,7 +110,7 @@ export type Command = BaseElement &
     /** Nested options definition */
     options?: Definition<Option>;
     /** Action to be executed when matched */
-    action?: (out: ParsingOutput) => void;
+    action?: (out: ParsingOutput) => void | Promise<void>;
     /** Specify the `Usage` section to be used in the generated help */
     usage?: string;
   };
