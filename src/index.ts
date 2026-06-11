@@ -124,7 +124,7 @@ export default class Cli {
    *
    * @param {string[]} args list of arguments to be processed
    */
-  run(args?: string[]): void | Promise<void> {
+  async run(args?: string[]): Promise<void> {
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
     const { rawLocation, ...opts } = parseArguments({
       args: args_,
@@ -174,7 +174,11 @@ export default class Cli {
       return logErrorAndExit(onExecuteCommandErrors[0].e);
     }
     if (typeof command.action === "function") {
-      return command.action(opts);
+      try {
+        await command.action(opts);
+      } catch (e) {
+        return logErrorAndExit((e as Error).message || (e as string));
+      }
     }
     return executeScript({ ...opts, location: elementLocation }, this.options);
   }
