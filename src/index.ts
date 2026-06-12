@@ -73,6 +73,7 @@ export default class Cli {
       cliName: packagejson.name || path.parse(getEntryFile()).name,
       cliVersion: packagejson.version || "-",
       cliDescription: packagejson.description || "",
+      hooks: {},
       debug: false,
       completion: {
         enabled: true,
@@ -132,6 +133,7 @@ export default class Cli {
       cliOptions: this.options,
       initial: { ...this.configContent(), ...this.envContent() },
     });
+    await this.options.hooks.afterParse?.(opts);
     // Include CliOptions.rootCommand if empty location provided
     const elementLocation =
       opts.location.length === 0 && typeof this.options.rootCommand === "string"
@@ -173,14 +175,18 @@ export default class Cli {
     if (onExecuteCommandErrors.length > 0) {
       return logErrorAndExit(onExecuteCommandErrors[0].e);
     }
-    if (typeof command.action === "function") {
-      try {
-        await command.action(opts);
-      } catch (e) {
-        return logErrorAndExit((e as Error).message || (e as string));
-      }
+
+    const executor = typeof command.action === "function" ? command.action : executeScript;
+
+    const eopts = { ...opts, location: elementLocation };
+    try {
+      await this.options.hooks.beforeExecute?.(eopts);
+      await executor({ ...opts, location: elementLocation }, this.options);
+      await this.options.hooks.afterExecute?.(eopts);
+    } catch (e) {
+      await this.options.hooks.afterExecute?.({ ...eopts, error: e as Error });
+      return logErrorAndExit((e as Error).message || (e as string));
     }
-    return executeScript({ ...opts, location: elementLocation }, this.options);
   }
   /**
    * Generate and output help documentation

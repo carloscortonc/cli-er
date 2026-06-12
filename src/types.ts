@@ -146,6 +146,12 @@ export interface ICliLogger {
 
 export type Messages = { [key in ErrorType | string]: string };
 
+export type Hooks = {
+  afterParse?: (ctx: ParsingOutput) => void | Promise<void>;
+  beforeExecute?: (ctx: ParsingOutput) => void | Promise<void>;
+  afterExecute?: (ctx: ParsingOutput & { error?: Error }) => void | Promise<void>;
+};
+
 export type CliOptions = {
   /** Base path where the `ProcessingOutput.location` will start from
    * @default path.dirname(require.main.filename)
@@ -198,6 +204,8 @@ export type CliOptions = {
    * @default packageJson.description
    */
   cliDescription: string;
+  /** Lifecycle hooks */
+  hooks: Hooks;
   /** Enable debug mode
    * @default `process.env.CLIER_DEBUG`
    */
