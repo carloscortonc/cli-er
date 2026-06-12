@@ -41,9 +41,11 @@ export type ValueParserOutput = {
   error?: string;
 };
 
-export type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
+export type DeepPartial<T> = T extends (...args: any[]) => any
+  ? T
+  : T extends object
+  ? { [P in keyof T]?: DeepPartial<T[P]> }
+  : T;
 
 type BaseElement = {
   /** Kind of element */
