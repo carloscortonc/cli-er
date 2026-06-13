@@ -109,6 +109,7 @@ describe("Cli.constructor", () => {
       cliName: "cli-app",
       cliVersion: "1.0.0",
       cliDescription: "cli-description",
+      hooks: {},
       debug: false,
       completion: {
         enabled: true,
@@ -157,6 +158,7 @@ describe("Cli.constructor", () => {
       cliName: "custom-name",
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
+      hooks: {},
       debug: false,
       completion: {
         enabled: true,
@@ -248,43 +250,43 @@ describe("Cli.parse", () => {
 });
 
 describe("Cli.run", () => {
-  it("Calling run with arguments invokes the script in the computed location", () => {
+  it("Calling run with arguments invokes the script in the computed location", async () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
     const c = new Cli(definition, { rootCommand: false });
-    c.run(["nms", "cmd", "cmdvalue"]);
+    await c.run(["nms", "cmd", "cmdvalue"]);
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: ["nms", "cmd"],
       options: { cmd: "cmdvalue", globalOption: "globalvalue", _: [] },
       errors: [],
     });
   });
-  it("Calling run with arguments invokes the script in the computed location - options only", () => {
+  it("Calling run with arguments invokes the script in the computed location - options only", async () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
     const c = new Cli(definition);
-    c.run(["--global", "overwritten"]);
+    await c.run(["--global", "overwritten"]);
     expect(spy.mock.calls[0][0]).toStrictEqual({
       location: [],
       options: { globalOption: "overwritten", _: [] },
       errors: [],
     });
   });
-  it("Calling run with no namespace/command: CliOptions.rootCommand=false", () => {
+  it("Calling run with no namespace/command: CliOptions.rootCommand=false", async () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
     const c = new Cli(definition, { rootCommand: false });
-    c.run([]);
+    await c.run([]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
     spy.mockClear();
-    c.run(["--global", "overwritten"]);
+    await c.run(["--global", "overwritten"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
-  it("Calling run with no namespace/command: typeof CliOptions.rootCommand=string", () => {
+  it("Calling run with no namespace/command: typeof CliOptions.rootCommand=string", async () => {
     const spy = jest.spyOn(cliutils, "executeScript").mockImplementation();
     const c = new Cli(definition, { rootCommand: "gcmd" });
-    c.run([]);
+    await c.run([]);
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ location: ["gcmd"] }), expect.anything());
     spy.mockClear();
   });
-  it("Calling run on element with action invokes such action", () => {
+  it("Calling run on element with action invokes such action", async () => {
     const action = jest.fn();
     const c = new Cli({
       cmd: {
@@ -292,7 +294,7 @@ describe("Cli.run", () => {
         action,
       },
     });
-    c.run(["cmd"]);
+    await c.run(["cmd"]);
     expect(action).toHaveBeenCalled();
   });
   it("async-action - await and capture error", async () => {
@@ -310,20 +312,20 @@ describe("Cli.run", () => {
     expect(action).toHaveBeenCalled();
     expect(errorlogger).toHaveBeenCalledWith("error-message");
   });
-  it("Calling run with help option invokes help-generation", () => {
+  it("Calling run with help option invokes help-generation", async () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
     const c = new Cli(definition);
-    c.run(["--help"]);
+    await c.run(["--help"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
     spy.mockClear();
-    c.run(["--global", "overwritten", "--help"]);
+    await c.run(["--global", "overwritten", "--help"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), [], expect.anything());
   });
-  it("Calling run with help option invokes help-generation - wrong location", () => {
+  it("Calling run with help option invokes help-generation - wrong location", async () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
     const logger: any = { error: jest.fn() };
     const c = new Cli(definition, { logger });
-    c.run(["nms", "unknown", "--help"]);
+    await c.run(["nms", "unknown", "--help"]);
     // generateScopedHelped gets called with valid-location part
     expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
     expect(logger.error).toHaveBeenCalledWith(
@@ -331,103 +333,189 @@ describe("Cli.run", () => {
       "\n",
     );
   });
-  it("Calling run on namespaces invokes help-generation", () => {
+  it("Calling run on namespaces invokes help-generation", async () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
     const c = new Cli(definition);
-    c.run(["nms"]);
+    await c.run(["nms"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
   });
-  it("Calling run on namespace with help option invokes help-generation - default-command", () => {
+  it("Calling run on namespace with help option invokes help-generation - default-command", async () => {
     const spy = jest.spyOn(cliutils, "generateScopedHelp").mockImplementation();
     const c = new Cli({ nms: { kind: "namespace", default: "cmd", options: { cmd: { kind: "command" } } } });
-    c.run(["nms", "-h"]);
+    await c.run(["nms", "-h"]);
     expect(spy).toHaveBeenCalledWith(expect.anything(), ["nms"], expect.anything());
   });
-  it("Calling run with version option invokes version-formatting", () => {
+  it("Calling run with version option invokes version-formatting", async () => {
     const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();
     const c = new Cli(definition);
-    c.run(["--version"]);
+    await c.run(["--version"]);
     expect(spy).toHaveBeenCalledWith(expect.anything());
   });
-  it("Calling run with version option invokes version-formatting - rootCommand:false", () => {
+  it("Calling run with version option invokes version-formatting - rootCommand:false", async () => {
     const spy = jest.spyOn(cliutils, "formatVersion").mockImplementation();
     const c = new Cli(definition, { rootCommand: false });
-    c.run(["--version"]);
+    await c.run(["--version"]);
     expect(spy).toHaveBeenCalledWith(expect.anything());
   });
-  it("[onGenerateHelp] Prints error if configured", () => {
+  it("[onGenerateHelp] Prints error if configured", async () => {
     const logger: any = { error: jest.fn() };
     jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
-    jest
-      .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"], rawLocation: [] }));
+    jest.spyOn(cliutils, "parseArguments").mockImplementationOnce(() => ({
+      location: [],
+      options: { help: true, _: [] },
+      errors: ["ERROR"],
+      rawLocation: [],
+    }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["command_not_found"] } });
-    c.run([]);
+    await c.run([]);
     expect(logger.error).toHaveBeenCalledWith("ERROR", "\n");
   });
-  it("[onGenerateHelp] Does not print error if not configured", () => {
+  it("[onGenerateHelp] Does not print error if not configured", async () => {
     const logger: any = { error: jest.fn() };
     jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
-    jest
-      .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { help: true, _: [] }, errors: ["ERROR"], rawLocation: [] }));
+    jest.spyOn(cliutils, "parseArguments").mockImplementationOnce(() => ({
+      location: [],
+      options: { help: true, _: [] },
+      errors: ["ERROR"],
+      rawLocation: [],
+    }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: [] } });
-    c.run([]);
+    await c.run([]);
     expect(logger.error).not.toHaveBeenCalled();
   });
-  it("[onExecuteCommand] Prints error if configured", () => {
+  it("[onExecuteCommand] Prints error if configured", async () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"], rawLocation: [] }));
+      .mockImplementationOnce(() => ({ location: [], options: { _: [] }, errors: ["ERROR"], rawLocation: [] }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition, { errors: { onExecuteCommand: ["command_not_found"] } });
-    c.run([]);
+    await c.run([]);
     expect(errorlogger).toHaveBeenCalledWith("ERROR");
   });
-  it("[onExecuteCommand] Does not print error if not configured", () => {
+  it("[onExecuteCommand] Does not print error if not configured", async () => {
     jest.spyOn(CliError, "analize").mockImplementation(() => "command_not_found");
     jest
       .spyOn(cliutils, "parseArguments")
-      .mockImplementation(() => ({ location: [], options: { _: [] }, errors: ["ERROR"], rawLocation: [] }));
+      .mockImplementationOnce(() => ({ location: [], options: { _: [] }, errors: ["ERROR"], rawLocation: [] }));
     const errorlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
     const c = new Cli(definition, { errors: { onExecuteCommand: [] } });
-    c.run([]);
+    await c.run([]);
     expect(errorlogger).not.toHaveBeenCalled();
   });
-  it("Errors are printed according to CliOptions.errors list order", () => {
+  it("Errors are printed according to CliOptions.errors list order", async () => {
     const logger: any = { error: jest.fn() };
     jest
       .spyOn(CliError, "analize")
       .mockImplementation(
         (value) => ({ CMD_NOT_FOUND: "command_not_found", OPT_NOT_FOUND: "option_not_found" }[value!] as ErrorType),
       );
-    jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
+    jest.spyOn(cliutils, "parseArguments").mockImplementationOnce(() => ({
       location: [],
       options: { help: true, _: [] },
       errors: ["CMD_NOT_FOUND", "OPT_NOT_FOUND"],
       rawLocation: [],
     }));
     const c = new Cli(definition, { logger, errors: { onGenerateHelp: ["option_not_found", "command_not_found"] } });
-    c.run([]);
+    await c.run([]);
     expect(logger.error).toHaveBeenCalledWith("OPT_NOT_FOUND", "\n");
   });
-  it("Inital value is computed from configuration-content and env-content", () => {
+  it("Inital value is computed from configuration-content and env-content", async () => {
     (utils.findFile as jest.Mock).mockImplementation(() => "file");
     (fs.readFileSync as jest.Mock).mockImplementation(() => '{"key1": "value1", "key2": "value2"}');
     process.env.CLIERTEST_KEY2 = "env2";
     process.env.CLIERTEST_KEY3 = "env3";
-    const mock = jest.spyOn(cliutils, "parseArguments").mockImplementation(() => ({
+    const mock = jest.spyOn(cliutils, "parseArguments").mockImplementationOnce(() => ({
       location: [],
       options: { _: [] },
       errors: [],
       rawLocation: [],
     }));
     const c = new Cli(definition, { configFile: { names: ["file"] }, envPrefix: "CLIERTEST_" });
-    c.run([]);
+    await c.run([]);
     expect(mock).toHaveBeenCalledWith(
       expect.objectContaining({ initial: { key1: "value1", key2: "env2", key3: "env3" } }),
     );
+  });
+});
+
+describe("Cli.run > hooks", () => {
+  it("afterParse", async () => {
+    const afterParse = jest.fn(async () => {});
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterParse } });
+    await c.run(["cmd"]);
+    expect(afterParse).toHaveBeenCalledWith({
+      errors: [],
+      location: ["cmd"],
+      options: {
+        _: [],
+      },
+    });
+    expect(afterParse.mock.invocationCallOrder[0]).toBeLessThan(action.mock.invocationCallOrder[0]);
+  });
+  it("beforeExecute", async () => {
+    const beforeExecute = jest.fn(async () => {});
+    const action = jest.fn(async () => {});
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeExecute } });
+    await c.run(["cmd"]);
+    const po = { errors: [], location: ["cmd"], options: { _: [] } };
+    expect(beforeExecute).toHaveBeenCalledWith(po);
+    expect(action).toHaveBeenCalledWith(po, expect.anything());
+    expect(beforeExecute.mock.invocationCallOrder[0]).toBeLessThan(action.mock.invocationCallOrder[0]);
+  });
+  it("afterExecute", async () => {
+    const afterExecute = jest.fn(async () => {});
+    const action = jest.fn(async () => {});
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
+    await c.run(["cmd"]);
+    const po = { errors: [], location: ["cmd"], options: { _: [] } };
+    expect(afterExecute).toHaveBeenCalledWith(po);
+    expect(action).toHaveBeenCalledWith(po, expect.anything());
+    expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
+  });
+  it("afterExecute - action-error", async () => {
+    const afterExecute = jest.fn(async () => {});
+    const error = new Error("error-message");
+    const action = jest.fn(async () => {
+      throw error;
+    });
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
+    await c.run(["cmd"]);
+    const po = { errors: [], location: ["cmd"], options: { _: [] } };
+    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(action).toHaveBeenCalledWith(po, expect.anything());
+    expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
+  });
+  it("afterExecute throws error - action-error", async () => {
+    const afterExecute = jest.fn(async () => {
+      throw new Error();
+    });
+    const error = new Error("error-message");
+    const action = jest.fn(async () => {
+      throw error;
+    });
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
+    await c.run(["cmd"]);
+    const po = { errors: [], location: ["cmd"], options: { _: [] } };
+    expect(afterExecute).toHaveBeenCalledTimes(1);
+    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(action).toHaveBeenCalledWith(po, expect.anything());
+    expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
+  });
+  it("beforeExecute throws error - afterExecutes gets called", async () => {
+    const error = new Error("error-message");
+    const beforeExecute = jest.fn(async () => {
+      throw error;
+    });
+    const afterExecute = jest.fn();
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeExecute, afterExecute } });
+    await c.run(["cmd"]);
+    const po = { errors: [], location: ["cmd"], options: { _: [] } };
+    expect(beforeExecute).toHaveBeenCalledWith(po);
+    expect(action).not.toHaveBeenCalled();
+    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
   });
 });
 
