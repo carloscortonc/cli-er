@@ -1,3 +1,11 @@
+# [0.20.0](https://github.com/carloscortonc/cli-er/compare/v0.19.1...v0.20.0) (2026-06-13)
+
+
+### Features
+
+* async command handlers ([#142](https://github.com/carloscortonc/cli-er/issues/142)) ([cc4d470](https://github.com/carloscortonc/cli-er/commit/cc4d470958e51c7a362110d1ff5e3032e91b0c9e))
+* hooks support ([#144](https://github.com/carloscortonc/cli-er/issues/144)) ([f332b34](https://github.com/carloscortonc/cli-er/commit/f332b34132c69fb2ec64745819cf2d3b3bd2ce6e))
+
 ## [0.19.1](https://github.com/carloscortonc/cli-er/compare/v0.19.0...v0.19.1) (2026-06-08)
 
 
