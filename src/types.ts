@@ -41,9 +41,11 @@ export type ValueParserOutput = {
   error?: string;
 };
 
-export type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
+export type DeepPartial<T> = T extends (...args: any[]) => any
+  ? T
+  : T extends object
+  ? { [P in keyof T]?: DeepPartial<T[P]> }
+  : T;
 
 type BaseElement = {
   /** Kind of element */
@@ -110,7 +112,7 @@ export type Command = BaseElement &
     /** Nested options definition */
     options?: Definition<Option>;
     /** Action to be executed when matched */
-    action?: (out: ParsingOutput) => void;
+    action?: (out: ParsingOutput) => void | Promise<void>;
     /** Specify the `Usage` section to be used in the generated help */
     usage?: string;
   };
@@ -145,6 +147,12 @@ export interface ICliLogger {
 }
 
 export type Messages = { [key in ErrorType | string]: string };
+
+export type Hooks = {
+  afterParse?: (ctx: ParsingOutput) => void | Promise<void>;
+  beforeExecute?: (ctx: ParsingOutput) => void | Promise<void>;
+  afterExecute?: (ctx: ParsingOutput & { error?: Error }) => void | Promise<void>;
+};
 
 export type CliOptions = {
   /** Base path where the `ProcessingOutput.location` will start from
@@ -198,6 +206,8 @@ export type CliOptions = {
    * @default packageJson.description
    */
   cliDescription: string;
+  /** Lifecycle hooks */
+  hooks: Hooks;
   /** Enable debug mode
    * @default `process.env.CLIER_DEBUG`
    */
