@@ -24,6 +24,34 @@ If the location is `["nms", "cmd"]` for an entryfile `cli.js`, the list of candi
 5. `/index.js` - named import  (`cmd`)
 6. `/cli.js` - named import  (`cmd`)
 
+## Lifecycle hooks
+Hooks can be defined and triggered when using `Cli.run()`:
+
+```
+Cli.run()
+  ↓
+parseArguments()
+  ↓
+hooks.afterParse()
+  ↓
+  ├─ version/help/error → exit
+  └─ continue to execution
+  ↓
+hooks.beforeExecute()
+  ↓
+command.action()
+  ↓
+hooks.afterExecute()
+```
+
+This enables features like:
+- Logging/Telemetry
+- Authentication handling
+- Resource cleanup
+- Update checks/notifications
+
+Check the [hooks example](/examples/hooks) for a use case.  
+
 ## Configuration file support
 A list of configuration file names can be used, so its contents will be processed when using [`Cli.run`](/docs/api.md#runargs).  
 Starting from the current directory where the cli is invoked (`process.cwd()`), the program will search up a file matching the provided list.

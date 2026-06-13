@@ -49,6 +49,7 @@ node cli.js [namespace(s)|command] [OPTIONS]
 - [**Help generation**](./docs/features.md#help-generation): help is generated for all commands and options.
 - [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
 - [**Configuration file support**](./docs/features.md#configuration-file-support): define the list of configuration file-names for your cli, and `cli-er` will try to find (from `process.cwd()` up), read its contents, and use it inside [`Cli.run`](./docs/api.md#runargs).
+- [**Lifecycle hooks**](./docs/features.md#lifecycle-hooks): execute code on lifecycle events when using `Cli.run()` (afterParse, beforeExecute, afterExecute).
 - [**Environment-variable prefix support**](/docs/features.md#environment-variable-prefix-support): define a prefix so all environment variables matching that will be passed into [`Cli.run`](./docs/api.md#runargs).
 - [**Reading from stdin**](/docs/definition.md#reading-from-stdin): configure options whose value can be provided from stdin.
 - [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
