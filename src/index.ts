@@ -179,9 +179,9 @@ export default class Cli {
     const executor = typeof command.action === "function" ? command.action : executeScript;
 
     const eopts = { ...opts, location: elementLocation };
-    await this.options.hooks.beforeExecute?.(eopts);
 
     try {
+      await this.options.hooks.beforeExecute?.(eopts);
       await executor({ ...opts, location: elementLocation }, this.options);
     } catch (e) {
       try {

@@ -503,6 +503,20 @@ describe("Cli.run > hooks", () => {
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
   });
+  it("beforeExecute throws error - afterExecutes gets called", async () => {
+    const error = new Error("error-message");
+    const beforeExecute = jest.fn(async () => {
+      throw error;
+    });
+    const afterExecute = jest.fn();
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeExecute, afterExecute } });
+    await c.run(["cmd"]);
+    const po = { errors: [], location: ["cmd"], options: { _: [] } };
+    expect(beforeExecute).toHaveBeenCalledWith(po);
+    expect(action).not.toHaveBeenCalled();
+    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+  });
 });
 
 describe("Cli.configContent", () => {

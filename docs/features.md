@@ -39,10 +39,15 @@ hooks.afterParse()
   ↓
 hooks.beforeExecute()
   ↓
-command.action()
+command.action() / script-execution
   ↓
 hooks.afterExecute()
 ```
+
+Some rules:
+
+- `hooks.beforeExecute` **always** gets called before action/script
+- `hooks.afterExecute` gets called after action/script. If `hooks.beforeExecute` thows an error, action/script will be skipped, but this hook will **always** get called
 
 This enables features like:
 - Logging/Telemetry

@@ -2,6 +2,13 @@
 
 A configuration object may be provided in the class constructor. The available options are:
 
+### `hooks`
+Lifecycle hooks triggered when using `Cli.run()`:
+- `afterParse`: executed after argument-parsing.
+- `beforeExecute`: when an action/script is found to execute, this is invoked right before.
+- `afterExecute`: after the action/script is executed. If an error is generated during execution, will be included as part of the arguments.
+**Default**: `{}`
+
 #### `baseLocation`
 Base path where the `ProcessingOutput.location` will start from.</br>
 **Default**: `path.dirname(entryFile)`
