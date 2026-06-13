@@ -474,7 +474,7 @@ describe("Cli.run > hooks", () => {
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
   });
-  it("afterExecute - error", async () => {
+  it("afterExecute - action-error", async () => {
     const afterExecute = jest.fn(async () => {});
     const error = new Error("error-message");
     const action = jest.fn(async () => {
@@ -483,6 +483,22 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
+    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(action).toHaveBeenCalledWith(po, expect.anything());
+    expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
+  });
+  it("afterExecute throws error - action-error", async () => {
+    const afterExecute = jest.fn(async () => {
+      throw new Error();
+    });
+    const error = new Error("error-message");
+    const action = jest.fn(async () => {
+      throw error;
+    });
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
+    await c.run(["cmd"]);
+    const po = { errors: [], location: ["cmd"], options: { _: [] } };
+    expect(afterExecute).toHaveBeenCalledTimes(1);
     expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);

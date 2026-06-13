@@ -179,14 +179,20 @@ export default class Cli {
     const executor = typeof command.action === "function" ? command.action : executeScript;
 
     const eopts = { ...opts, location: elementLocation };
+    await this.options.hooks.beforeExecute?.(eopts);
+
     try {
-      await this.options.hooks.beforeExecute?.(eopts);
       await executor({ ...opts, location: elementLocation }, this.options);
-      await this.options.hooks.afterExecute?.(eopts);
     } catch (e) {
-      await this.options.hooks.afterExecute?.({ ...eopts, error: e as Error });
+      try {
+        await this.options.hooks.afterExecute?.({ ...eopts, error: e as Error });
+      } catch {
+        // Ignore hook error
+      }
       return logErrorAndExit((e as Error).message || (e as string));
     }
+
+    await this.options.hooks.afterExecute?.(eopts);
   }
   /**
    * Generate and output help documentation
