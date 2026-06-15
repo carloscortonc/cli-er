@@ -1,3 +1,4 @@
+import Cli from ".";
 import { ErrorType } from "./cli-errors";
 
 export enum Kind {
@@ -148,11 +149,19 @@ export interface ICliLogger {
 
 export type Messages = { [key in ErrorType | string]: string };
 
-export type Hooks = {
-  afterParse?: (ctx: ParsingOutput) => void | Promise<void>;
-  beforeExecute?: (ctx: ParsingOutput) => void | Promise<void>;
-  afterExecute?: (ctx: ParsingOutput & { error?: Error }) => void | Promise<void>;
-};
+type Hook<Ctx> = (ctx: Ctx) => void | Promise<void>;
+export type Hooks = Partial<{
+  beforeParse: Hook<string[]>;
+  afterParse: Hook<ParsingOutput>;
+  beforeExecute: Hook<ParsingOutput>;
+  afterExecute: Hook<ParsingOutput & { error?: Error }>;
+}>;
+
+export interface Plugin {
+  name: string;
+  init?: Hook<Cli>;
+  hooks?: Hooks;
+}
 
 export type CliOptions = {
   /** Base path where the `ProcessingOutput.location` will start from
@@ -208,6 +217,8 @@ export type CliOptions = {
   cliDescription: string;
   /** Lifecycle hooks */
   hooks: Hooks;
+  /** List of plugins */
+  plugins: Plugin[];
   /** Enable debug mode
    * @default `process.env.CLIER_DEBUG`
    */
