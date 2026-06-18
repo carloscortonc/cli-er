@@ -149,9 +149,9 @@ export interface ICliLogger {
 
 export type Messages = { [key in ErrorType | string]: string };
 
-type Hook<Ctx> = (ctx: Ctx) => void | Promise<void>;
+type Hook<Ctx> = (ctx: Ctx & { data: Record<string, string> }) => void | Promise<void>;
 export type Hooks = Partial<{
-  beforeParse: Hook<string[]>;
+  beforeParse: Hook<{ args: string[] }>;
   afterParse: Hook<ParsingOutput>;
   beforeExecute: Hook<ParsingOutput>;
   afterExecute: Hook<ParsingOutput & { error?: Error }>;
@@ -159,7 +159,7 @@ export type Hooks = Partial<{
 
 export interface Plugin {
   name: string;
-  init?: Hook<Cli>;
+  init?: (cli: Cli) => void | Promise<void>;
   hooks?: Hooks;
 }
 

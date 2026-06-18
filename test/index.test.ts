@@ -110,6 +110,7 @@ describe("Cli.constructor", () => {
       cliVersion: "1.0.0",
       cliDescription: "cli-description",
       hooks: {},
+      plugins: [],
       debug: false,
       completion: {
         enabled: true,
@@ -159,6 +160,7 @@ describe("Cli.constructor", () => {
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
       hooks: {},
+      plugins: [],
       debug: false,
       completion: {
         enabled: true,
@@ -247,6 +249,10 @@ describe("Cli.parse", () => {
     expect(c.parse(["--no-opt", "true"]).options.opt).toBe(false);
     expect(c.parse(["--no-opt", "false"]).options.opt).toBe(true);
   });
+});
+
+beforeAll(() => {
+  jest.spyOn(utils, "logErrorAndExit").mockImplementation();
 });
 
 describe("Cli.run", () => {
@@ -440,6 +446,25 @@ describe("Cli.run", () => {
 });
 
 describe("Cli.run > hooks", () => {
+  it("beforeParse", async () => {
+    const beforeParse = jest.fn(async () => {});
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeParse } });
+    await c.run(["cmd"]);
+    expect(beforeParse).toHaveBeenCalledWith(expect.objectContaining({ args: ["cmd"] }));
+    expect(beforeParse.mock.invocationCallOrder[0]).toBeLessThan(action.mock.invocationCallOrder[0]);
+  });
+  it("beforeParse - modify args", async () => {
+    const beforeParse = jest.fn(async (ctx) => {
+      ctx.args.push("before-parse");
+    });
+    const parseArgs = jest.spyOn(cliutils, "parseArguments");
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action }, opt: {} }, { hooks: { beforeParse } });
+    await c.run(["cmd"]);
+    // hook can modify `args`
+    expect(parseArgs).toHaveBeenCalledWith(expect.objectContaining({ args: ["cmd", "before-parse"] }));
+  });
   it("afterParse", async () => {
     const afterParse = jest.fn(async () => {});
     const action = jest.fn();
@@ -451,6 +476,7 @@ describe("Cli.run > hooks", () => {
       options: {
         _: [],
       },
+      data: {},
     });
     expect(afterParse.mock.invocationCallOrder[0]).toBeLessThan(action.mock.invocationCallOrder[0]);
   });
@@ -460,7 +486,7 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
-    expect(beforeExecute).toHaveBeenCalledWith(po);
+    expect(beforeExecute).toHaveBeenCalledWith(expect.objectContaining(po));
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(beforeExecute.mock.invocationCallOrder[0]).toBeLessThan(action.mock.invocationCallOrder[0]);
   });
@@ -470,7 +496,7 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
-    expect(afterExecute).toHaveBeenCalledWith(po);
+    expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining(po));
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
   });
@@ -483,7 +509,7 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
-    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining({ ...po, error }));
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
   });
@@ -499,7 +525,7 @@ describe("Cli.run > hooks", () => {
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
     expect(afterExecute).toHaveBeenCalledTimes(1);
-    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining({ ...po, error }));
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
   });
@@ -513,9 +539,9 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeExecute, afterExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
-    expect(beforeExecute).toHaveBeenCalledWith(po);
+    expect(beforeExecute).toHaveBeenCalledWith(expect.objectContaining(po));
     expect(action).not.toHaveBeenCalled();
-    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining({ ...po, error }));
   });
 });
 

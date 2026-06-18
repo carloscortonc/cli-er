@@ -6,12 +6,13 @@ interface ExecuteOptions {
   executed?: HookName[];
   /** Whether to reverse the order of the hooks */
   reverse?: boolean;
-  /** List of of hook "group" names to execute */
-  filter?: HookName[];
+  /** List of hook "group" names to exclude */
+  exclude?: HookName[];
 }
 
 class HooksManager {
   hooks: { [K in keyof Hooks]: { name: HookName; fn: Hooks[K] }[] };
+  hookData = {};
 
   constructor() {
     this.hooks = {};
@@ -24,16 +25,25 @@ class HooksManager {
     }
   }
 
-  async execute<T extends keyof Hooks>(hook: T, ctx: Parameters<NonNullable<Hooks[T]>>[0], opts: ExecuteOptions = {}) {
+  async execute<T extends keyof Hooks>(
+    hook: T,
+    ctx: Omit<Parameters<NonNullable<Hooks[T]>>[0], "data">,
+    opts: ExecuteOptions = {},
+  ) {
     const _list = this.hooks[hook];
     if (!_list || !_list.length) return;
     opts.executed ||= [];
     const list = opts.reverse ? ([..._list].reverse() as typeof _list) : _list;
-    const filtered = opts.filter ? list.filter((e) => opts.filter!.includes(e.name)) : list;
+    const filtered = opts.exclude ? list.filter((e) => !opts.exclude!.includes(e.name)) : list;
     for (const hook of filtered) {
-      await hook.fn!(ctx as any);
       opts.executed.push(hook.name);
+      //TODO debug("[hook.name::hook] executing")
+      await hook.fn!({ ...ctx, data: this.hookData } as any);
     }
+  }
+
+  get(hook: keyof Hooks) {
+    return this.hooks[hook] || [];
   }
 }
 

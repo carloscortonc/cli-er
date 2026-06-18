@@ -159,7 +159,7 @@ export default class Cli {
   async run(args?: string[]): Promise<void> {
     await this.ensureInit();
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
-    await this.hooksManager.execute("beforeParse", args_);
+    await this.hooksManager.execute("beforeParse", { args: args_ });
     const { rawLocation, ...opts } = parseArguments({
       args: args_,
       definition: this.definition,
@@ -212,16 +212,18 @@ export default class Cli {
     const executor = typeof command.action === "function" ? command.action : executeScript;
 
     const eopts = { ...opts, location: elementLocation };
-    const hookOpts = { executed: [] as string[] };
+    const hookOpts = { executed: [] as (string | symbol)[] };
     try {
       await this.hooksManager.execute("beforeExecute", eopts, hookOpts);
       await executor({ ...opts, location: elementLocation }, this.options);
     } catch (e) {
       try {
+        const beList = this.hooksManager.get("beforeExecute").map((b) => b.name);
+        const exclude = beList?.filter((e) => !hookOpts.executed.includes(e));
         await this.hooksManager.execute(
           "afterExecute",
           { ...eopts, error: e as Error },
-          Object.assign(hookOpts, { reverse: true, filter: hookOpts.executed, executed: [] }),
+          Object.assign(hookOpts, { reverse: true, exclude, executed: [] }),
         );
       } catch {
         // Ignore hook error
