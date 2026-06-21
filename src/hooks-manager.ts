@@ -1,4 +1,5 @@
 import type { Hooks } from "./types";
+import { debug } from "./utils";
 
 type HookName = string | symbol;
 interface ExecuteOptions {
@@ -35,10 +36,10 @@ class HooksManager {
     opts.executed ||= [];
     const list = opts.reverse ? ([..._list].reverse() as typeof _list) : _list;
     const filtered = opts.exclude ? list.filter((e) => !opts.exclude!.includes(e.name)) : list;
-    for (const hook of filtered) {
-      opts.executed.push(hook.name);
-      //TODO debug("[hook.name::hook] executing")
-      await hook.fn!({ ...ctx, data: this.hookData } as any);
+    for (const h of filtered) {
+      opts.executed.push(h.name);
+      debug("TRACE", `[${String(h.name)}::${hook}]`);
+      await h.fn!({ ...ctx, data: this.hookData } as any);
     }
   }
 
