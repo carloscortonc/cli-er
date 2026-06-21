@@ -30,6 +30,8 @@ Hooks can be defined and triggered when using `Cli.run()`:
 ```
 Cli.run()
   ↓
+hooks.beforeParse()
+  ↓
 parseArguments()
   ↓
 hooks.afterParse()
@@ -55,7 +57,26 @@ This enables features like:
 - Resource cleanup
 - Update checks/notifications
 
-Check the [hooks example](/examples/hooks) for a use case.  
+Check the [hooks example](/examples/hooks) for a use case.
+
+## Plugins
+Plugins allow registering a set of hooks with related functionality. The plugin is a way to encapsulate them:
+
+```typescript
+interface Plugin {
+  name: string;
+  init?: (cli: Cli) => void | Promise<void>;
+  hooks?: Hooks;
+}
+```
+
+When declared, `CliOptions.hooks` are integrated into a "global" plugin which get the first order position, followed by all `CliOptions.plugins`.
+
+Apart from the hook-rules declared above, one thing to keep in mind is the order for all plugin's beforeExecute/afterExecute hooks:
+- All `beforeExecute` hooks are run in order, synchronously.  If a hook throws an error, the rest of `beforeExecute` hooks do not get called. The library tracks which were run (even if an exception was thrown)
+- Those plugins with `beforeExecute` hook that did not run will not get their `afterExecute` called. All the rest will.
+
+Check the [plugin example](/examples/plugin) for a use case.
 
 ## Configuration file support
 A list of configuration file names can be used, so its contents will be processed when using [`Cli.run`](/docs/api.md#runargs).  
