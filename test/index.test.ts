@@ -4,7 +4,7 @@ import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
-import { Definition, Option } from "../src/types";
+import { Definition, Hooks, Option, Plugin } from "../src/types";
 const definition = _definition as Definition;
 
 jest.mock("fs", () => ({
@@ -446,6 +446,13 @@ describe("Cli.run", () => {
 });
 
 describe("Cli.run > hooks", () => {
+  // Auxiliary method to sort hook calls
+  const sortHooks = (list: readonly (readonly [string, Plugin["hooks"]])[], hookName: keyof Hooks) =>
+    [...list]
+      .map((e) => [e[0], (e[1]![hookName]! as jest.Mock).mock.invocationCallOrder[0]] as [string, number])
+      .filter((e) => e[1] >= 0)
+      .sort((a, b) => a[1] - b[1])
+      .map((e) => e[0]);
   it("beforeParse", async () => {
     const beforeParse = jest.fn(async () => {});
     const action = jest.fn();
@@ -542,6 +549,50 @@ describe("Cli.run > hooks", () => {
     expect(beforeExecute).toHaveBeenCalledWith(expect.objectContaining(po));
     expect(action).not.toHaveBeenCalled();
     expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining({ ...po, error }));
+  });
+  it("with multiple plugins", async () => {
+    const genPlugin = (name: string): Plugin => ({
+      name,
+      hooks: {
+        beforeParse: jest.fn(),
+        afterParse: jest.fn(),
+        beforeExecute: jest.fn(),
+        afterExecute: jest.fn(),
+      },
+    });
+    const pluginA = genPlugin("plugin-a");
+    const pluginB = genPlugin("plugin-b");
+    const globalHooks = genPlugin("plugin-b").hooks;
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: globalHooks, plugins: [pluginA, pluginB] });
+    await c.run(["cmd"]);
+    // Sort invocation orders
+    const hooks = [
+      ["plugin-a", pluginA.hooks],
+      ["plugin-b", pluginB.hooks],
+      ["global", globalHooks],
+    ] as const;
+
+    expect(sortHooks(hooks, "beforeParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "afterParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "beforeExecute")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "afterExecute")).toStrictEqual(["plugin-b", "plugin-a", "global"]);
+
+    // clear mocks
+    for (const mockHooks of hooks.map((h) => h[1])) {
+      Object.values(mockHooks!).forEach((m) => (m as jest.Mock).mockClear());
+    }
+
+    // "plugin-a" throws error => "plugin-b" should not be called on "beforeExecute" and "afterExecute"
+    (pluginA.hooks!.beforeExecute as jest.Mock).mockImplementation(async () => {
+      throw new Error("");
+    });
+    await c.run(["cmd"]);
+
+    expect(sortHooks(hooks, "beforeParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "afterParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "beforeExecute")).toStrictEqual(["global", "plugin-a"]);
+    expect(sortHooks(hooks, "afterExecute")).toStrictEqual(["plugin-a", "global"]);
   });
 });
 

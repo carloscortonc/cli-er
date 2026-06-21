@@ -231,7 +231,7 @@ export default class Cli {
       return logErrorAndExit((e as Error).message || (e as string));
     }
 
-    await this.hooksManager.execute("afterExecute", eopts);
+    await this.hooksManager.execute("afterExecute", eopts, { reverse: true });
   }
 
   /**
