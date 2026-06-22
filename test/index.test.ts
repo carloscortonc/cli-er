@@ -612,8 +612,27 @@ describe("Cli.run > hooks", () => {
       Object.values(mockHooks!).forEach((m) => (m as jest.Mock).mockClear());
     }
 
-    // "plugin-a" throws error => "plugin-b" should not be called on "beforeExecute" and "afterExecute"
+    // "plugin-a" beforeExecute throws error => "plugin-b" should not be called on "beforeExecute" and "afterExecute"
     (pluginA.hooks!.beforeExecute as jest.Mock).mockImplementation(async () => {
+      throw new Error("");
+    });
+    await c.run(["cmd"]);
+
+    expect(sortHooks(hooks, "beforeParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "afterParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "beforeExecute")).toStrictEqual(["global", "plugin-a"]);
+    expect(sortHooks(hooks, "afterExecute")).toStrictEqual(["plugin-a", "global"]);
+
+    // clear mocks
+    for (const mockHooks of hooks.map((h) => h[1])) {
+      Object.values(mockHooks!).forEach((m) => (m as jest.Mock).mockClear());
+    }
+
+    // "plugin-a" beforeExecute+afterExecute throws error => "global" should still be called
+    (pluginA.hooks!.beforeExecute as jest.Mock).mockImplementation(async () => {
+      throw new Error("");
+    });
+    (pluginA.hooks!.afterExecute as jest.Mock).mockImplementation(async () => {
       throw new Error("");
     });
     await c.run(["cmd"]);

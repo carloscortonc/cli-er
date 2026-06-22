@@ -223,7 +223,7 @@ export default class Cli {
         await this.hooksManager.execute(
           "afterExecute",
           { ...eopts, error: e as Error },
-          Object.assign(hookOpts, { reverse: true, exclude, executed: [] }),
+          Object.assign(hookOpts, { reverse: true, captureError: true, exclude, executed: [] }),
         );
       } catch {
         // Ignore hook error
@@ -231,7 +231,7 @@ export default class Cli {
       return logErrorAndExit((e as Error).message || (e as string));
     }
 
-    await this.hooksManager.execute("afterExecute", eopts, { reverse: true });
+    await this.hooksManager.execute("afterExecute", eopts, { reverse: true, captureError: true });
   }
 
   /**

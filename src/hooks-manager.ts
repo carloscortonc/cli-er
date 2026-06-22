@@ -9,6 +9,8 @@ interface ExecuteOptions {
   reverse?: boolean;
   /** List of hook "group" names to exclude */
   exclude?: HookName[];
+  /** Whether to capture hook-execution error */
+  captureError?: boolean;
 }
 
 class HooksManager {
@@ -35,7 +37,15 @@ class HooksManager {
     for (const h of filtered) {
       opts.executed.push(h.name);
       debug("TRACE", `[${String(h.name)}::${hook}]`);
-      await h.fn!({ ...ctx, data: this.hookData } as any);
+      try {
+        await h.fn!({ ...ctx, data: this.hookData } as any);
+      } catch (err) {
+        if (opts.captureError) {
+          debug("TRACE", `[${String(h.name)}::${hook}::error] `.concat(String(err)));
+          continue;
+        }
+        throw err;
+      }
     }
   }
 
