@@ -1,8 +1,8 @@
 Example of using a plugin for logging and global authentication:
 
-- `plugin.afterParse` to log what command is being executed (using ctx.location)
-- `plugin.beforeExecution` as auth-middleware, validating the same env value is present
-- `plugin.afterExecution` to log command-execution errors
+- `plugin.hooks.afterParse` to log what command is being executed (using ctx.location)
+- `plugin.hooks.beforeExecution` as auth-middleware, validating the same env value is present
+- `plugin.hooks.afterExecution` to log command-execution errors
 
 ## Example executions:
 

@@ -12,12 +12,8 @@ interface ExecuteOptions {
 }
 
 class HooksManager {
-  hooks: { [K in keyof Hooks]: { name: HookName; fn: Hooks[K] }[] };
+  hooks: { [K in keyof Hooks]: { name: HookName; fn: Hooks[K] }[] } = {};
   hookData = {};
-
-  constructor() {
-    this.hooks = {};
-  }
 
   register(name: HookName, hooks: Hooks) {
     for (const hook of Object.keys(hooks) as (keyof Hooks)[]) {

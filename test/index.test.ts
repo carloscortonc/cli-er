@@ -443,6 +443,35 @@ describe("Cli.run", () => {
       expect.objectContaining({ initial: { key1: "value1", key2: "env2", key3: "env3" } }),
     );
   });
+  it("executes init() under the hood", async () => {
+    const init = jest.fn(async () => {});
+    const plugin: Plugin = { name: "init", init };
+    const c = new Cli(definition, { plugins: [plugin] });
+    await c.run();
+    expect(init).toHaveBeenCalledWith(c);
+  });
+});
+
+describe("Cli.init", () => {
+  it("Registers all plugins and invokes their init()", async () => {
+    const init = () => jest.fn(async () => {});
+    const pluginA: Plugin = { name: "init", init: init(), hooks: { beforeParse: jest.fn() } };
+    const pluginB: Plugin = { name: "init", init: init() };
+    const c = new Cli(definition, { plugins: [pluginA, pluginB] });
+    await c.init();
+    expect(pluginA.init).toHaveBeenCalledWith(c);
+    expect(pluginB.init).toHaveBeenCalledWith(c);
+    expect((pluginA.init as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+      (pluginB.init as jest.Mock).mock.invocationCallOrder[0],
+    );
+    // Hooks are now registered
+    expect(c.hooksManager.get("beforeParse").map((e) => e.fn)).toContain(pluginA.hooks!.beforeParse);
+
+    // Invoke again -> init does not get re-triggered
+    await c.init();
+    expect(pluginA.init).toHaveBeenCalledTimes(1);
+    expect(pluginB.init).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Cli.run > hooks", () => {

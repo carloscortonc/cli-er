@@ -70,7 +70,7 @@ interface Plugin {
 }
 ```
 
-When declared, `CliOptions.hooks` are integrated into a "global" plugin which get the first order position, followed by all `CliOptions.plugins`.
+When declared, `CliOptions.hooks` are integrated into a "global" plugin which gets the first order position, followed by all `CliOptions.plugins`.
 
 Apart from the hook-rules declared above, one thing to keep in mind is the order for all plugin's beforeExecute/afterExecute hooks:
 - All `beforeExecute` hooks are run in order, synchronously.  If a hook throws an error, the rest of `beforeExecute` hooks do not get called. The library tracks which were run (even if an exception was thrown)
