@@ -4,7 +4,7 @@ import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
 import { CliError, ErrorType } from "../src/cli-errors";
-import { Definition, Option } from "../src/types";
+import { Definition, Hooks, Option, Plugin } from "../src/types";
 const definition = _definition as Definition;
 
 jest.mock("fs", () => ({
@@ -110,6 +110,7 @@ describe("Cli.constructor", () => {
       cliVersion: "1.0.0",
       cliDescription: "cli-description",
       hooks: {},
+      plugins: [],
       debug: false,
       completion: {
         enabled: true,
@@ -159,6 +160,7 @@ describe("Cli.constructor", () => {
       cliVersion: "2.0.0",
       cliDescription: "custom-description",
       hooks: {},
+      plugins: [],
       debug: false,
       completion: {
         enabled: true,
@@ -247,6 +249,10 @@ describe("Cli.parse", () => {
     expect(c.parse(["--no-opt", "true"]).options.opt).toBe(false);
     expect(c.parse(["--no-opt", "false"]).options.opt).toBe(true);
   });
+});
+
+beforeAll(() => {
+  jest.spyOn(utils, "logErrorAndExit").mockImplementation();
 });
 
 describe("Cli.run", () => {
@@ -437,9 +443,64 @@ describe("Cli.run", () => {
       expect.objectContaining({ initial: { key1: "value1", key2: "env2", key3: "env3" } }),
     );
   });
+  it("executes init() under the hood", async () => {
+    const init = jest.fn(async () => {});
+    const plugin: Plugin = { name: "init", init };
+    const c = new Cli(definition, { plugins: [plugin] });
+    await c.run();
+    expect(init).toHaveBeenCalledWith(c);
+  });
+});
+
+describe("Cli.init", () => {
+  it("Registers all plugins and invokes their init()", async () => {
+    const init = () => jest.fn(async () => {});
+    const pluginA: Plugin = { name: "init", init: init(), hooks: { beforeParse: jest.fn() } };
+    const pluginB: Plugin = { name: "init", init: init() };
+    const c = new Cli(definition, { plugins: [pluginA, pluginB] });
+    await c.init();
+    expect(pluginA.init).toHaveBeenCalledWith(c);
+    expect(pluginB.init).toHaveBeenCalledWith(c);
+    expect((pluginA.init as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan(
+      (pluginB.init as jest.Mock).mock.invocationCallOrder[0],
+    );
+    // Hooks are now registered
+    expect(c.hooksManager.get("beforeParse").map((e) => e.fn)).toContain(pluginA.hooks!.beforeParse);
+
+    // Invoke again -> init does not get re-triggered
+    await c.init();
+    expect(pluginA.init).toHaveBeenCalledTimes(1);
+    expect(pluginB.init).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Cli.run > hooks", () => {
+  // Auxiliary method to sort hook calls
+  const sortHooks = (list: readonly (readonly [string, Plugin["hooks"]])[], hookName: keyof Hooks) =>
+    [...list]
+      .map((e) => [e[0], (e[1]![hookName]! as jest.Mock).mock.invocationCallOrder[0]] as [string, number])
+      .filter((e) => e[1] >= 0)
+      .sort((a, b) => a[1] - b[1])
+      .map((e) => e[0]);
+  it("beforeParse", async () => {
+    const beforeParse = jest.fn(async () => {});
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeParse } });
+    await c.run(["cmd"]);
+    expect(beforeParse).toHaveBeenCalledWith(expect.objectContaining({ args: ["cmd"] }));
+    expect(beforeParse.mock.invocationCallOrder[0]).toBeLessThan(action.mock.invocationCallOrder[0]);
+  });
+  it("beforeParse - modify args", async () => {
+    const beforeParse = jest.fn(async (ctx) => {
+      ctx.args.push("before-parse");
+    });
+    const parseArgs = jest.spyOn(cliutils, "parseArguments");
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action }, opt: {} }, { hooks: { beforeParse } });
+    await c.run(["cmd"]);
+    // hook can modify `args`
+    expect(parseArgs).toHaveBeenCalledWith(expect.objectContaining({ args: ["cmd", "before-parse"] }));
+  });
   it("afterParse", async () => {
     const afterParse = jest.fn(async () => {});
     const action = jest.fn();
@@ -451,6 +512,7 @@ describe("Cli.run > hooks", () => {
       options: {
         _: [],
       },
+      data: {},
     });
     expect(afterParse.mock.invocationCallOrder[0]).toBeLessThan(action.mock.invocationCallOrder[0]);
   });
@@ -460,7 +522,7 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
-    expect(beforeExecute).toHaveBeenCalledWith(po);
+    expect(beforeExecute).toHaveBeenCalledWith(expect.objectContaining(po));
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(beforeExecute.mock.invocationCallOrder[0]).toBeLessThan(action.mock.invocationCallOrder[0]);
   });
@@ -470,7 +532,7 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
-    expect(afterExecute).toHaveBeenCalledWith(po);
+    expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining(po));
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
   });
@@ -483,7 +545,7 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { afterExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
-    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining({ ...po, error }));
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
   });
@@ -499,7 +561,7 @@ describe("Cli.run > hooks", () => {
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
     expect(afterExecute).toHaveBeenCalledTimes(1);
-    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining({ ...po, error }));
     expect(action).toHaveBeenCalledWith(po, expect.anything());
     expect(action.mock.invocationCallOrder[0]).toBeLessThan(afterExecute.mock.invocationCallOrder[0]);
   });
@@ -513,9 +575,72 @@ describe("Cli.run > hooks", () => {
     const c = new Cli({ cmd: { kind: "command", action } }, { hooks: { beforeExecute, afterExecute } });
     await c.run(["cmd"]);
     const po = { errors: [], location: ["cmd"], options: { _: [] } };
-    expect(beforeExecute).toHaveBeenCalledWith(po);
+    expect(beforeExecute).toHaveBeenCalledWith(expect.objectContaining(po));
     expect(action).not.toHaveBeenCalled();
-    expect(afterExecute).toHaveBeenCalledWith({ ...po, error });
+    expect(afterExecute).toHaveBeenCalledWith(expect.objectContaining({ ...po, error }));
+  });
+  it("with multiple plugins", async () => {
+    const genPlugin = (name: string): Plugin => ({
+      name,
+      hooks: {
+        beforeParse: jest.fn(),
+        afterParse: jest.fn(),
+        beforeExecute: jest.fn(),
+        afterExecute: jest.fn(),
+      },
+    });
+    const pluginA = genPlugin("plugin-a");
+    const pluginB = genPlugin("plugin-b");
+    const globalHooks = genPlugin("plugin-b").hooks;
+    const action = jest.fn();
+    const c = new Cli({ cmd: { kind: "command", action } }, { hooks: globalHooks, plugins: [pluginA, pluginB] });
+    await c.run(["cmd"]);
+    // Sort invocation orders
+    const hooks = [
+      ["plugin-a", pluginA.hooks],
+      ["plugin-b", pluginB.hooks],
+      ["global", globalHooks],
+    ] as const;
+
+    expect(sortHooks(hooks, "beforeParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "afterParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "beforeExecute")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "afterExecute")).toStrictEqual(["plugin-b", "plugin-a", "global"]);
+
+    // clear mocks
+    for (const mockHooks of hooks.map((h) => h[1])) {
+      Object.values(mockHooks!).forEach((m) => (m as jest.Mock).mockClear());
+    }
+
+    // "plugin-a" beforeExecute throws error => "plugin-b" should not be called on "beforeExecute" and "afterExecute"
+    (pluginA.hooks!.beforeExecute as jest.Mock).mockImplementation(async () => {
+      throw new Error("");
+    });
+    await c.run(["cmd"]);
+
+    expect(sortHooks(hooks, "beforeParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "afterParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "beforeExecute")).toStrictEqual(["global", "plugin-a"]);
+    expect(sortHooks(hooks, "afterExecute")).toStrictEqual(["plugin-a", "global"]);
+
+    // clear mocks
+    for (const mockHooks of hooks.map((h) => h[1])) {
+      Object.values(mockHooks!).forEach((m) => (m as jest.Mock).mockClear());
+    }
+
+    // "plugin-a" beforeExecute+afterExecute throws error => "global" should still be called
+    (pluginA.hooks!.beforeExecute as jest.Mock).mockImplementation(async () => {
+      throw new Error("");
+    });
+    (pluginA.hooks!.afterExecute as jest.Mock).mockImplementation(async () => {
+      throw new Error("");
+    });
+    await c.run(["cmd"]);
+
+    expect(sortHooks(hooks, "beforeParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "afterParse")).toStrictEqual(["global", "plugin-a", "plugin-b"]);
+    expect(sortHooks(hooks, "beforeExecute")).toStrictEqual(["global", "plugin-a"]);
+    expect(sortHooks(hooks, "afterExecute")).toStrictEqual(["plugin-a", "global"]);
   });
 });
 

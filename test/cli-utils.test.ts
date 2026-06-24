@@ -65,6 +65,7 @@ describe("completeDefinition", () => {
     cliVersion: "",
     cliDescription: "",
     hooks: {},
+    plugins: [],
     debug: false,
     completion: {
       enabled: false,

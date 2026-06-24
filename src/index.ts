@@ -18,6 +18,7 @@ import { ERROR_MESSAGES } from "./cli-errors";
 import { CLI_MESSAGES, formatMessage } from "./cli-messages";
 import { defineCommand, CommandOptions, NamespaceOptions, defineNamespace } from "./extract-options-type";
 import { generateCompletions } from "./bash-completion";
+import HooksManager from "./hooks-manager";
 
 export default class Cli {
   static logger: ICliLogger = CliLogger;
@@ -27,6 +28,9 @@ export default class Cli {
   static defineNamespace = defineNamespace;
   definition: Definition;
   options: CliOptions;
+  hooksManager = new HooksManager();
+  private initPromise: Promise<void> | undefined;
+
   /** Creates a new Cli instance
    *
    * @param {Definition} definition The definition of the cli application
@@ -74,6 +78,7 @@ export default class Cli {
       cliVersion: packagejson.version || "-",
       cliDescription: packagejson.description || "",
       hooks: {},
+      plugins: [],
       debug: false,
       completion: {
         enabled: true,
@@ -111,6 +116,31 @@ export default class Cli {
 
     return this;
   }
+
+  /** Initialize plugins and hooks */
+  async init() {
+    return this.ensureInit();
+  }
+
+  private async ensureInit() {
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+    this.initPromise = (async () => {
+      // Execute init() for each plugin
+      for (const plugin of this.options.plugins.filter((p) => p.init)) {
+        await plugin.init!(this);
+      }
+      // Register hooks
+      this.hooksManager.register(Symbol("global"), this.options.hooks);
+      // Register plugins
+      for (const plugin of this.options.plugins) {
+        this.hooksManager.register(plugin.name || Symbol(), plugin.hooks || {});
+      }
+    })();
+    return this.initPromise;
+  }
+
   /**
    * Process the provided arguments and return the final options
    *
@@ -120,20 +150,23 @@ export default class Cli {
     const po = parseArguments({ args, definition: this.definition, cliOptions: this.options });
     return delete (po as Partial<ReturnType<typeof parseArguments>>)["rawLocation"], po;
   }
+
   /**
    * Run the provided argument list. This defaults to `process.argv.slice(2)`
    *
    * @param {string[]} args list of arguments to be processed
    */
   async run(args?: string[]): Promise<void> {
+    await this.ensureInit();
     const args_ = Array.isArray(args) ? args : process.argv.slice(2);
+    await this.hooksManager.execute("beforeParse", { args: args_ });
     const { rawLocation, ...opts } = parseArguments({
       args: args_,
       definition: this.definition,
       cliOptions: this.options,
       initial: { ...this.configContent(), ...this.envContent() },
     });
-    await this.options.hooks.afterParse?.(opts);
+    await this.hooksManager.execute("afterParse", opts);
     // Include CliOptions.rootCommand if empty location provided
     const elementLocation =
       opts.location.length === 0 && typeof this.options.rootCommand === "string"
@@ -179,21 +212,28 @@ export default class Cli {
     const executor = typeof command.action === "function" ? command.action : executeScript;
 
     const eopts = { ...opts, location: elementLocation };
-
+    const hookOpts = { executed: [] as (string | symbol)[] };
     try {
-      await this.options.hooks.beforeExecute?.(eopts);
+      await this.hooksManager.execute("beforeExecute", eopts, hookOpts);
       await executor({ ...opts, location: elementLocation }, this.options);
     } catch (e) {
       try {
-        await this.options.hooks.afterExecute?.({ ...eopts, error: e as Error });
+        const beList = this.hooksManager.get("beforeExecute").map((b) => b.name);
+        const exclude = beList?.filter((e) => !hookOpts.executed.includes(e));
+        await this.hooksManager.execute(
+          "afterExecute",
+          { ...eopts, error: e as Error },
+          Object.assign(hookOpts, { reverse: true, captureError: true, exclude, executed: [] }),
+        );
       } catch {
         // Ignore hook error
       }
       return logErrorAndExit((e as Error).message || (e as string));
     }
 
-    await this.options.hooks.afterExecute?.(eopts);
+    await this.hooksManager.execute("afterExecute", eopts, { reverse: true, captureError: true });
   }
+
   /**
    * Generate and output help documentation
    *
@@ -202,12 +242,14 @@ export default class Cli {
   help(location: string[] = []) {
     generateScopedHelp(this.definition, location, this.options);
   }
+
   /**
    * Print formatted version of the current cli application
    */
   version() {
     formatVersion(this.options);
   }
+
   /**
    * Find nearest configuration file. Returns undefined if:
    * - options.configFile is not specified
@@ -230,6 +272,7 @@ export default class Cli {
     }
     return;
   }
+
   /** If `CliOptions.envPrefix` is defined, extract options from environment variables
    * matching that value
    */
@@ -242,6 +285,7 @@ export default class Cli {
       .filter(([k]) => k.startsWith(p))
       .reduce((acc, [k, v]) => ({ ...acc, [k.replace(new RegExp("^".concat(p)), "").toLowerCase()]: v }), {});
   }
+
   /**
    * Output bash-completion script contents
    */

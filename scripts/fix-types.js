@@ -14,7 +14,7 @@ let currentDts = fs.readFileSync(fileLocation).toString();
 const newDts = currentDts.replace(
   /export { (type \w+, )*Cli as default };/,
   `declare namespace Cli {
-  export type { Definition, Namespace, Command, Option, CommandOptions, NamespaceOptions, ValueParserInput, ErrorType };
+  export type { Definition, Namespace, Command, Option, CommandOptions, NamespaceOptions, ValueParserInput, ErrorType, Hooks, Plugin };
   export { Cli as default };
 }
 
