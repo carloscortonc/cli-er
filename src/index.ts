@@ -11,7 +11,7 @@ import {
   getEntryFile,
 } from "./cli-utils";
 import { Definition, ParsingOutput, CliOptions, DeepPartial, ICliLogger, Kind } from "./types";
-import { clone, logErrorAndExit, merge, findPackageJson, CLIER_DEBUG_KEY, deprecationWarning, findFile } from "./utils";
+import { clone, logErrorAndExit, merge, findPackageJson, deprecationWarning, findFile } from "./utils";
 import { CliError } from "./cli-errors";
 import CliLogger from "./cli-logger";
 import { ERROR_MESSAGES } from "./cli-errors";
@@ -19,6 +19,7 @@ import { CLI_MESSAGES, formatMessage } from "./cli-messages";
 import { defineCommand, CommandOptions, NamespaceOptions, defineNamespace } from "./extract-options-type";
 import { generateCompletions } from "./bash-completion";
 import HooksManager from "./hooks-manager";
+import { debug, CLIER_DEBUG_KEY } from "./debug-logger";
 
 export default class Cli {
   static logger: ICliLogger = CliLogger;
@@ -26,6 +27,7 @@ export default class Cli {
   static formatMessage = formatMessage;
   static defineCommand = defineCommand;
   static defineNamespace = defineNamespace;
+  static debug = debug;
   definition: Definition;
   options: CliOptions;
   hooksManager = new HooksManager();

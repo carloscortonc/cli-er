@@ -1,8 +1,7 @@
 import Cli from ".";
 import path from "path";
 import fs from "fs";
-
-export const CLIER_DEBUG_KEY: string = "CLIER_DEBUG";
+import { clierdebug, DEBUG_TYPE, isDebugActive } from "./debug-logger";
 
 /** Basic implementation of an object deepclone algorithm.
  * Does not cover all cases (does not create new Integer, Float, Boolean, etc objects),
@@ -164,26 +163,6 @@ export function getClierVersion() {
   }
 }
 
-export const isDebugActive = () => process.env[CLIER_DEBUG_KEY];
-
-export enum DEBUG_TYPE {
-  /** Used for deprecations, definition warnings, etc */
-  WARN = "WARN",
-  /** Used for debugging execution */
-  TRACE = "TRACE",
-}
-
-/** Utility to print messages only when debug mode is active
- * This will set the process exitcode to 1 */
-export function debug(type: `${DEBUG_TYPE}`, message: string) {
-  //TODO implement as a singleton with strategy ptrn
-  if (isDebugActive()) {
-    process.stdout.write(`[CLIER_DEBUG::${type}] `.concat(message, "\n"));
-    // Only set error exitcode with warn debug-messages
-    type === DEBUG_TYPE.WARN && (process.exitCode = 1);
-  }
-}
-
 /** Class containing the logic for logging deprecations. It holds the list of deprecation-messages already
  * printed, to avoid duplicates */
 class DeprecationWarning {
@@ -206,7 +185,7 @@ class DeprecationWarning {
     );
     if (!this.list.has(depMessage)) {
       this.list.add(depMessage);
-      debug(DEBUG_TYPE.WARN, depMessage);
+      clierdebug(depMessage, DEBUG_TYPE.WARN);
     }
   };
 }

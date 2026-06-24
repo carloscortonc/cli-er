@@ -1,5 +1,5 @@
 import type { Hooks } from "./types";
-import { debug } from "./utils";
+import { clierdebug } from "./debug-logger";
 
 type HookName = string | symbol;
 interface ExecuteOptions {
@@ -36,12 +36,12 @@ class HooksManager {
     const filtered = opts.exclude ? list.filter((e) => !opts.exclude!.includes(e.name)) : list;
     for (const h of filtered) {
       opts.executed.push(h.name);
-      debug("TRACE", `[${String(h.name)}::${hook}]`);
+      clierdebug(`[${String(h.name)}::${hook}]`, "TRACE");
       try {
         await h.fn!({ ...ctx, data: this.hookData } as any);
       } catch (err) {
         if (opts.captureError) {
-          debug("TRACE", `[${String(h.name)}::${hook}::error] `.concat(String(err)));
+          clierdebug(`[${String(h.name)}::${hook}::error] `.concat(String(err)), "TRACE");
           continue;
         }
         throw err;
