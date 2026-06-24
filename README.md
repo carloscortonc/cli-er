@@ -55,6 +55,7 @@ node cli.js [namespace(s)|command] [OPTIONS]
 - [**Reading from stdin**](/docs/definition.md#reading-from-stdin): configure options whose value can be provided from stdin.
 - [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
 - [**Bash completion**](./docs/features.md#bash-completion): a command is created to generate the `bash-completions` script for the cli.
+- [**Debug logger**](./docs/features.md#debug-logger): static debug-logging utility.
 - [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
 - [**Typescript support**](./docs/features.md#typescript-support): build the cli with typescript.
 

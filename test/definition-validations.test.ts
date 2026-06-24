@@ -1,13 +1,9 @@
 import { clierdebug, DEBUG_TYPE } from "../src/debug-logger";
 import { validatePositional } from "../src/definition-validations";
 
-jest.mock("../src/utils", () => ({
-  ...jest.requireActual("../src/utils"),
-  isDebugActive: () => true,
-}));
-
 jest.mock("../src/debug-logger", () => ({
   ...jest.requireActual("../src/debug-logger"),
+  isDebugActive: () => true,
   clierdebug: jest.fn(),
 }));
 

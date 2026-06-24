@@ -1,4 +1,4 @@
-import { clone, deprecationWarning, findPackageJson, merge, findFile } from "../src/utils";
+import { clone, findPackageJson, merge, findFile } from "../src/utils";
 import path from "path";
 import fs from "fs";
 import { CLIER_DEBUG_KEY } from "../src/debug-logger";
@@ -86,8 +86,12 @@ describe("findPackageJson", () => {
 });
 
 describe("deprecationWarning", () => {
-  it("Log a given deprecation if condition is true", () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+  it("Log a given deprecation if condition is true", async () => {
     process.env[CLIER_DEBUG_KEY] = "1"; // enable debug mode
+    const { deprecationWarning } = await import("../src/utils");
     const stderr = jest.spyOn(process.stderr, "write").mockImplementation(jest.fn());
     deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
     expect(stderr).toHaveBeenCalledWith(expect.stringContaining(`<P> is deprecated and will be removed in 1.0.0`));

@@ -1,28 +1,75 @@
-import { CLIER_DEBUG_KEY, clierdebug, DEBUG_TYPE } from "../src/debug-logger";
+import { CLIER_DEBUG_KEY, DEBUG_TYPE } from "../src/debug-logger";
 
-describe("debug", () => {
-  const stdout = jest.spyOn(process.stderr, "write").mockImplementation(jest.fn());
+describe("clierdebug", () => {
+  const stderr = jest.spyOn(process.stderr, "write").mockImplementation(jest.fn());
   beforeEach(() => {
-    stdout.mockClear();
+    stderr.mockClear();
+    jest.resetModules();
   });
   afterAll(() => {
-    stdout.mockReset();
+    stderr.mockReset();
   });
-  it("Invokes process.stdout.write if debug is enabled: WARN", () => {
+  it("Invokes process.stdout.write if debug is enabled: WARN", async () => {
     process.env[CLIER_DEBUG_KEY] = "1";
+    const { clierdebug } = await import("../src/debug-logger");
     clierdebug("debug-message", DEBUG_TYPE.WARN);
-    expect(stdout).toHaveBeenCalledWith("[CLIER_DEBUG::WARN] debug-message\n");
+    expect(stderr).toHaveBeenCalledWith("[CLIER::WARN] debug-message\n");
     expect(process.exitCode).toBe(1);
   });
-  it("Invokes process.stdout.write if debug is enabled: TRACE", () => {
+  it("Invokes process.stdout.write if debug is enabled: TRACE", async () => {
+    process.exitCode = 0;
     process.env[CLIER_DEBUG_KEY] = "1";
+    const { clierdebug } = await import("../src/debug-logger");
     clierdebug("trace-message", DEBUG_TYPE.TRACE);
-    expect(stdout).toHaveBeenCalledWith("[CLIER_DEBUG::TRACE] trace-message\n");
+    expect(stderr).toHaveBeenCalledWith("[CLIER::TRACE] trace-message\n");
     expect(process.exitCode).toBe(0);
   });
-  it("Does nothing if debug is disabled", () => {
+  it("Does nothing if debug is disabled", async () => {
     process.env[CLIER_DEBUG_KEY] = "";
+    const { clierdebug } = await import("../src/debug-logger");
     clierdebug("debug-message", DEBUG_TYPE.WARN);
-    expect(stdout).not.toHaveBeenCalled();
+    expect(stderr).not.toHaveBeenCalled();
+  });
+});
+
+describe("debug", () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+  it("Enabled when provided exact namespace", async () => {
+    process.env.DEBUG = "nms";
+    const { debug } = await import("../src/debug-logger");
+    const d = debug("nms");
+    expect(d.enabled).toBe(true);
+  });
+  it("Enabled when provided '*'", async () => {
+    process.env.DEBUG = "*";
+    const { debug } = await import("../src/debug-logger");
+    const d = debug("nms");
+    expect(d.enabled).toBe(true);
+  });
+  it("Enabled when provided partial namespace + '*'", async () => {
+    process.env.DEBUG = "nm*";
+    const { debug } = await import("../src/debug-logger");
+    const d = debug("nms");
+    expect(d.enabled).toBe(true);
+  });
+  it("Enabled when provided inside comma-separated list", async () => {
+    process.env.DEBUG = "another,nms";
+    const { debug } = await import("../src/debug-logger");
+    const d = debug("nms");
+    expect(d.enabled).toBe(true);
+  });
+  it("Disabled with empty DEBUG", async () => {
+    process.env.DEBUG = undefined;
+    const { debug } = await import("../src/debug-logger");
+    const d = debug("nms");
+    expect(d.enabled).toBe(false);
+  });
+  it("Disabled with non-matching namespace", async () => {
+    process.env.DEBUG = "nm";
+    const { debug } = await import("../src/debug-logger");
+    const d = debug("nms");
+    expect(d.enabled).toBe(false);
   });
 });

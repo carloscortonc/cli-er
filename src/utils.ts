@@ -1,7 +1,7 @@
 import Cli from ".";
 import path from "path";
 import fs from "fs";
-import { clierdebug, DEBUG_TYPE, isDebugActive } from "./debug-logger";
+import { clierdebug, DEBUG_TYPE, Debugger, isDebugActive, NoOpDebugStrategy } from "./debug-logger";
 
 /** Basic implementation of an object deepclone algorithm.
  * Does not cover all cases (does not create new Integer, Float, Boolean, etc objects),
@@ -165,17 +165,16 @@ export function getClierVersion() {
 
 /** Class containing the logic for logging deprecations. It holds the list of deprecation-messages already
  * printed, to avoid duplicates */
-class DeprecationWarning {
+class DeprecationDebugLogger extends NoOpDebugStrategy {
   list = new Set();
-  deprecate = (options: {
+  log: any = (options: {
     condition?: boolean;
     property?: string;
     version?: string;
     alternative?: string;
     description?: string;
   }) => {
-    // Check if debug mode is active to avoid unnecessary execution
-    if (!isDebugActive() || options.condition === false) {
+    if (options.condition === false) {
       return;
     }
     const depMessage = `<${options.property}> is deprecated`.concat(
@@ -191,4 +190,8 @@ class DeprecationWarning {
 }
 
 /** Method for logging deprecation warnings */
-export const deprecationWarning = new DeprecationWarning().deprecate;
+export const deprecationWarning = new Debugger({
+  namespace: "CLIER",
+  enabled: isDebugActive(),
+  strategy: DeprecationDebugLogger,
+}).log as (options: DeprecationDebugLogger["log"]) => void;
