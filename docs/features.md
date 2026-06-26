@@ -136,6 +136,30 @@ new Cli({
 You can check [here](/examples/docker/completions.sh) the generated script for docker example.
 > The script was tested with `bash` version 3.2.57 and `zsh` version 5.9.
 
+## Debug logger
+`cli-er` ships with an static debug logger, similar to [debug](https://www.npmjs.com/package/debug) package:
+
+- Instantiate a logger for a given namespace.
+- The value of `process.env.DEBUG` is checked to determine if logs should be generated, looking for a comma-separated list of enabled namespaces. It supports "*" and "namespace*" format.
+- The logs are sent to `stderr`.
+- The log format is `{namespace} {message}\n`.
+
+```typescript
+// cli.js
+const debug = Cli.debug("cliname");
+
+debug("Some message");
+```
+
+And then:
+
+```sh
+$ DEBUG=cliname node cli.js
+# cliname Some message
+```
+
+Check the [debug-logger example](/examples/debug-logger) for a use case.
+
 ## Debug mode
 When active, the library will generate debug logs warning about problems, deprecations or suggestions. Two types exist:
 - `WARN`: to indicated misused or deprecated options.

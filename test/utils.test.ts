@@ -1,15 +1,7 @@
-import {
-  CLIER_DEBUG_KEY,
-  DEBUG_TYPE,
-  clone,
-  debug,
-  deprecationWarning,
-  findPackageJson,
-  merge,
-  findFile,
-} from "../src/utils";
+import { clone, findPackageJson, merge, findFile } from "../src/utils";
 import path from "path";
 import fs from "fs";
+import { CLIER_DEBUG_KEY } from "../src/debug-logger";
 
 jest.mock("fs", () => ({
   readFileSync: jest.fn(),
@@ -93,43 +85,20 @@ describe("findPackageJson", () => {
   });
 });
 
-describe("debug", () => {
-  const stdout = jest.spyOn(process.stdout, "write").mockImplementation(jest.fn());
-  beforeEach(() => {
-    stdout.mockClear();
-  });
-  afterAll(() => {
-    stdout.mockReset();
-  });
-  it("Invokes process.stdout.write if debug is enabled: WARN", () => {
-    process.env[CLIER_DEBUG_KEY] = "1";
-    debug(DEBUG_TYPE.WARN, "debug-message");
-    expect(stdout).toHaveBeenCalledWith("[CLIER_DEBUG::WARN] debug-message\n");
-    expect(process.exitCode).toBe(1);
-  });
-  it("Invokes process.stdout.write if debug is enabled: TRACE", () => {
-    process.env[CLIER_DEBUG_KEY] = "1";
-    debug(DEBUG_TYPE.TRACE, "trace-message");
-    expect(stdout).toHaveBeenCalledWith("[CLIER_DEBUG::TRACE] trace-message\n");
-    expect(process.exitCode).toBe(0);
-  });
-  it("Does nothing if debug is disabled", () => {
-    process.env[CLIER_DEBUG_KEY] = "";
-    debug(DEBUG_TYPE.WARN, "debug-message");
-    expect(stdout).not.toHaveBeenCalled();
-  });
-});
-
 describe("deprecationWarning", () => {
-  it("Log a given deprecation if condition is true", () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+  it("Log a given deprecation if condition is true", async () => {
     process.env[CLIER_DEBUG_KEY] = "1"; // enable debug mode
-    const stdout = jest.spyOn(process.stdout, "write").mockImplementation(jest.fn());
+    const { deprecationWarning } = await import("../src/utils");
+    const stderr = jest.spyOn(console, "error").mockImplementation(jest.fn());
     deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
-    expect(stdout).toHaveBeenCalledWith(expect.stringContaining(`<P> is deprecated and will be removed in 1.0.0`));
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining(`<P> is deprecated and will be removed in 1.0.0`));
     // Repeated deprecation will not be logged again
-    stdout.mockClear();
+    stderr.mockClear();
     deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
-    expect(stdout).not.toHaveBeenCalled();
+    expect(stderr).not.toHaveBeenCalled();
   });
 });
 
