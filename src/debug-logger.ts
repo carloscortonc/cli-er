@@ -23,14 +23,14 @@ export class NoOpDebugStrategy implements DebugStrategy {
 }
 
 class DefaultDebugStrategy extends NoOpDebugStrategy {
-  log(message: string, type?: DEBUG_TYPE) {
-    process.stderr.write(`${this.namespace} ${message}\n`);
+  log(message: string) {
+    console.error(`${this.namespace} ${message}`);
   }
 }
 
 class ClierDebugStrategy extends NoOpDebugStrategy {
   log(message: string, type?: DEBUG_TYPE) {
-    process.stderr.write(`[${this.namespace}::${type}] ${message}\n`);
+    console.error(`[${this.namespace}::${type}] ${message}`);
     if (type === DEBUG_TYPE.WARN) {
       process.exitCode = 1;
     }
@@ -54,7 +54,7 @@ export class Debugger {
     const self = this;
     this.log = function (message: string) {
       self.strategy.log(...(arguments as unknown as [string]));
-    } as ((message: string) => void) & { enabled?: boolean };
+    } as DebugStrategy["log"];
     Object.assign(this.log, { enabled: config.enabled });
   }
 }

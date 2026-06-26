@@ -1,7 +1,7 @@
 import { CLIER_DEBUG_KEY, DEBUG_TYPE } from "../src/debug-logger";
 
 describe("clierdebug", () => {
-  const stderr = jest.spyOn(process.stderr, "write").mockImplementation(jest.fn());
+  const stderr = jest.spyOn(console, "error").mockImplementation(jest.fn());
   beforeEach(() => {
     stderr.mockClear();
     jest.resetModules();
@@ -13,7 +13,7 @@ describe("clierdebug", () => {
     process.env[CLIER_DEBUG_KEY] = "1";
     const { clierdebug } = await import("../src/debug-logger");
     clierdebug("debug-message", DEBUG_TYPE.WARN);
-    expect(stderr).toHaveBeenCalledWith("[CLIER::WARN] debug-message\n");
+    expect(stderr).toHaveBeenCalledWith("[CLIER::WARN] debug-message");
     expect(process.exitCode).toBe(1);
   });
   it("Invokes process.stdout.write if debug is enabled: TRACE", async () => {
@@ -21,7 +21,7 @@ describe("clierdebug", () => {
     process.env[CLIER_DEBUG_KEY] = "1";
     const { clierdebug } = await import("../src/debug-logger");
     clierdebug("trace-message", DEBUG_TYPE.TRACE);
-    expect(stderr).toHaveBeenCalledWith("[CLIER::TRACE] trace-message\n");
+    expect(stderr).toHaveBeenCalledWith("[CLIER::TRACE] trace-message");
     expect(process.exitCode).toBe(0);
   });
   it("Does nothing if debug is disabled", async () => {

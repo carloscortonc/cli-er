@@ -92,7 +92,7 @@ describe("deprecationWarning", () => {
   it("Log a given deprecation if condition is true", async () => {
     process.env[CLIER_DEBUG_KEY] = "1"; // enable debug mode
     const { deprecationWarning } = await import("../src/utils");
-    const stderr = jest.spyOn(process.stderr, "write").mockImplementation(jest.fn());
+    const stderr = jest.spyOn(console, "error").mockImplementation(jest.fn());
     deprecationWarning({ condition: true, property: "P", version: "1.0.0" });
     expect(stderr).toHaveBeenCalledWith(expect.stringContaining(`<P> is deprecated and will be removed in 1.0.0`));
     // Repeated deprecation will not be logged again
