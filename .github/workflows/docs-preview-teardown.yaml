@@ -1,0 +1,32 @@
+name: Docs Preview Teardown
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [closed, unlabeled]
+
+permissions:
+  contents: write
+
+jobs:
+  teardown-preview:
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'docs-preview') ||
+      github.event.label.name == 'docs-preview'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Remove preview directory
+        run: rm -rf previews/pr-${{ github.event.pull_request.number }}
+
+      - name: Commit removal
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          keep_files: true

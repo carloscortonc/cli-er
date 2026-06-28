@@ -1,0 +1,67 @@
+name: Docs Preview
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    if: contains(github.event.pull_request.labels.*.name, 'docs-preview')
+    uses: ./.github/workflows/docs-build.yaml
+    with:
+      site-base: /cli-er/previews/pr-${{ github.event.pull_request.number }}/
+      docs-base: /cli-er/previews/pr-${{ github.event.pull_request.number }}/docs/
+
+  deploy-preview:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact-name }}
+          path: site/dist
+
+      - name: Deploy preview to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site/dist
+          destination_dir: previews/pr-${{ github.event.pull_request.number }}
+          keep_files: true
+
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+            const url = `https://carloscortonc.github.io/cli-er/previews/pr-${prNumber}/`;
+            const body = `📚 **Docs preview deployed!**\n\n🔗 ${url}\n\n> _Updated on every push to this PR. Will be removed when the PR is closed._`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.find(c => c.body.includes('Docs preview deployed'));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
+
