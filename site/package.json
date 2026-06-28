@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "npm --prefix .. ci && npm --prefix .. run build && node scripts/browserify.js > ./src/cli.web.js",
-    "bundle:site": "npm run build && vite build --base=/cli-er/",
-    "bundle:docs": "npm --prefix .. run docs:build",
+    "bundle:site": "npm run build && vite build --base=${SITE_BASE:-/cli-er/}",
+    "bundle:docs": "npm --prefix .. run docs:build -- --base=${DOCS_BASE:-/cli-er/docs/}",
     "bundle:all": "npm run bundle:site && npm run bundle:docs && cp -r ../docs-dist ./dist/docs",
     "start": "npm run build && (npx http-server .. --port=8000 --cors &) && vite",
     "test": "node --test ./test/**"
