@@ -27,13 +27,16 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install site dependencies
         working-directory: site
         run: npm ci
 
-      - name: Bundle docs
+      - name: Bundle playground + docs
         working-directory: site
-        run: npm run bundle
+        run: npm run bundle:all
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

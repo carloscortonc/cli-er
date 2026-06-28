@@ -1,3 +1,5 @@
+# API Reference
+
 The available methods are described here:
 
 ## parse(args)
@@ -22,7 +24,7 @@ _**TIP**: You can define an option as required (`required: true`), which will ve
 This library also interprets the delimiter `--` to stop parsing, including the remaning arguments as an array inside `ParsingOutput.options.__`
 
 
-The execution of [this example](/README.md#example) would be:
+The execution of [this example](/guide/getting-started#example-docker-like-cli) would be:
 
 ```json
 {
@@ -69,11 +71,11 @@ new Cli({
 invoking with `node action.js cmd --log` will print _"Log from cmd"_ into the console.
 
 This method has three main behaviours: print version, print help and execute a command:
-- **print version**: if [autoincluded version](/docs/cli-options.md#versionautoinclude) is enabled and version option is provided, version will be printed.
-- **print help**: if [autoincluded help](/docs/cli-options.md#helpautoinclude) is enabled and help option is provided, or a cli without `rootCommand` is invoked without location, or a namespace is invoked, help will be generated. If any errors configured in [`CliOptions.errors.onGenerateHelp`](/docs/cli-options.md#errorsongeneratehelp) are generated, they will be outputted before the help.
-- **execute command**: if any errors configured in [`CliOptions.errors.onExecuteCommand`](/docs/cli-options.md#errorsonexecutecommand) are generated, they will be printed and execution will end with status `1`. Otherwise, the script location will be calculated, and the corresponding script executed.
+- **print version**: if [autoincluded version](/reference/cli-options#versionautoinclude) is enabled and version option is provided, version will be printed.
+- **print help**: if [autoincluded help](/reference/cli-options#helpautoinclude) is enabled and help option is provided, or a cli without `rootCommand` is invoked without location, or a namespace is invoked, help will be generated. If any errors configured in [`CliOptions.errors.onGenerateHelp`](/reference/cli-options#errorsongeneratehelp) are generated, they will be outputted before the help.
+- **execute command**: if any errors configured in [`CliOptions.errors.onExecuteCommand`](/reference/cli-options#errorsonexecutecommand) are generated, they will be printed and execution will end with status `1`. Otherwise, the script location will be calculated, and the corresponding script executed.
 
-If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](/docs/cli-options.md#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](/examples/docker/definition.js#L130)).
+If a cli application does not have registered a root command (logic executed without any supplied namespace/command), it should be configured with [`CliOptions.rootCommand: false`](/reference/cli-options#rootcommand). By doing this, when the cli application is invoked with no arguments, full help will be shown (see this [docker example](https://github.com/carloscortonc/cli-er/blob/develop/examples/docker/definition.js#L130)).
 
 You also use `CliOptions.rootCommand` to define a default command to execute, when no command/namespace is supplied (check this [webpack-cli example](https://carloscortonc.github.io/cli-er/?cmd=webpack)).
 
@@ -222,23 +224,23 @@ The library also checks `process.stdout.columns` to format the help and line-bre
 _**TIP**: any `DefinitionElement` can be hidden from the generated help by using `hidden:true` on its definition._
 
 > **Note**
-> help-generation option is auto-included by default. This can be configured via [`CliOptions.help`](/docs/cli-options.md#helpautoinclude)
+> help-generation option is auto-included by default. This can be configured via [`CliOptions.help`](/reference/cli-options#helpautoinclude)
 
 ## version()
 
 Prints the formatted version of the current cli application: finds the package.json for the current application, and prints its name and version.
 
 > **Note**
-> version-generation option is auto-included by default. This can be configured via [`CliOptions.version`](/docs/cli-options.md#versionautoinclude)
+> version-generation option is auto-included by default. This can be configured via [`CliOptions.version`](/reference/cli-options#versionautoinclude)
 
 
 ## completions()
 
-Generates and outputs bash-completion script contents. This can instead be included as a command and be managed by `Cli.run`, check: [`bash completion`](/docs/features.md#bash-completion)
+Generates and outputs bash-completion script contents. This can instead be included as a command and be managed by `Cli.run`, check: [`bash completion`](/guide/features#bash-completion)
 
 ## configContent()
 
-Find and parse configuration files defined via [`CliOptions.configFile`](/docs/cli-options.md#configfile).  
+Find and parse configuration files defined via [`CliOptions.configFile`](/reference/cli-options#configfile).  
 In several cases, `undefined` may be returned:
 - No `CliOptions.configFile` configured
 - No file is found from the provided list (`CliOptions.configFile.names`)
@@ -248,5 +250,5 @@ Otherwise, the parsed content is returned (hopefully, an object containing globa
 
 ## envContent()
 
-Extract options from environment variables matching [`CliOptions.envPrefix`](/docs/cli-options.md#envprefix).  
+Extract options from environment variables matching [`CliOptions.envPrefix`](/reference/cli-options#envprefix).  
 Will return undefined if no prefix value is configured.

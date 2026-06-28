@@ -15,15 +15,17 @@
 </p>
 
 <h4 align="center">
-  <a href="#features">Features</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started">Features</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="#installation">Installation</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started#installation">Installation</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="#usage">Usage</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started#basic-usage">Usage</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="./docs/definition.md">Definition</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/guide/definition">Definition</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="./docs/cli-options.md">Options</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/reference/cli-options">Options</a>
+  <span>&nbsp;·&nbsp;</span>
+  <a href="https://carloscortonc.github.io/cli-er/docs/">Docs</a>
   <span>&nbsp;·&nbsp;</span>
   <a href="https://carloscortonc.github.io/cli-er/">Live demo</a>
 </h4>
@@ -46,18 +48,18 @@ node cli.js [namespace(s)|command] [OPTIONS]
 
 
 ## Features
-- [**Help generation**](./docs/features.md#help-generation): help is generated for all commands and options.
-- [**Routing**](./docs/features.md#routing): routes are generated where command handlers are expected to be found.
-- [**Configuration file support**](./docs/features.md#configuration-file-support): define the list of configuration file-names for your cli, and `cli-er` will try to find (from `process.cwd()` up), read its contents, and use it inside [`Cli.run`](./docs/api.md#runargs).
-- [**Lifecycle hooks**](./docs/features.md#lifecycle-hooks): execute code on lifecycle events when using `Cli.run()` (beforeParse, afterParse, beforeExecute, afterExecute).
-- [**Plugins**](./docs/features.md#plugins): define reusable logic with a set of hooks.
-- [**Environment-variable prefix support**](/docs/features.md#environment-variable-prefix-support): define a prefix so all environment variables matching that will be passed into [`Cli.run`](./docs/api.md#runargs).
-- [**Reading from stdin**](/docs/definition.md#reading-from-stdin): configure options whose value can be provided from stdin.
-- [**Intl support**](./docs/features.md#intl-support): support for internationalized messages.
-- [**Bash completion**](./docs/features.md#bash-completion): a command is created to generate the `bash-completions` script for the cli.
-- [**Debug logger**](./docs/features.md#debug-logger): static debug-logging utility.
-- [**Debug mode**](./docs/features.md#debug-mode): validate the definition and options, especially when upgrading to a new version.
-- [**Typescript support**](./docs/features.md#typescript-support): build the cli with typescript.
+- [**Help generation**](https://carloscortonc.github.io/cli-er/docs/guide/features#help-generation): help is generated for all commands and options.
+- [**Routing**](https://carloscortonc.github.io/cli-er/docs/guide/features#routing): routes are generated where command handlers are expected to be found.
+- [**Configuration file support**](https://carloscortonc.github.io/cli-er/docs/guide/features#configuration-file-support): define the list of configuration file-names for your cli, and `cli-er` will try to find (from `process.cwd()` up), read its contents, and use it inside [`Cli.run`](https://carloscortonc.github.io/cli-er/docs/reference/api#runargs).
+- [**Lifecycle hooks**](https://carloscortonc.github.io/cli-er/docs/guide/features#lifecycle-hooks): execute code on lifecycle events when using `Cli.run()` (beforeParse, afterParse, beforeExecute, afterExecute).
+- [**Plugins**](https://carloscortonc.github.io/cli-er/docs/guide/features#plugins): define reusable logic with a set of hooks.
+- [**Environment-variable prefix support**](https://carloscortonc.github.io/cli-er/docs/guide/features#environment-variable-prefix-support): define a prefix so all environment variables matching that will be passed into [`Cli.run`](https://carloscortonc.github.io/cli-er/docs/reference/api#runargs).
+- [**Reading from stdin**](https://carloscortonc.github.io/cli-er/docs/guide/definition#reading-from-stdin): configure options whose value can be provided from stdin.
+- [**Intl support**](https://carloscortonc.github.io/cli-er/docs/guide/features#intl-support): support for internationalized messages.
+- [**Bash completion**](https://carloscortonc.github.io/cli-er/docs/guide/features#bash-completion): a command is created to generate the `bash-completions` script for the cli.
+- [**Debug logger**](https://carloscortonc.github.io/cli-er/docs/guide/features#debug-logger): static debug-logging utility.
+- [**Debug mode**](https://carloscortonc.github.io/cli-er/docs/guide/features#debug-mode): validate the definition and options, especially when upgrading to a new version.
+- [**Typescript support**](https://carloscortonc.github.io/cli-er/docs/guide/features#typescript-support): build the cli with typescript.
 
 
 #### Example
@@ -126,15 +128,15 @@ npm install cli-er
 
 ## Usage
 
-`cli-er` default-exports a class, which takes in a [definition object](./docs/definition.md) and an optional argument [CliOptions](./docs/cli-options.md). The available methods are the following:
+`cli-er` default-exports a class, which takes in a [definition object](https://carloscortonc.github.io/cli-er/docs/guide/definition) and an optional argument [CliOptions](https://carloscortonc.github.io/cli-er/docs/reference/cli-options). The available methods are the following:
 
-- [**parse(args)**](./docs/api.md#parseargs): parse the given arguments and return an object containing the options, errors and calculated location.
-- [**run(args?)**](./docs/api.md#runargs): parse the given arguments and execute the corresponding script found in the calculated location. Integrates help and version generation.
-- [**help(location?)**](./docs/api.md#helplocation): generate help based on the definition. Can be scoped to a namespace/command.
-- [**version()**](./docs/api.md#version): generate a formatted version of the application's version.
-- [**completions()**](./docs/api.md#completions): output bash-completion script contents.
-- [**configContent()**](./docs/api.md#configcontent): find the contents of configuration files (e.g. `.prettierrc.json`).
-- [**envContent()**](./docs/api.md#envcontent): find the contents of configuration files (e.g. `.prettierrc.json`).
+- [**parse(args)**](https://carloscortonc.github.io/cli-er/docs/reference/api#parseargs): parse the given arguments and return an object containing the options, errors and calculated location.
+- [**run(args?)**](https://carloscortonc.github.io/cli-er/docs/reference/api#runargs): parse the given arguments and execute the corresponding script found in the calculated location. Integrates help and version generation.
+- [**help(location?)**](https://carloscortonc.github.io/cli-er/docs/reference/api#helplocation): generate help based on the definition. Can be scoped to a namespace/command.
+- [**version()**](https://carloscortonc.github.io/cli-er/docs/reference/api#version): generate a formatted version of the application's version.
+- [**completions()**](https://carloscortonc.github.io/cli-er/docs/reference/api#completions): output bash-completion script contents.
+- [**configContent()**](https://carloscortonc.github.io/cli-er/docs/reference/api#configcontent): find the contents of configuration files (e.g. `.prettierrc.json`).
+- [**envContent()**](https://carloscortonc.github.io/cli-er/docs/reference/api#envcontent): find the contents of configuration files (e.g. `.prettierrc.json`).
 
 #### Glossary
 - **Namespace**: is used to group commands, but cannot be invoked. Can contain other namespaces, commands or options.
