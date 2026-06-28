@@ -79,7 +79,7 @@ If a cli application does not have registered a root command (logic executed wit
 
 You also use `CliOptions.rootCommand` to define a default command to execute, when no command/namespace is supplied (check this [webpack-cli example](https://carloscortonc.github.io/cli-er/?cmd=webpack)).
 
-### [Typescript] Typing command's options
+### Typing command's options
 When defining a command handler inside a script file, in order to have typed options the following steps are needed:
 - Define the command using `Cli.defineCommand`:
 ```typescript
@@ -107,7 +107,7 @@ function handler(options: Cli.CommandOptions<typeof command>){
 }
 ```
 
-### [Typescript] Typing namespace's options
+### Typing namespace's options
 When defining a namespace handler inside a script file, in order to have typed options the following steps are needed:
 - Define the namespace using `Cli.defineNamespace`:
 ```typescript

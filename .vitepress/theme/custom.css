@@ -192,3 +192,13 @@
   border: 1px solid var(--vp-c-divider);
   padding: 0.5em 0.85em;
 }
+
+/* Right ToC sidebar: render nested only when parent selected */
+/* .VPDocOutlineItem.root ul.VPDocOutlineItem.nested {
+  display: none;
+}
+
+.VPDocOutlineItem.root a.outline-link.active + ul.VPDocOutlineItem.nested,
+.VPDocOutlineItem.root a.outline-link:has(+ ul a.outline-link.active) + ul.VPDocOutlineItem.nested {
+  display: block;
+} */
