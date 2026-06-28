@@ -51,6 +51,10 @@ export default defineConfig({
       },
     ],
 
+    outline: {
+      level: [2, 3],
+    },
+
     socialLinks: [{ icon: "github", link: "https://github.com/carloscortonc/cli-er" }],
 
     editLink: {

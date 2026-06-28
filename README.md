@@ -15,19 +15,19 @@
 </p>
 
 <h4 align="center">
-  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started">Features</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started" target="_blank">Features</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started#installation">Installation</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started#installation" target="_blank">Installation</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started#basic-usage">Usage</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/guide/getting-started#basic-usage" target="_blank">Usage</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="https://carloscortonc.github.io/cli-er/docs/guide/definition">Definition</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/guide/definition" target="_blank">Definition</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="https://carloscortonc.github.io/cli-er/docs/reference/cli-options">Options</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/reference/cli-options" target="_blank">Options</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="https://carloscortonc.github.io/cli-er/docs/">Docs</a>
+  <a href="https://carloscortonc.github.io/cli-er/docs/" target="_blank">Docs</a>
   <span>&nbsp;·&nbsp;</span>
-  <a href="https://carloscortonc.github.io/cli-er/">Live demo</a>
+  <a href="https://carloscortonc.github.io/cli-er/" target="_blank">Live demo</a>
 </h4>
 
 _cli.js_:

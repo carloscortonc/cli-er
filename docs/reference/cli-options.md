@@ -1,3 +1,6 @@
+---
+outline: [4]
+---
 # CLI Options
 
 ### CliOptions
