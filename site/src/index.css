@@ -64,6 +64,11 @@ body.light {
   mask-size: contain;
   background: var(--fg-color);
 }
+.icon.docs {
+  mask: url("/assets/docs.svg") no-repeat center;
+  mask-size: contain;
+  background: var(--fg-color);
+}
 .icon.theme {
   mask: url("/assets/theme.svg") no-repeat center;
   mask-size: contain;

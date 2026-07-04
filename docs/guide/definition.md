@@ -1,3 +1,5 @@
+# Definition
+
 The definition object describing the Cli.
 
 The general form is:
@@ -98,7 +100,7 @@ new Cli({ files: { positional: true }, destination: { positional: -1 } }, { cliN
 // => { options: { files: ["file-1.txt", "file-2.txt"], destination: "dest" }}
 ```
 
-**Example**: [jest-cli](/examples/jest-cli/)
+**Example**: [jest-cli](https://github.com/carloscortonc/cli-er/tree/develop/examples/jest-cli)
 
 ### Negated aliases
 For options with `type:boolean`, negated aliases can be included specifying `negatable:true`. These negated aliases are generated from original aliases, prefixing `no` and `no-`.
@@ -152,4 +154,4 @@ type ValueParserOutput = {
 }
 ```
 
-**Example**: [custom-option-parser](/examples/custom-option-parser)
+**Example**: [custom-option-parser](https://github.com/carloscortonc/cli-er/tree/develop/examples/custom-option-parser)

@@ -13,6 +13,9 @@ new Cli(
   {
     rootCommand: false,
     hooks: {
+      beforeParse: (ctx) => {
+        Cli.logger.log(`\x1b[1;34m[auth-cli] info args=[${ctx.args.join(",")}]\x1b[0m\n`);
+      },
       afterParse: (ctx) => {
         Cli.logger.log(`\x1b[1;34m[auth-cli] info loc=[${ctx.location.join(",")}]\x1b[0m\n`);
       },

@@ -12,6 +12,7 @@ import {
 } from "../src/cli-utils";
 import Cli from "../src";
 import * as utils from "../src/utils";
+import * as debuglogger from "../src/debug-logger";
 import _definition from "./data/definition.json";
 //@ts-ignore
 import gcmd from "./data/gcmd";
@@ -65,6 +66,7 @@ describe("completeDefinition", () => {
     cliVersion: "",
     cliDescription: "",
     hooks: {},
+    plugins: [],
     debug: false,
     completion: {
       enabled: false,
@@ -896,27 +898,27 @@ describe("parseArguments", () => {
 
 describe("executeScript", () => {
   const cliOptions = new Cli({}).options;
-  const debugSpy = jest.spyOn(utils, "debug").mockImplementation();
+  const debugSpy = jest.spyOn(debuglogger, "clierdebug").mockImplementation();
   const exitlogger = jest.spyOn(utils, "logErrorAndExit").mockImplementation();
   it("Logs error if no baseLocation configured", () => {
     executeScript({ location: [], options: {} as any }, { ...cliOptions, baseLocation: "" });
     expect(exitlogger).toHaveBeenCalledWith("There was a problem finding base script location");
   });
   it("[DEBUG-OFF] No valid script found: exits", () => {
-    process.env[utils.CLIER_DEBUG_KEY] = "";
+    process.env[debuglogger.CLIER_DEBUG_KEY] = "";
     executeScript({ location: ["non-existent"], options: {} as any }, { ...cliOptions, debug: false });
     expect(exitlogger).toHaveBeenCalled();
   });
   it("[DEBUG-ON] No valid script found: logs error + prints paths", () => {
-    process.env[utils.CLIER_DEBUG_KEY] = "1";
+    process.env[debuglogger.CLIER_DEBUG_KEY] = "1";
     executeScript({ location: ["non-existent"], options: {} as any }, { ...cliOptions, debug: true });
     expect(debugSpy).toHaveBeenCalledWith(
-      "WARN",
       expect.stringContaining("There was a problem finding the script to run. Considered paths were:\n"),
+      "WARN",
     );
     expect(exitlogger).toHaveBeenCalled();
     //Restore debug value
-    process.env[utils.CLIER_DEBUG_KEY] = "";
+    process.env[debuglogger.CLIER_DEBUG_KEY] = "";
   });
   it("Generates all valid paths with the corresponding named/default import - namespace", () => {
     const c = new Cli(definition, { baseLocation: "/" });

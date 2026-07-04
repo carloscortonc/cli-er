@@ -1,7 +1,8 @@
 import path from "path";
 import fs from "fs";
 import url from "url";
-import { addLineBreaks, clone, ColumnFormatter, debug, DEBUG_TYPE, deprecationWarning, logErrorAndExit } from "./utils";
+import { addLineBreaks, clone, ColumnFormatter, deprecationWarning, logErrorAndExit } from "./utils";
+import { clierdebug, DEBUG_TYPE } from "./debug-logger";
 import { Kind, ParsingOutput, Definition, Type, CliOptions, Option, Namespace, Command } from "./types";
 import parseOptionValue from "./cli-option-parser";
 import { validatePositional } from "./definition-validations";
@@ -155,10 +156,10 @@ function completeElementDefinition(
       completeElementDefinition(negatedName, definition, deContext);
     } else if (element.type === Type.BOOLEAN && element.negatable === true) {
       element.negatable = false;
-      debug(
-        DEBUG_TYPE.WARN,
+      clierdebug(
         `Boolean option <${name}> will be included without negated aliases.` +
           " To change this, provide long aliases without dashes",
+        DEBUG_TYPE.WARN,
       );
     }
   }
@@ -443,7 +444,10 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
 
   const finalLocation = location.length === 1 ? [cliOptions.commandsPath].concat(location) : location;
 
-  debug(DEBUG_TYPE.TRACE, `[run:executeScript] Parameters: ${JSON.stringify({ location: finalLocation, options })}`);
+  clierdebug(
+    `[run:executeScript] Parameters: ${JSON.stringify({ location: finalLocation, options })}`,
+    DEBUG_TYPE.TRACE,
+  );
 
   const scriptPaths = [".", ...finalLocation]
     .reduce((acc: { path: string; default: boolean }[], _, i: number, list) => {
@@ -467,22 +471,22 @@ export async function executeScript({ location, options }: Omit<ParsingOutput, "
     }, [])
     .map((p) => ({ ...p, path: path.join(base, p.path.concat(entryFile.ext)) }));
 
-  debug(DEBUG_TYPE.TRACE, `[run:executeScript] List of candidates: ${JSON.stringify(scriptPaths)}`);
+  clierdebug(`[run:executeScript] List of candidates: ${JSON.stringify(scriptPaths)}`, DEBUG_TYPE.TRACE);
 
   const validScriptPath = scriptPaths.find((p) => fs.existsSync(p.path));
 
   if (!validScriptPath) {
-    debug(
-      DEBUG_TYPE.WARN,
+    clierdebug(
       scriptPaths.reduce(
         (acc, sp) => "".concat(acc, "  ", sp.path, "\n"),
         "There was a problem finding the script to run. Considered paths were:\n",
       ),
+      DEBUG_TYPE.WARN,
     );
     return logErrorAndExit();
   }
 
-  debug(DEBUG_TYPE.TRACE, `[run:executeScript] Selected candidate: ${JSON.stringify(validScriptPath)}`);
+  clierdebug(`[run:executeScript] Selected candidate: ${JSON.stringify(validScriptPath)}`, DEBUG_TYPE.TRACE);
 
   try {
     let m;

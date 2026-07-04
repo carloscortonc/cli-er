@@ -1,7 +1,7 @@
 {
   "name": "cli-er",
   "version": "0.20.0",
-  "description": "Tool for building advanced cli applications",
+  "description": "Tool for building advanced type-safe cli applications",
   "repository": "github:carloscortonc/cli-er",
   "author": "Carlos Cortón Cobas <carloscortoncobas98@gmail.com>",
   "homepage": "https://github.com/carloscortonc/cli-er#readme",
@@ -26,7 +26,10 @@
     "smoke-test": "cd test/smoke && node cjs/index.cjs && node mjs/index.mjs && ts-node-transpile-only ts/index.ts",
     "types-test": "tstyche",
     "test": "npx tsc && jest --silent && npm run smoke-test",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
   },
   "devDependencies": {
     "@saithodev/semantic-release-backmerge": "^4.0.1",
@@ -44,7 +47,8 @@
     "ts-node": "^10.9.1",
     "tstyche": "4.3.0",
     "tsup": "8.5.0",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vitepress": "^1.6.4"
   },
   "publishConfig": {
     "access": "public",

@@ -1,0 +1,57 @@
+name: Build Docs
+
+on:
+  workflow_call:
+    inputs:
+      site-base:
+        description: Base URL for the Vite site build
+        type: string
+        default: /cli-er/
+      docs-base:
+        description: Base URL for the VitePress docs build
+        type: string
+        default: /cli-er/docs/
+    outputs:
+      artifact-name:
+        description: Name of the uploaded build artifact
+        value: ${{ jobs.build.outputs.artifact-name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.artifact-name.outputs.value }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install site dependencies
+        working-directory: site
+        run: npm ci
+
+      - name: Bundle site + docs
+        working-directory: site
+        run: npm run bundle:all
+        env:
+          SITE_BASE: ${{ inputs.site-base }}
+          DOCS_BASE: ${{ inputs.docs-base }}
+
+      - name: Set artifact name
+        id: artifact-name
+        run: echo "value=docs-site-${{ github.run_id }}-${{ github.run_attempt }}" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact-name.outputs.value }}
+          path: site/dist
+          if-no-files-found: error

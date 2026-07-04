@@ -2,3 +2,6 @@ node_modules
 dist
 .DS_Store
 
+# VitePress
+docs-dist
+.vitepress/cache

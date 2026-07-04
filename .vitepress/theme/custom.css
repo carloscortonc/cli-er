@@ -1,0 +1,204 @@
+/**
+ * Custom theme matching the cli-er Playground palette.
+ *
+ * Playground tokens:
+ *   dark  — bg #212221  fg #c2c2c2
+ *   light — bg #eaeaea  fg #474747
+ *   accent (cyan from terminal output) — #51c9c9
+ *   font  — monospace
+ */
+
+/* ─── Font ─────────────────────────────────────────────────────────────── */
+:root {
+  --vp-font-family-base: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --vp-font-family-mono: var(--vp-font-family-base);
+}
+
+/* ─── Brand / accent colours — dark mode default (bright cyan) ─────────── */
+:root {
+  --vp-c-brand-1: #51c9c9;
+  --vp-c-brand-2: #3fb3b3;
+  --vp-c-brand-3: #2d9999;
+  --vp-c-brand-soft: rgba(81, 201, 201, 0.14);
+}
+
+/* ─── Dark mode (default in the playground) ────────────────────────────── */
+.dark {
+  /* backgrounds */
+  --vp-c-bg: #212221;
+  --vp-c-bg-soft: #2a2b2a;
+  --vp-c-bg-mute: #303230;
+  --vp-c-bg-elv: #2a2b2a;
+  --vp-c-bg-alt: #1c1d1c;
+
+  /* text */
+  --vp-c-text-1: #c2c2c2;
+  --vp-c-text-2: #9a9a9a;
+  --vp-c-text-3: #6e6e6e;
+
+  /* borders */
+  --vp-c-divider: rgba(194, 194, 194, 0.1);
+  --vp-c-border: rgba(194, 194, 194, 0.14);
+  --vp-c-gutter: #1c1d1c;
+
+  /* nav / sidebar */
+  --vp-nav-bg-color: #212221;
+  --vp-sidebar-bg-color: #1c1d1c;
+
+  /* code blocks */
+  --vp-code-block-bg: #1c1d1c;
+  --vp-code-copy-code-bg: #2a2b2a;
+  --vp-code-copy-code-hover-bg: #303230;
+
+  /* tip / info / warning / danger admonitions */
+  --vp-custom-block-tip-bg: rgba(81, 201, 201, 0.08);
+  --vp-custom-block-tip-border: rgba(81, 201, 201, 0.3);
+  --vp-custom-block-tip-text: #c2c2c2;
+  --vp-custom-block-tip-code-bg: rgba(81, 201, 201, 0.08);
+}
+
+/* ─── Light mode ───────────────────────────────────────────────────────── */
+:root:not(.dark) {
+  /* brand — darkened teal for sufficient contrast on #eaeaea (WCAG AA) */
+  --vp-c-brand-1: #1a8585;
+  --vp-c-brand-2: #156e6e;
+  --vp-c-brand-3: #0f5757;
+  --vp-c-brand-soft: rgba(26, 133, 133, 0.12);
+
+  /* backgrounds */
+  --vp-c-bg: #eaeaea;
+  --vp-c-bg-soft: #e0e0e0;
+  --vp-c-bg-mute: #d6d6d6;
+  --vp-c-bg-elv: #e0e0e0;
+  --vp-c-bg-alt: #f0f0f0;
+
+  /* text */
+  --vp-c-text-1: #474747;
+  --vp-c-text-2: #606060;
+  --vp-c-text-3: #848484;
+
+  /* borders */
+  --vp-c-divider: rgba(71, 71, 71, 0.12);
+  --vp-c-border: rgba(71, 71, 71, 0.18);
+  --vp-c-gutter: #f0f0f0;
+
+  /* nav / sidebar */
+  --vp-nav-bg-color: #eaeaea;
+  --vp-sidebar-bg-color: #e4e4e4;
+
+  /* code blocks */
+  --vp-code-block-bg: #d8d8d8;
+  --vp-code-copy-code-bg: #e0e0e0;
+  --vp-code-copy-code-hover-bg: #d6d6d6;
+
+  /* tip admonitions */
+  --vp-custom-block-tip-bg: rgba(81, 201, 201, 0.1);
+  --vp-custom-block-tip-border: rgba(45, 153, 153, 0.35);
+  --vp-custom-block-tip-text: #474747;
+  --vp-custom-block-tip-code-bg: rgba(81, 201, 201, 0.1);
+}
+
+/* ─── Nav ──────────────────────────────────────────────────────────────── */
+.VPNav {
+  border-bottom: 1px solid var(--vp-c-divider);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: transparent;
+}
+
+/* "Playground" nav item stands out */
+.VPNavBarMenuLink[href*="carloscortonc.github.io"] {
+  color: var(--vp-c-brand-1) !important;
+  font-weight: 600;
+}
+
+/* ─── Sidebar ──────────────────────────────────────────────────────────── */
+.VPSidebar {
+  border-right: 1px solid var(--vp-c-divider) !important;
+}
+
+/* ─── Home hero ────────────────────────────────────────────────────────── */
+
+/* ─── Feature cards ────────────────────────────────────────────────────── */
+.VPFeature {
+  border: 1px solid var(--vp-c-border) !important;
+  background: var(--vp-c-bg-soft) !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.VPFeature:hover {
+  border-color: var(--vp-c-brand-1) !important;
+  box-shadow: 0 0 0 1px var(--vp-c-brand-soft);
+}
+
+/* ─── Code blocks ──────────────────────────────────────────────────────── */
+.vp-code-group .tabs {
+  background: var(--vp-c-bg-mute);
+}
+
+/* inline code — color follows brand so it inherits the mode-appropriate value */
+:not(pre) > code {
+  background: var(--vp-c-bg-mute) !important;
+  color: var(--vp-c-brand-1) !important;
+  border-radius: 3px;
+  padding: 0.15em 0.35em;
+  font-size: 0.88em;
+}
+
+/* active sidebar link underline / indicator */
+.VPSidebarItem.is-active > .item .link,
+.VPSidebarItem.is-active > .item .text {
+  color: var(--vp-c-brand-1) !important;
+}
+
+/* ─── Scrollbar (match playground style) ───────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(194, 194, 194, 0.12) transparent;
+}
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(194, 194, 194, 0.12);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(194, 194, 194, 0.25);
+}
+
+/* ─── "Edit this page" / last-updated footer line ─────────────────────── */
+.VPDocFooter {
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+/* ─── Table styling ────────────────────────────────────────────────────── */
+.vp-doc table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+}
+.vp-doc table thead tr {
+  background: var(--vp-c-bg-mute);
+}
+.vp-doc table tr:nth-child(even) {
+  background: var(--vp-c-bg-soft);
+}
+.vp-doc table th,
+.vp-doc table td {
+  border: 1px solid var(--vp-c-divider);
+  padding: 0.5em 0.85em;
+}
+
+/* Right ToC sidebar: render nested only when parent selected */
+/* .VPDocOutlineItem.root ul.VPDocOutlineItem.nested {
+  display: none;
+}
+
+.VPDocOutlineItem.root a.outline-link.active + ul.VPDocOutlineItem.nested,
+.VPDocOutlineItem.root a.outline-link:has(+ ul a.outline-link.active) + ul.VPDocOutlineItem.nested {
+  display: block;
+} */

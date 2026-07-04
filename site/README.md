@@ -4,7 +4,7 @@ To run the project:
 
 ```sh
 # bundle the script
-$ npm run bundle
+$ npm run bundle:site
 
 # start the application (replace "bunx" with "npx" if not installed )
 $ npm run start
