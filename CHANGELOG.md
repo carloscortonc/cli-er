@@ -1,3 +1,15 @@
+# [0.21.0](https://github.com/carloscortonc/cli-er/compare/v0.20.0...v0.21.0) (2026-07-04)
+
+
+### Bug Fixes
+
+* findFile does not work on windows ([04d1746](https://github.com/carloscortonc/cli-er/commit/04d17464a25b6148620c75106650f26bc7ac9803))
+
+
+### Features
+
+* improve debug logging  ([#149](https://github.com/carloscortonc/cli-er/issues/149)) ([2bd3c2f](https://github.com/carloscortonc/cli-er/commit/2bd3c2f7f2a8480c4d06bcf71630cb5da6b97609))
+
 # [0.20.0](https://github.com/carloscortonc/cli-er/compare/v0.19.1...v0.20.0) (2026-06-13)
 
 
