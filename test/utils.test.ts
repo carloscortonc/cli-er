@@ -10,7 +10,15 @@ jest.mock("fs", () => ({
 jest.mock("path", () => ({
   esModule: true,
   ...jest.requireActual("path"),
-  resolve: (...parts: string[]) => parts.join(path.sep),
+  join: (...parts: string[]) => parts.join(path.sep),
+  // Simulate actual Windows path.resolve behavior: a bare drive letter ("C:") is treated as
+  // relative to the CWD on that drive, NOT as the root. path.join does not have this problem.
+  resolve: (...parts: string[]) => {
+    if (path.sep === "\\" && /^[A-Za-z]:$/.test(parts[0])) {
+      return [parts[0] + "\\cwd", ...parts.slice(1)].join(path.sep);
+    }
+    return parts.join(path.sep);
+  },
   sep: "/",
 }));
 
