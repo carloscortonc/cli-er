@@ -1,5 +1,6 @@
 import Cli from "../src/index";
 import fs from "fs";
+import path from "path";
 import * as cliutils from "../src/cli-utils";
 import * as utils from "../src/utils";
 import _definition from "./data/definition.json";
@@ -173,10 +174,13 @@ describe("Cli.constructor", () => {
   it("CliOptions - transform baseLocation into absolute path", () => {
     const options = { baseLocation: "base-location" };
     const c = new Cli({}, options);
-    expect(c.options.baseLocation).toBe("/require.main.filename/".concat(options.baseLocation));
+    expect(c.options.baseLocation).toBe(path.join("/require.main.filename", options.baseLocation));
   });
   it("CliOptions - transform commandsPath into a relative path to baseLocation", () => {
-    const options = { baseLocation: "base-location", commandsPath: "/require.main.filename/base-location/cmds-path" };
+    const options = {
+      baseLocation: "base-location",
+      commandsPath: path.join("/require.main.filename", "base-location", "cmds-path"),
+    };
     const c = new Cli({}, options);
     expect(c.options.commandsPath).toBe("cmds-path");
   });
@@ -184,7 +188,7 @@ describe("Cli.constructor", () => {
     const dpwMock = jest.spyOn(utils, "deprecationWarning").mockImplementation((_: any) => {});
     const options = { baseLocation: "base-location", baseScriptLocation: "base-script-location" };
     const c = new Cli({}, options);
-    expect(c.options.baseLocation).toBe("/require.main.filename/".concat(options.baseScriptLocation));
+    expect(c.options.baseLocation).toBe(path.join("/require.main.filename", options.baseScriptLocation));
     expect(dpwMock).toHaveBeenCalledWith({
       property: "CliOptions.baseScriptLocation",
       alternative: "CliOptions.baseLocation",

@@ -129,7 +129,7 @@ export function findFile(start: string, names: string[]) {
   const parts = start?.split(new RegExp(`(?!^)${path.sep == "\\" ? path.sep.repeat(2) : path.sep}`)) || [];
   for (let len = parts.length; len > 0; len--) {
     for (const name of names) {
-      const candidate = path.resolve(...parts.slice(0, len), name);
+      const candidate = path.join(...parts.slice(0, len), name);
       if (fs.existsSync(candidate)) {
         return candidate;
       }
