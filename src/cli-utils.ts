@@ -49,7 +49,7 @@ function getAliases(element: DefinitionElement) {
     return [element.key!];
   }
   if (element.kind === Kind.COMMAND) {
-    return [element.key!].concat(element.rawAliases);
+    return element.rawAliases;
   }
   return element.rawAliases.map((alias) => {
     if (!alias.startsWith("-")) {

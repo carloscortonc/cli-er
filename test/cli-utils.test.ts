@@ -99,7 +99,7 @@ describe("completeDefinition", () => {
     const completedDefinition = completeDefinition(cmdDef, cliOptions);
     expect(completedDefinition).toMatchObject({
       cmd: {
-        aliases: ["cmd", "cmd2"],
+        aliases: ["cmd2"],
       },
     });
   });
