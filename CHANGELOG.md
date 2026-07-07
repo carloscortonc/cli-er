@@ -1,3 +1,10 @@
+## [0.21.1](https://github.com/carloscortonc/cli-er/compare/v0.21.0...v0.21.1) (2026-07-07)
+
+
+### Bug Fixes
+
+* allow overwriting command aliases ([#157](https://github.com/carloscortonc/cli-er/issues/157)) ([db2c45c](https://github.com/carloscortonc/cli-er/commit/db2c45c70cc05aa7fc380a2f4db8170c7944f7e2))
+
 # [0.21.0](https://github.com/carloscortonc/cli-er/compare/v0.20.0...v0.21.0) (2026-07-04)
 
 
