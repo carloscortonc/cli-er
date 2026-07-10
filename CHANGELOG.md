@@ -1,3 +1,10 @@
+## [0.21.2](https://github.com/carloscortonc/cli-er/compare/v0.21.1...v0.21.2) (2026-07-10)
+
+
+### Bug Fixes
+
+* command aliases not rendered in help ([#160](https://github.com/carloscortonc/cli-er/issues/160)) ([e6bebf3](https://github.com/carloscortonc/cli-er/commit/e6bebf3c1c37692e46b7a7dc9fb353164c8f5c75))
+
 ## [0.21.1](https://github.com/carloscortonc/cli-er/compare/v0.21.0...v0.21.1) (2026-07-07)
 
 
