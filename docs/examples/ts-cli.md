@@ -7,4 +7,4 @@ A fully typed TypeScript CLI. Showcases:
 - Using `Cli.defineCommand` and `Cli.CommandOptions<T>` for typed handler options
 - `tsconfig.json` setup to compile the project
 
-See also [Typed command options](/reference/api#typescript-typing-commands-options) in the API reference.
+See also [Typed command options](/reference/api#typing-commands-options) in the API reference.
