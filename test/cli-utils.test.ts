@@ -453,7 +453,11 @@ describe("parseArguments", () => {
       nms: {
         kind: "namespace",
         default: "a",
-        options: { a: { kind: "command" }, b: { kind: "command" }, c: { kind: "option", positional: 0 } },
+        options: {
+          a: { kind: "command", aliases: ["a-1", "a-alias"], options: {} },
+          b: { kind: "command" },
+          c: { kind: "option", positional: 0 },
+        },
       },
     });
     expect(
@@ -464,6 +468,15 @@ describe("parseArguments", () => {
       errors: [],
       rawLocation: ["nms"],
     });
+    // Using command alias: positional is ignored
+    expect(parseArguments({ args: ["nms", "a-alias"], definition: c.definition, cliOptions: c.options })).toStrictEqual(
+      {
+        location: ["nms", "a"],
+        options: { _: [] },
+        errors: [],
+        rawLocation: ["nms", "a"],
+      },
+    );
   });
   it("No args but rootCommand:string", () => {
     const c = new Cli(
@@ -1063,7 +1076,7 @@ Command with no options
 
 `);
   });
-  it("With location: resulting element is command with type", () => {
+  it("[deprecated] With location: resulting element is command with type", () => {
     let output = "";
     logger.mockImplementation((m: any) => !!(output += m));
     generateScopedHelp(
@@ -1165,6 +1178,52 @@ Options:
   --arg4           prev-last positional option
   --arg5           last positional option
   -h, --help       Display global help, or scoped to a namespace/command
+
+`);
+  });
+  it("Command with aliases: used in {usage} and {description}", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const { definition: def } = new Cli({
+      cmd: { kind: "command", aliases: ["cmd-alias-1", "cmd-alias-2"], description: "command-description" },
+      cmd2: { kind: "command", aliases: ["cmd2-alias-1"], description: "command-description" },
+    });
+    generateScopedHelp(def, ["cmd"], cliOptions);
+    expect(output).toStrictEqual(`
+Usage:  cli-name cmd-alias-1
+
+command-description (aliases: cmd-alias-2)
+
+Options:
+  -h, --help  Display global help, or scoped to a namespace/command
+
+`);
+    output = "";
+    generateScopedHelp(def, ["cmd2"], cliOptions);
+    expect(output).toStrictEqual(`
+Usage:  cli-name cmd2-alias-1
+
+command-description
+
+Options:
+  -h, --help  Display global help, or scoped to a namespace/command
+
+`);
+  });
+  it("Command with single aliases: used in {usage} (only)", () => {
+    let output = "";
+    logger.mockImplementation((m: any) => !!(output += m));
+    const { definition: def } = new Cli({
+      cmd: { kind: "command", aliases: ["cmd-alias-1"], description: "command-description" },
+    });
+    generateScopedHelp(def, ["cmd"], cliOptions);
+    expect(output).toStrictEqual(`
+Usage:  cli-name cmd-alias-1
+
+command-description
+
+Options:
+  -h, --help  Display global help, or scoped to a namespace/command
 
 `);
   });

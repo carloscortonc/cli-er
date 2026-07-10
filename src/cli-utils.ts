@@ -57,7 +57,7 @@ function getAliases(element: DefinitionElement) {
     }
     deprecationWarning({
       property: "Option.aliases with dashes",
-      description: "Aliases should be specified without dashes",
+      description: `Aliases should be specified without dashes (${element.key!})`,
     });
     return alias;
   });
@@ -288,7 +288,7 @@ export function parseArguments(params: {
       // In case namespace defines a default command, check if what follows is an available command or not
       const commands = Object.values(definitionRef[key].options || {})
         .filter((e) => e.kind === Kind.COMMAND)
-        .map((e) => e.key);
+        .flatMap((e) => e.aliases);
       if (defaultCmd && !commands.includes(argsToProcess[0])) {
         output.location.push(defaultCmd);
         // Jump to default command options
@@ -525,7 +525,11 @@ export function generateScopedHelp(
   const sections: { [key in HELP_SECTIONS]?: string } = {};
   if (location.length > 0) {
     if (element && [Kind.NAMESPACE, Kind.COMMAND].includes(element.kind as Kind)) {
-      sections[HELP_SECTIONS.DESCRIPTION] = element.description?.concat("\n");
+      const aliases =
+        element.aliases && element.aliases.length > 1
+          ? " ".concat(Cli.formatMessage("generate-help.aliases", { aliases: element.aliases.slice(1).join(", ") }))
+          : "";
+      sections[HELP_SECTIONS.DESCRIPTION] = element.description?.concat(aliases, "\n");
       definitionRef = element.options as Definition<DefinitionElement>;
     } else {
       // Some element in location was incorrect. Output the entire help
@@ -583,7 +587,14 @@ export function generateScopedHelp(
   };
 
   const usagePrefix = `${Cli.formatMessage("generate-help.usage")}:  ${cliOptions.cliName}`;
-  const usageCommonHeader = [usagePrefix, location.join(" ")].filter((e) => e).join(" ");
+  const usageCommonHeader = [
+    usagePrefix,
+    location.slice(0, -1).join(" "),
+    // If last location has aliases (command), include the first instead of location (element.key)
+    element?.aliases ? element.aliases[0] : location.slice(-1)[0],
+  ]
+    .filter((e) => e)
+    .join(" ");
 
   // Check whether options hint ("[OPTIONS]") should be included before or after positional-options
   const includeOptsHintBeforePositional = positionalOptions.some((p) => typeof p.index === "number" && p.index < 0);
