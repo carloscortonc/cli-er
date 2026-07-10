@@ -6,6 +6,7 @@ export const CLI_MESSAGES = {
   "execute.execution-error": "There was a problem executing the script ({path}: {error})",
   "generate-help.scope-not-found": "Unable to find the specified scope ({scope})",
   "generate-help.usage": "Usage",
+  "generate-help.aliases": "(aliases: {aliases})",
   "generate-help.has-options": "[OPTIONS]",
   "generate-help.option-default": "default: {default}",
   "generate-help.option-enum": "allowed: {enum}",
