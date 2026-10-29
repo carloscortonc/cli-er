@@ -2,9 +2,11 @@ import * as ohm from "ohm-js";
 
 export const grammar = ohm.grammar(String.raw`
   Shell {
-    Program = Item (separator Item)*
+    space := " " | "\t"
+    Program = Item (separator Item)* separator?
     Item = FunctionDef | OrStatement
-    FunctionDef = "function"? Keyword "(" ")" "{" Program "}"
+    FunctionDef = "function"? Keyword "(" ")" "{" Program "}"  -- parens
+                | "function" Keyword "{" Program "}"              -- noParens
     OrStatement = OrStatement ("||" AndStatement)*  -- or
                 | AndStatement
     AndStatement = AndStatement ("&&" PipeStatement)* -- and
@@ -38,10 +40,13 @@ export const grammar = ohm.grammar(String.raw`
 `);
 
 export const semantics = grammar.createSemantics().addOperation("ast", {
-  Program(a, _, b) {
+  Program(a, _, b, _trailingSeparator) {
     return [a.ast(), ...b.children.map((c) => c.ast())];
   },
-  FunctionDef(f, k, op, cp, ob, s, cb) {
+  FunctionDef_parens(f, k, op, cp, ob, s, cb) {
+    return { type: "function", args: [k.ast(), s.ast()] };
+  },
+  FunctionDef_noParens(f, k, ob, s, cb) {
     return { type: "function", args: [k.ast(), s.ast()] };
   },
   OrStatement_or(a, _, b) {

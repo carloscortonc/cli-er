@@ -87,15 +87,15 @@ class Bash {
         if (v === "0") return this.variables["0"] || process.env.SHELL;
         if (v == "?") return process.lastExitCode.toString();
         if (v == "$") return kernel.getpid();
-        return process.env[v] || this.variables[v]?.toString();
+        return this.variables[v] ?? process.env[v];
       }
       if (node.type === "cmd") {
         const cliSpec = CLI_COMMANDS[node.cmd];
         const args = [];
         // Process arguments
         for (const arg of node.args) {
-          let av = await this.executeAst(arg);
-          av !== undefined && args.push(av);
+          const av = await this.executeAst(arg);
+          av !== undefined && args.push(...(Array.isArray(av) ? av : [av]));
         }
         const env = { ...process.env };
         // Process environment variables
@@ -108,13 +108,21 @@ class Bash {
         // Check for function definition
         if (this.functions[node.cmd]) {
           // Provide variables ($1, $2, ...)
+          const prevArgs = Object.fromEntries(Object.entries(this.variables).filter(([key]) => /^\d+$/.test(key)));
+          for (const key of Object.keys(prevArgs)) {
+            delete this.variables[key];
+          }
           this.variables["0"] = node.cmd;
           for (let i = 0; i < args.length; i++) {
             this.variables[i + 1] = args[i];
           }
-          await this.#executeProgram(this.functions[node.cmd]);
-          for (let i = 0; i < args.length + 1; i++) {
-            delete this.variables[i];
+          try {
+            await this.#executeProgram(this.functions[node.cmd]);
+          } finally {
+            for (const key of Object.keys(this.variables).filter((key) => /^\d+$/.test(key))) {
+              delete this.variables[key];
+            }
+            Object.assign(this.variables, prevArgs);
           }
           return process.exit(process.exitCode);
         }
