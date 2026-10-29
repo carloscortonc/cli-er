@@ -70,6 +70,10 @@ class Bash {
         }
         return a;
       }
+      if (node.type === "export") {
+        const key = await this.executeAst(node.value);
+        process.env[key] = this.variables[key];
+      }
       if (node.type === "var") {
         const arg1 = node.args[1];
         // Wrap value with "quoted" node-type to reuse logic for capturing output
@@ -80,6 +84,8 @@ class Bash {
           return r;
         }
         this.variables[r[0]] = r[1];
+        // return variable name
+        return r[0];
       }
       if (node.type === "expansion") {
         const v = node.args[0];

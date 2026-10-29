@@ -4,7 +4,7 @@ export const grammar = ohm.grammar(String.raw`
   Shell {
     space := " " | "\t"
     Program = Item (separator Item)* separator?
-    Item = FunctionDef | OrStatement
+    Item = FunctionDef | Export | OrStatement 
     FunctionDef = "function"? Keyword "(" ")" "{" Program "}"  -- parens
                 | "function" Keyword "{" Program "}"              -- noParens
     OrStatement = OrStatement ("||" AndStatement)*  -- or
@@ -19,6 +19,7 @@ export const grammar = ohm.grammar(String.raw`
                 | Expr
     Expr   = (Assignment spaces)* Keyword (spaces Quoted)* -- expr
            | Assignment
+    Export = "export" (Assignment | Keyword)
     Assignment = Keyword ~space "=" ~space AssignmentValue
     AssignmentValue = "(" Quoted+ ")" -- arr
             | Quoted
@@ -66,6 +67,9 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
   },
   Expr_expr(a, _s, cmd, _s2, t) {
     return { type: "cmd", cmd: cmd.ast(), args: t.ast().flat(), env: a.ast() };
+  },
+  Export(a, v) {
+    return { type: "export", value: v.ast() };
   },
   Assignment(k, _, v) {
     return { type: "var", args: [k.ast(), v.ast()] };

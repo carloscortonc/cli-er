@@ -151,6 +151,16 @@ assertResult("test=1 echo 1", {
   args: ["1"],
   env: [{ type: "var", args: ["test", "1"] }],
 });
+// Export assignment
+assertResult("export test=1", {
+  type: "export",
+  value: { type: "var", args: ["test", "1"] },
+});
+// Export keyword
+assertResult("export test", {
+  type: "export",
+  value: "test",
+});
 // Expansion
 assertResult("echo $e", {
   type: "cmd",
