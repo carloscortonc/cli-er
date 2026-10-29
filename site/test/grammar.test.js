@@ -8,7 +8,7 @@ function assertResult(input, expectedAst) {
   try {
     ast = semantics(r).ast();
   } catch {}
-  assert.deepEqual(ast, expectedAst);
+  assert.deepEqual(ast, expectedAst == undefined || Array.isArray(expectedAst) ? expectedAst : [expectedAst]);
 }
 
 // Command
@@ -126,25 +126,40 @@ assertResult("echo $(echo 1)", {
 });
 // Assignment
 assertResult("test=1", {
-  type: "env",
+  type: "var",
   args: ["test", "1"],
 });
 // Assigment with complex expr
 assertResult("test=$(echo 1)", {
-  type: "env",
+  type: "var",
   args: ["test", { type: "cmd", cmd: "echo", args: ["1"], env: [] }],
 });
 // Assigment with quoted expr
 assertResult('test="1 $(echo 1)"', {
-  type: "env",
+  type: "var",
   args: ["test", { type: "quote", args: ["1 ", { type: "cmd", cmd: "echo", args: ["1"], env: [] }] }],
+});
+// Assigment with array
+assertResult("test=(one two)", {
+  type: "var",
+  args: ["test", { type: "array", args: ["one", "two"] }],
 });
 // Assignment within command
 assertResult("test=1 echo 1", {
   type: "cmd",
   cmd: "echo",
   args: ["1"],
-  env: [{ type: "env", args: ["test", "1"] }],
+  env: [{ type: "var", args: ["test", "1"] }],
+});
+// Export assignment
+assertResult("export test=1", {
+  type: "export",
+  value: { type: "var", args: ["test", "1"] },
+});
+// Export keyword
+assertResult("export test", {
+  type: "export",
+  value: "test",
 });
 // Expansion
 assertResult("echo $e", {
@@ -189,4 +204,30 @@ assertResult("echo 1 >> test", {
     { op: ">>", value: "test" },
     { type: "cmd", cmd: "echo", args: ["1"], env: [] },
   ],
+});
+// Multi-statement separated by commas
+assertResult("echo one; echo two", [
+  { type: "cmd", cmd: "echo", args: ["one"], env: [] },
+  { type: "cmd", cmd: "echo", args: ["two"], env: [] },
+]);
+// Multi-statement separated by newline
+assertResult("echo one\necho two", [
+  { type: "cmd", cmd: "echo", args: ["one"], env: [] },
+  { type: "cmd", cmd: "echo", args: ["two"], env: [] },
+]);
+// Function using keyword and parenthesis
+assertResult("function f() { echo hi; }", [
+  { type: "function", args: ["f", [{ type: "cmd", cmd: "echo", args: ["hi"], env: [] }]] },
+]);
+// Function without keyword
+assertResult("f() { echo hi; }", [
+  { type: "function", args: ["f", [{ type: "cmd", cmd: "echo", args: ["hi"], env: [] }]] },
+]);
+// Function without parenthesis
+assertResult("function f { echo hi; }", [
+  { type: "function", args: ["f", [{ type: "cmd", cmd: "echo", args: ["hi"], env: [] }]] },
+]);
+assertResult("items=(one two)", {
+  type: "var",
+  args: ["items", { type: "array", args: ["one", "two"] }],
 });

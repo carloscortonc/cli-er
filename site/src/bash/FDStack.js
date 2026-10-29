@@ -12,8 +12,13 @@ class FileDescriptorStack {
 
   init() {
     for (const fd in this.value) {
-      this.value[fd] = [];
       this.push(fd, new FileDescriptor("TTY"));
+    }
+  }
+
+  cleanup() {
+    for (const fd in this.value) {
+      this.pop(fd);
     }
   }
 

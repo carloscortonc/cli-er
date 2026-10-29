@@ -2,7 +2,11 @@ import * as ohm from "ohm-js";
 
 export const grammar = ohm.grammar(String.raw`
   Shell {
-    Statement = OrStatement
+    space := " " | "\t"
+    Program = Item (separator Item)* separator?
+    Item = FunctionDef | Export | OrStatement 
+    FunctionDef = "function"? Keyword "(" ")" "{" Program "}"  -- parens
+                | "function" Keyword "{" Program "}"              -- noParens
     OrStatement = OrStatement ("||" AndStatement)*  -- or
                 | AndStatement
     AndStatement = AndStatement ("&&" PipeStatement)* -- and
@@ -15,7 +19,10 @@ export const grammar = ohm.grammar(String.raw`
                 | Expr
     Expr   = (Assignment spaces)* Keyword (spaces Quoted)* -- expr
            | Assignment
-    Assignment = Keyword ~space "=" ~space Quoted
+    Export = "export" (Assignment | Keyword)
+    Assignment = Keyword ~space "=" ~space AssignmentValue
+    AssignmentValue = "(" Quoted+ ")" -- arr
+            | Quoted
     Redirect = (">" ~">" | ">>") arg
     Quoted = "\"" (InnerExpr | Expansion | QuotedText)* "\"" -- quoted
           | InnerExpr
@@ -29,10 +36,20 @@ export const grammar = ohm.grammar(String.raw`
     scaped = "\\" ("n" | "\"" | "\\" | "$")
     word = word_char+
     word_char = letter | digit | "-" | "." | "_" | ":" | "$"
+    separator = ";" | "\n"
   }
 `);
 
 export const semantics = grammar.createSemantics().addOperation("ast", {
+  Program(a, _, b, _trailingSeparator) {
+    return [a.ast(), ...b.children.map((c) => c.ast())];
+  },
+  FunctionDef_parens(f, k, op, cp, ob, s, cb) {
+    return { type: "function", args: [k.ast(), s.ast()] };
+  },
+  FunctionDef_noParens(f, k, ob, s, cb) {
+    return { type: "function", args: [k.ast(), s.ast()] };
+  },
   OrStatement_or(a, _, b) {
     return { type: "or", args: [a.ast(), ...b.ast()] };
   },
@@ -51,8 +68,14 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
   Expr_expr(a, _s, cmd, _s2, t) {
     return { type: "cmd", cmd: cmd.ast(), args: t.ast().flat(), env: a.ast() };
   },
+  Export(a, v) {
+    return { type: "export", value: v.ast() };
+  },
   Assignment(k, _, v) {
-    return { type: "env", args: [k.ast(), v.ast()] };
+    return { type: "var", args: [k.ast(), v.ast()] };
+  },
+  AssignmentValue_arr(lp, v, rp) {
+    return { type: "array", args: v.children.map((c) => c.ast()) };
   },
   // https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html#Redirections-1
   Redirect(op, v) {

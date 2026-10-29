@@ -4,7 +4,7 @@ import * as renderer from "./renderer.js";
 import * as history from "./history.js";
 import fs from "./fs.js";
 import path from "./path.js";
-import { execute, prompt } from "./bash";
+import bash, { prompt } from "./bash";
 import * as builtincmds from "./builtins";
 import kernel, { Signal } from "./kernel";
 import "./index.css";
@@ -76,7 +76,7 @@ handleKey(i, {
     }
     history.add(inputValue);
     i.value = "";
-    execute(inputValue).finally(() => {
+    bash.execute(inputValue).finally(() => {
       updatePrompt();
       renderer.flushOutput();
     });
