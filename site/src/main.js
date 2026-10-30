@@ -21,11 +21,28 @@ const blob = new Blob([blobSource], { type: "text/javascript" });
 window.cliHandlerUrl = URL.createObjectURL(blob);
 require("url").pathToFileURL = () => ({ href: cliHandlerUrl });
 
-let [i, sp, o, oa, lm, sr] = ["input", "sprompt", "output", "output-after", "theme", "size-ref"].map((id) =>
+let [i, sp, o, oa, lm, sr, s] = ["input", "sprompt", "output", "output-after", "theme", "size-ref", "shell"].map((id) =>
   document.getElementById(id),
 );
-document.addEventListener("click", () => i.focus());
-o.addEventListener("click", (e) => e.stopPropagation());
+const hasOutputSelection = () => {
+  const selection = window.getSelection();
+  return !selection?.isCollapsed && (o.contains(selection.anchorNode) || o.contains(selection.focusNode));
+};
+
+// capture shell clicks to focus input, preserving selection
+s.addEventListener("click", () => {
+  if (hasOutputSelection()) return;
+  i.focus({ preventScroll: true });
+});
+// re-focus input anytime a key is pressed
+document.addEventListener(
+  "keydown",
+  (e) => {
+    if (!hasOutputSelection() || e.ctrlKey || e.metaKey) return;
+    i.focus({ preventScroll: true });
+  },
+  true,
+);
 lm.addEventListener("click", () =>
   document.body.classList[document.body.classList.contains("light") ? "remove" : "add"]("light"),
 );
@@ -38,8 +55,14 @@ updateColumns();
 window.addEventListener("resize", updateColumns);
 
 // Initialize FS
-await fs.init({ "/users/guest/README.md": "Welcome!" }).catch(() => {});
+await fs
+  .init({
+    "/users/guest/README.md": "Welcome!",
+    "package.json": '{ "name": "cli-er", "version": "alpha-web"}',
+  })
+  .catch(() => {});
 require("fs").readFileSync = fs.readFileSync.bind(fs);
+require("fs").readFile = fs.readFile.bind(fs);
 
 // Initialize path
 path.setCwd("/");
@@ -67,7 +90,7 @@ const updatePrompt = () => {
 };
 updatePrompt();
 
-handleKey(i, {
+handleKey(document, {
   Enter: () => {
     let inputValue = i.value;
     renderer.renderInput(inputValue);
@@ -82,7 +105,7 @@ handleKey(i, {
     });
   },
   c: (e) => {
-    if (!e.ctrlKey) return;
+    if (!e.ctrlKey || hasOutputSelection()) return;
     kernel.kill(Signal.SIGINT);
     i.value = "";
     renderer.renderOutput("^C");
@@ -122,5 +145,5 @@ if (q) {
     await delay(30);
   }
   await delay(200);
-  i.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
 }

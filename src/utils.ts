@@ -154,10 +154,10 @@ export function findPackageJson(baseLocation: string) {
 }
 
 /** Find the version of this library */
-export function getClierVersion() {
+export async function getClierVersion() {
   const location = path.join(__dirname, "..", "package.json");
   try {
-    return JSON.parse(fs.readFileSync(location, "utf-8")).version;
+    return JSON.parse(await fs.readFile(location, "utf-8")).version;
   } catch {
     return undefined;
   }
