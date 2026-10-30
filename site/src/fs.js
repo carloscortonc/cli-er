@@ -1,157 +1,191 @@
-import kernel from "./kernel";
 import pathmodule from "./path.js";
 
-const root = await navigator.storage.getDirectory();
+const databaseName = "cliersh";
+const storeName = "entries";
 
 class FileSystem {
-  // Store a dedicated handle for stdin fd (stdout and stderr are sent to main thread) to be used in `readFileSync`
-  stdinHandle = null;
+  database = null;
+  stdin = "";
   // Pending write operation
   wp = Promise.resolve();
 
-  async #getDirHandle(pathOrParts, create) {
-    const parts = Array.isArray(pathOrParts) ? pathOrParts : pathOrParts.split("/").filter(Boolean);
-    let h = root;
-    for (const part of parts) {
-      h = await h.getDirectoryHandle(part, { create });
+  #path(path) {
+    return "/".concat(path.split("/").filter(Boolean).join("/")) || "/";
+  }
+
+  async #db() {
+    if (this.database) return this.database;
+    this.database = await new Promise((resolve, reject) => {
+      const request = indexedDB.open(databaseName, 1);
+      request.onupgradeneeded = () => request.result.createObjectStore(storeName, { keyPath: "path" });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    return this.database;
+  }
+
+  async #read(method, value) {
+    const database = await this.#db();
+    return new Promise((resolve, reject) => {
+      const request = database.transaction(storeName).objectStore(storeName)[method](value);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async #entries() {
+    return this.#read("getAll");
+  }
+
+  async #entry(path) {
+    return this.#read("get", this.#path(path));
+  }
+
+  async #write(method, value) {
+    const database = await this.#db();
+    return new Promise((resolve, reject) => {
+      const transaction = database.transaction(storeName, "readwrite");
+      transaction.objectStore(storeName)[method](value);
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+  }
+
+  async #put(entry) {
+    return this.#write("put", entry);
+  }
+
+  async #delete(path) {
+    return this.#write("delete", this.#path(path));
+  }
+
+  async #ensureDirectories(path) {
+    const parts = this.#path(path).split("/").filter(Boolean);
+    parts.pop();
+    for (let index = 1; index <= parts.length; index++) {
+      const directory = "/".concat(parts.slice(0, index).join("/"));
+      const entry = await this.#entry(directory);
+      if (entry?.type === "file") throw new Error(`${directory} is not a directory`);
+      if (!entry) await this.#put({ path: directory, type: "directory", metadata: { d: new Date().getTime() } });
     }
-    return h;
   }
 
-  async #getFileHandle(path, create) {
-    const parts = path.split("/").filter(Boolean);
-    const dirh = await this.#getDirHandle(parts.slice(0, parts.length - 1), create);
-    return dirh.getFileHandle(parts[parts.length - 1], { create });
+  async #directoryExists(path) {
+    const directory = this.#path(path);
+    if (directory === "/") return true;
+    if ((await this.#entry(directory))?.type === "directory") return true;
+    return (await this.#entries()).some((entry) => entry.path.startsWith(`${directory}/`));
   }
 
-  getProcessFdPath(fd) {
-    return `/proc/${kernel.getpid()}/fd/${fd}`;
+  #metadata(m) {
+    return { u: "clier", p: 3, ...m };
+  }
+
+  #enqueue(operation) {
+    const pending = this.wp.then(operation);
+    this.wp = pending.catch(() => {});
+    return pending;
+  }
+
+  async updateMetadata(path, metadata) {
+    return this.#enqueue(async () => {
+      await this.#put({ path, type: "file", metadata });
+    });
   }
 
   async writeFile(path, content, opts = {}) {
-    this.wp = this.wp.then(() => this.#writeFile(path, content, opts));
-    return this.wp;
+    return this.#enqueue(async () => {
+      const file = this.#path(path);
+      const existing = opts.concat ? await this.#entry(file) : undefined;
+      await this.#ensureDirectories(file);
+      await this.#put({
+        path: file,
+        type: "file",
+        content: `${opts.concat ? existing?.content || "" : ""}${content}`,
+        metadata: { ...existing?.metadata, d: new Date().getTime() },
+      });
+    });
   }
 
   async readFile(path) {
     await this.wp;
-    return this.#readFile(path);
+    const entry = await this.#entry(path);
+    if (entry?.type !== "file") throw new Error(`No such file: ${path}`);
+    return entry.content;
   }
 
-  // https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system#deleting_a_file_or_folder
   async deleteFile(path) {
-    await this.wp;
-    const h = await this.#getFileHandle(path);
-    return h.remove();
+    return this.#enqueue(() => this.#delete(path));
   }
 
   async createDir(path, create) {
-    const parts = path.split("/").filter(Boolean);
-    const existsParent = await this.#getDirHandle(parts.slice(0, parts.length - 1), false).catch(() => false);
-    return this.#getDirHandle(path, create || existsParent);
+    const directory = this.#path(path);
+    return this.#enqueue(async () => {
+      const parts = directory.split("/").filter(Boolean);
+      for (let index = 1; index <= parts.length; index++) {
+        const target = "/".concat(parts.slice(0, index).join("/"));
+        const entry = await this.#entry(target);
+        if (entry?.type === "file") throw new Error(`${target} is not a directory`);
+        if (entry || (await this.#directoryExists(target))) continue;
+        if (!create && index !== parts.length) throw new Error(`No such directory: ${target}`);
+        await this.#put({ path: target, type: "directory", metadata: { d: new Date().getTime() } });
+      }
+    });
   }
 
   async info(path) {
-    const target = pathmodule.basename(path);
-    const parent = pathmodule.resolve(path, "..");
-    if (parent == path) {
-      return { type: "directory", name: path };
+    const target = this.#path(path);
+    if (target === "/") return { type: "directory", name: target, metadata: {} };
+    const entry = await this.#entry(target);
+    if (entry) {
+      return {
+        type: entry.type,
+        name: pathmodule.basename(target),
+        metadata: this.#metadata(entry.metadata),
+        size: entry.type === "file" ? new TextEncoder().encode(entry.content || "").length : 0,
+      };
     }
-    const dir = await this.readDir(parent);
-    return dir.find((e) => e.name === target);
+    if (await this.#directoryExists(target)) return { type: "directory", name: pathmodule.basename(target) };
   }
 
-  async #readFile(path) {
-    const handle = await this.#getFileHandle(path);
-    return handle
-      .getFile()
-      .then((f) => f.text())
-      .then((r) => {
-        return r.slice(r.indexOf("\n") + 1);
-      });
-  }
-
-  async #writeFile(path, content, opts) {
-    let c;
-    // Check if file needs to be read (regenerating metadata)
-    if (opts.metadata || !opts.concat) {
-      const e = opts.concat ? await this.#readFile(path) : "";
-      c = `${JSON.stringify(opts.metadata || {})}\n${e}${content}`;
-    } else {
-      c = content;
-    }
-    return this.#writeRawFileContent(path, c, opts);
-  }
-
-  /** Get file metadata by reading stream until a "\n" is found */
-  async getFileMetadata(path) {
-    const reader = (await this.#getFileHandle(path).then((h) => h.getFile())).stream().getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) return buffer;
-      buffer += decoder.decode(value, { stream: true });
-      if (buffer.indexOf("\n") !== -1) break;
-    }
-    try {
-      return JSON.parse(buffer.slice(0, buffer.indexOf("\n")));
-    } catch {
-      return {};
-    }
-  }
-
-  async #writeRawFileContent(path, content, opts) {
-    const handle = await this.#getFileHandle(path, true);
-    const position = opts.concat ? (await handle.getFile()).size : undefined;
-    const writable = await handle.createWritable({ keepExistingData: opts.concat });
-    await writable.write({ type: "write", data: content, position });
-    await writable.close();
-  }
-
-  /** Compatibility method with original `fs.readFileSync`
-   * If a number is provided, treat it as file-descriptor, and read from `/proc/{PID}/fd/{fd}`
-   * We will assume the only fd requested will be 0 (used by cli-er)
-   */
   readFileSync(pathOrFd) {
-    if (typeof pathOrFd === "string") {
-      return "";
-    }
-    if (pathOrFd !== 0) {
-      return "";
-    }
-    const fileSize = this.stdinHandle.getSize();
-    const buffer = new DataView(new ArrayBuffer(fileSize));
-    this.stdinHandle.read(buffer, { at: 0 });
-    const content = new TextDecoder("utf-8").decode(new Uint8Array(buffer.buffer));
-    return content.slice(content.indexOf("\n"));
+    return pathOrFd === 0 ? this.stdin : "";
+  }
+
+  setStdin(content) {
+    this.stdin = content || "";
   }
 
   async readDir(path) {
-    const handle = await this.#getDirHandle(path);
-    const entries = [];
-    for await (const [name, value] of handle.entries()) {
-      entries.push({ name, type: value.kind });
+    await this.wp;
+    const directory = this.#path(path);
+    if (!(await this.#directoryExists(directory))) throw new Error(`No such directory: ${directory}`);
+    const prefix = directory === "/" ? "/" : `${directory}/`;
+    const result = new Map();
+    for (const entry of await this.#entries()) {
+      if (!entry.path.startsWith(prefix) || entry.path === directory) continue;
+      const [name, ...remaining] = entry.path.slice(prefix.length).split("/");
+      if (remaining.length) continue;
+      result.set(name, {
+        name,
+        type: remaining.length ? "directory" : entry.type,
+        metadata: this.#metadata(entry.metadata),
+        size: entry.type === "file" ? new TextEncoder().encode(entry.content || "").length : 0,
+      });
     }
-    return entries;
+    return [...result.values()];
   }
 
-  /** Create initial FS structure */
   async init(fileMap) {
-    // TODO change to `removeEntry()` for compatibility
-    await root.remove().catch(() => {});
-    for (const f in fileMap) {
-      await this.writeFile(f, fileMap[f]);
-    }
-  }
-
-  // Create a stdin handle for web-worker
-  async wwPrepareStdinHandle() {
-    this.stdinHandle = await this.#getFileHandle(this.getProcessFdPath(0), true).then((h) =>
-      h.createSyncAccessHandle(),
-    );
-    // Return cleanup function
-    return () => this.stdinHandle.close();
+    return this.#enqueue(async () => {
+      for (const [path, content] of Object.entries(fileMap)) {
+        const file = this.#path(path);
+        if (await this.#entry(file)) continue;
+        await this.#ensureDirectories(file);
+        await this.#put({ path: file, type: "file", content, metadata: {} });
+      }
+    });
   }
 }
 

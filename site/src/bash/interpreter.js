@@ -138,9 +138,16 @@ class Bash {
           return process.exit(-1);
         }
 
+        const stdin = kernel.getFD(0)?.type === "PIPE" ? kernel.getFD(0).buffer : "";
+
         // Handle "builtins" that need access to internals (e.g. renderer), and would not otherwise work from web-worker
         if (cliSpec.builtin) {
-          await run({ name: node.cmd, cliSpec, args });
+          fs.setStdin(stdin);
+          try {
+            await run({ name: node.cmd, cliSpec, args });
+          } finally {
+            fs.setStdin("");
+          }
           return process.exit(process.exitCode);
         }
 
@@ -148,7 +155,7 @@ class Bash {
         const p = { env, stdout: { columns: process.stdout.columns }, stdin: { isTTY: process.stdin.isTTY } };
 
         return await new Promise((resolve, reject) => {
-          execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, process: p, cliHandlerUrl }));
+          execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, process: p, cliHandlerUrl, stdin }));
 
           execWorker.onmessage = ({ data }) => {
             if (data.type === "output") {
@@ -180,13 +187,11 @@ class Bash {
 
         // Write captured value (fd=1) into fd=0 (stdin)
         FDStack.push(0, pipe);
-        await fs.writeFile(fs.getProcessFdPath(0), pipe.buffer);
 
         await this.executeAst(node.args[1]);
 
         // Remove fd=0 (stdin)
         FDStack.pop(0);
-        await fs.deleteFile(fs.getProcessFdPath(0));
       }
       if (node.type === "redirect") {
         const [{ op, value }, expr] = node.args;

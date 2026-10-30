@@ -2,7 +2,7 @@ import { DefinitionElement, isShortAlias } from "./cli-utils";
 import { CliOptions, Definition, Kind } from "./types";
 import { getClierVersion } from "./utils";
 
-export function generateCompletions({
+export async function generateCompletions({
   definition,
   cliOptions,
 }: {
@@ -38,7 +38,7 @@ export function generateCompletions({
   const str = Object.entries({
     cliName: cliOptions.cliName,
     cliVersion: cliOptions.cliVersion,
-    clierVersion: getClierVersion(),
+    clierVersion: await getClierVersion(),
     date: getLocalDate("YYYY-MM-DD HH:mm"),
     command: cliOptions.completion.command,
     nestings: toFormattedList(nestings),

@@ -6,5 +6,6 @@ export * from "./pwd";
 export * from "./ls";
 export * from "./cd";
 export * from "./cat";
+export * from "./chmod";
 export * from "./mkdir";
 export * from "./clier";
