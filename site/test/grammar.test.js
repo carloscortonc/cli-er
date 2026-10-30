@@ -13,6 +13,11 @@ function assertResult(input, expectedAst) {
 
 // Command
 assertResult("echo 1 2", { type: "cmd", cmd: "echo", args: ["1", "2"], env: [] });
+// Command as path
+assertResult("./path", { type: "cmd", cmd: "./path", args: [], env: [] });
+assertResult("./path/another", { type: "cmd", cmd: "./path/another", args: [], env: [] });
+assertResult("/path", { type: "cmd", cmd: "/path", args: [], env: [] });
+assertResult("path/another", { type: "cmd", cmd: "path/another", args: [], env: [] });
 // Logic OR
 assertResult("echo 1 || echo 2", {
   type: "or",
