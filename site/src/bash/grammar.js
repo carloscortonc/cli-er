@@ -35,7 +35,7 @@ export const grammar = ohm.grammar(String.raw`
     arg = (word_char | "/" )+
     scaped = "\\" ("n" | "\"" | "\\" | "$")
     word = word_char+
-    word_char = letter | digit | "-" | "." | "_" | ":" | "$"
+    word_char = letter | digit | "-" | "+" | "." | "_" | ":" | "$"
     separator = ";" | "\n"
   }
 `);

@@ -67,7 +67,7 @@ class FileSystem {
       const directory = "/".concat(parts.slice(0, index).join("/"));
       const entry = await this.#entry(directory);
       if (entry?.type === "file") throw new Error(`${directory} is not a directory`);
-      if (!entry) await this.#put({ path: directory, type: "directory" });
+      if (!entry) await this.#put({ path: directory, type: "directory", metadata: { d: new Date().getTime() } });
     }
   }
 
@@ -78,10 +78,20 @@ class FileSystem {
     return (await this.#entries()).some((entry) => entry.path.startsWith(`${directory}/`));
   }
 
+  #metadata(m) {
+    return { u: "clier", p: 3, ...m };
+  }
+
   #enqueue(operation) {
     const pending = this.wp.then(operation);
     this.wp = pending.catch(() => {});
     return pending;
+  }
+
+  async updateMetadata(path, metadata) {
+    return this.#enqueue(async () => {
+      await this.#put({ path, type: "file", metadata });
+    });
   }
 
   async writeFile(path, content, opts = {}) {
@@ -93,7 +103,7 @@ class FileSystem {
         path: file,
         type: "file",
         content: `${opts.concat ? existing?.content || "" : ""}${content}`,
-        metadata: opts.metadata || existing?.metadata || {},
+        metadata: { ...existing?.metadata, d: new Date().getTime() },
       });
     });
   }
@@ -111,26 +121,32 @@ class FileSystem {
 
   async createDir(path, create) {
     const directory = this.#path(path);
-    if (await this.#directoryExists(directory)) return;
-    if (!create) throw new Error(`No such directory: ${directory}`);
     return this.#enqueue(async () => {
       const parts = directory.split("/").filter(Boolean);
       for (let index = 1; index <= parts.length; index++) {
-        await this.#put({ path: "/".concat(parts.slice(0, index).join("/")), type: "directory" });
+        const target = "/".concat(parts.slice(0, index).join("/"));
+        const entry = await this.#entry(target);
+        if (entry?.type === "file") throw new Error(`${target} is not a directory`);
+        if (entry || (await this.#directoryExists(target))) continue;
+        if (!create && index !== parts.length) throw new Error(`No such directory: ${target}`);
+        await this.#put({ path: target, type: "directory", metadata: { d: new Date().getTime() } });
       }
     });
   }
 
   async info(path) {
     const target = this.#path(path);
-    if (target === "/") return { type: "directory", name: target };
+    if (target === "/") return { type: "directory", name: target, metadata: {} };
     const entry = await this.#entry(target);
-    if (entry) return { type: entry.type, name: pathmodule.basename(target) };
+    if (entry) {
+      return {
+        type: entry.type,
+        name: pathmodule.basename(target),
+        metadata: this.#metadata(entry.metadata),
+        size: entry.type === "file" ? new TextEncoder().encode(entry.content || "").length : 0,
+      };
+    }
     if (await this.#directoryExists(target)) return { type: "directory", name: pathmodule.basename(target) };
-  }
-
-  async getFileMetadata(path) {
-    return (await this.#entry(path))?.metadata || {};
   }
 
   readFileSync(pathOrFd) {
@@ -150,7 +166,13 @@ class FileSystem {
     for (const entry of await this.#entries()) {
       if (!entry.path.startsWith(prefix) || entry.path === directory) continue;
       const [name, ...remaining] = entry.path.slice(prefix.length).split("/");
-      result.set(name, { name, type: remaining.length ? "directory" : entry.type });
+      if (remaining.length) continue;
+      result.set(name, {
+        name,
+        type: remaining.length ? "directory" : entry.type,
+        metadata: this.#metadata(entry.metadata),
+        size: entry.type === "file" ? new TextEncoder().encode(entry.content || "").length : 0,
+      });
     }
     return [...result.values()];
   }
