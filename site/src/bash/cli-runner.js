@@ -8,6 +8,7 @@ export default async function run({ name, cliSpec, args }) {
     logger: { error: (...m) => process.stderr.write("".concat(name, ": ", m.join(""))) },
     ...cliSpec.cliOptions,
     cliName: name,
+    cliVersion: "0.1.0",
   });
   // Update default help template
   c.options.help.template =

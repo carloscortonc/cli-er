@@ -10,3 +10,4 @@ globalThis.process = {
   lastExitCode: 0,
   exit: (c = 0) => ((process.exitCode = c), (process.lastExitCode = c)),
 };
+globalThis.__dirname = "";
