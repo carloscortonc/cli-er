@@ -89,6 +89,7 @@ const updatePrompt = () => {
   sp.innerHTML = window.CLI_PROMPT;
 };
 updatePrompt();
+let executing = false;
 
 handleKey(document, {
   Enter: () => {
@@ -99,7 +100,9 @@ handleKey(document, {
     }
     history.add(inputValue);
     i.value = "";
+    executing = true;
     bash.execute(inputValue).finally(() => {
+      executing = false;
       updatePrompt();
       renderer.flushOutput();
     });
@@ -107,8 +110,13 @@ handleKey(document, {
   c: (e) => {
     if (!e.ctrlKey || hasOutputSelection()) return;
     kernel.kill(Signal.SIGINT);
+    if (executing) {
+      renderer.renderOutput("^C");
+    } else {
+      renderer.renderInput(i.value);
+    }
+    executing = false;
     i.value = "";
-    renderer.renderOutput("^C");
     renderer.flushOutput();
   },
   Tab: (e) => {
