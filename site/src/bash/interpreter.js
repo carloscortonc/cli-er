@@ -188,18 +188,28 @@ class Bash {
         }
       }
       if (node.type === "pipe") {
-        FDStack.push(1, new FileDescriptor("PIPE"));
-        await this.executeAst(node.args[0], env);
-        const pipe = FDStack.pop(1);
-        await FDStack.flush();
-
-        // Write captured value (fd=1) into fd=0 (stdin)
-        FDStack.push(0, pipe);
-
-        await this.executeAst(node.args[1], env);
-
-        // Remove fd=0 (stdin)
-        FDStack.pop(0);
+        let stdin;
+        for (let index = 0; index < node.args.length; index++) {
+          const input = stdin;
+          // Write input into fd=0 (stdin)
+          if (input) FDStack.push(0, input);
+          try {
+            if (index === node.args.length - 1) {
+              await this.executeAst(node.args[index], env);
+              continue;
+            }
+            FDStack.push(1, new FileDescriptor("PIPE"));
+            try {
+              await this.executeAst(node.args[index], env);
+            } finally {
+              stdin = FDStack.pop(1);
+              await FDStack.flush();
+            }
+          } finally {
+            // Remove fd=0 (stdin)
+            if (input) FDStack.pop(0);
+          }
+        }
       }
       if (node.type === "redirect") {
         const [{ op, value }, expr] = node.args;
