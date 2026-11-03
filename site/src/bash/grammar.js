@@ -106,7 +106,7 @@ export const semantics = grammar.createSemantics().addOperation("ast", {
     return q.children.map((c) => (c.ctorName !== "any" ? c.ast() : c.sourceString)).join("");
   },
   InnerExpr(_s, expr, _e) {
-    return expr.ast();
+    return { type: "substitution", value: expr.ast() };
   },
   Path(a, b, _c) {
     return a.sourceString.concat(b.sourceString);

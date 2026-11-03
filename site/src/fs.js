@@ -79,8 +79,9 @@ class FileSystem {
     return (await this.#entries()).some((entry) => entry.path.startsWith(`${directory}/`));
   }
 
+  /** Default file metadata */
   #metadata(m) {
-    return { u: "clier", p: 3, ...m };
+    return { d: new Date().getTime(), u: "clier", p: 3, ...m };
   }
 
   #enqueue(operation) {
@@ -167,7 +168,6 @@ class FileSystem {
     for (const entry of await this.#entries()) {
       if (!entry.path.startsWith(prefix) || entry.path === directory) continue;
       const [name, ...remaining] = entry.path.slice(prefix.length).split("/");
-      if (remaining.length) continue;
       result.set(name, {
         name,
         type: remaining.length ? "directory" : entry.type,
