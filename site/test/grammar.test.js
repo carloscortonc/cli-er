@@ -91,13 +91,21 @@ assertResult('echo "some \\" \\$exp value"', {
   args: [{ type: "quote", args: ['some " $exp value'] }],
   env: [],
 });
+assertResult("echo $(echo 2)", {
+  type: "cmd",
+  cmd: "echo",
+  args: [{ type: "substitution", value: { type: "cmd", cmd: "echo", args: ["2"], env: [] } }],
+  env: [],
+});
 // Quoted with unknown scape sequence (error)
 assertResult('echo "some \\w value"', undefined);
 // Quoted expr
 assertResult('echo "1$(echo 2)"', {
   type: "cmd",
   cmd: "echo",
-  args: [{ type: "quote", args: ["1", { type: "cmd", cmd: "echo", args: ["2"], env: [] }] }],
+  args: [
+    { type: "quote", args: ["1", { type: "substitution", value: { type: "cmd", cmd: "echo", args: ["2"], env: [] } }] },
+  ],
   env: [],
 });
 // Quoted complex expr
@@ -110,23 +118,19 @@ assertResult('echo "1 $(echo 2 && echo 2)  3"', {
       args: [
         "1 ",
         {
-          type: "and",
-          args: [
-            { type: "cmd", cmd: "echo", args: ["2"], env: [] },
-            { type: "cmd", cmd: "echo", args: ["2"], env: [] },
-          ],
+          type: "substitution",
+          value: {
+            type: "and",
+            args: [
+              { type: "cmd", cmd: "echo", args: ["2"], env: [] },
+              { type: "cmd", cmd: "echo", args: ["2"], env: [] },
+            ],
+          },
         },
         "  3",
       ],
     },
   ],
-  env: [],
-});
-// Quoted without quotes
-assertResult("echo $(echo 1)", {
-  type: "cmd",
-  cmd: "echo",
-  args: [{ type: "cmd", cmd: "echo", args: ["1"], env: [] }],
   env: [],
 });
 // Assignment
@@ -137,12 +141,18 @@ assertResult("test=1", {
 // Assigment with complex expr
 assertResult("test=$(echo 1)", {
   type: "var",
-  args: ["test", { type: "cmd", cmd: "echo", args: ["1"], env: [] }],
+  args: ["test", { type: "substitution", value: { type: "cmd", cmd: "echo", args: ["1"], env: [] } }],
 });
 // Assigment with quoted expr
 assertResult('test="1 $(echo 1)"', {
   type: "var",
-  args: ["test", { type: "quote", args: ["1 ", { type: "cmd", cmd: "echo", args: ["1"], env: [] }] }],
+  args: [
+    "test",
+    {
+      type: "quote",
+      args: ["1 ", { type: "substitution", value: { type: "cmd", cmd: "echo", args: ["1"], env: [] } }],
+    },
+  ],
 });
 // Assigment with array
 assertResult("test=(one two)", {
