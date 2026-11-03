@@ -5,7 +5,9 @@ import * as renderer from "../renderer.js";
 import kernel, { FileDescriptor } from "../kernel";
 import FDStack from "./FDStack.js";
 import fs from "../fs.js";
+import pathmodule from "../path.js";
 import run from "./cli-runner.js";
+import { F_MODE } from "../kernel/permission.js";
 
 // Capture cli output, send it to the corresponding fd
 process.stdout.write = (v) => kernel.getFD(1).write(v);
@@ -96,7 +98,6 @@ class Bash {
         return this.variables[v] ?? process.env[v];
       }
       if (node.type === "cmd") {
-        const cliSpec = CLI_COMMANDS[node.cmd];
         const args = [];
         // Process arguments
         for (const arg of node.args) {
@@ -133,6 +134,15 @@ class Bash {
           return process.exit(process.exitCode);
         }
 
+        // Check for executable file
+        const fp = pathmodule.resolve(pathmodule.getCwd(), node.cmd);
+        const file = await fs.info(fp);
+        if (file && file.metadata?.p & F_MODE.EXECUTE) {
+          const content = await fs.readFile(fp);
+          return this.execute(content);
+        }
+
+        const cliSpec = CLI_COMMANDS[node.cmd];
         if (!cliSpec) {
           process.stderr.write(`cliersh: command not found: "${node.cmd}"\n`);
           return process.exit(-1);

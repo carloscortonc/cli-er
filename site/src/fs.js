@@ -53,7 +53,8 @@ class FileSystem {
   }
 
   async #put(entry) {
-    return this.#write("put", entry);
+    const existing = await this.#entry(entry.path);
+    return this.#write("put", { ...existing, ...entry });
   }
 
   async #delete(path) {
