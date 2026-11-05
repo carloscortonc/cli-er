@@ -1,6 +1,6 @@
-import fs from "../fs";
-import { F_MODE } from "../kernel/permission";
-import pathmodule from "../path";
+import fs from "../fs.js";
+import { F_MODE } from "../kernel/permission.js";
+import pathmodule from "../path.js";
 
 export const chmod = {
   definition: {

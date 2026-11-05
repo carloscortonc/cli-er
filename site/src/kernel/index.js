@@ -1,3 +1,3 @@
-export { default } from "./kernel";
-export { Signal } from "./signal";
-export { FileDescriptor } from "./fd";
+export { default } from "./kernel.js";
+export { Signal } from "./signal.js";
+export { FileDescriptor } from "./fd.js";

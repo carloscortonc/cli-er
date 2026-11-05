@@ -2,7 +2,7 @@ import { grammar, semantics } from "./grammar.js";
 import ExecWorker from "./exec-worker?worker";
 import { serialize } from "./serializer.js";
 import * as renderer from "../renderer.js";
-import kernel, { FileDescriptor } from "../kernel";
+import kernel, { FileDescriptor } from "../kernel/index.js";
 import FDStack from "./FDStack.js";
 import fs from "../fs.js";
 import pathmodule from "../path.js";
@@ -108,7 +108,7 @@ class Bash {
           const [k, v] = await this.executeAst({ ...e, cmd: true }, newenv);
           newenv[k] = v;
         }
-        console.log(`[execute::cmd] ${node.cmd} args=${JSON.stringify(args)} env=${JSON.stringify(newenv)}`);
+        console.trace(`[execute::cmd] ${node.cmd} args=${JSON.stringify(args)} env=${JSON.stringify(newenv)}`);
 
         // Check for function definition
         if (this.functions[node.cmd]) {

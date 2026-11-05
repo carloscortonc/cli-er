@@ -1,5 +1,5 @@
-import fs from "../fs";
-import pathmodule from "../path";
+import fs from "../fs.js";
+import pathmodule from "../path.js";
 
 export const cat = {
   definition: { path: { type: "string", positional: 0 } },
