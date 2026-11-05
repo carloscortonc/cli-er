@@ -2,10 +2,12 @@ import { grammar, semantics } from "./grammar.js";
 import ExecWorker from "./exec-worker?worker";
 import { serialize } from "./serializer.js";
 import * as renderer from "../renderer.js";
-import kernel, { FileDescriptor } from "../kernel";
+import kernel, { FileDescriptor } from "../kernel/index.js";
 import FDStack from "./FDStack.js";
 import fs from "../fs.js";
+import pathmodule from "../path.js";
 import run from "./cli-runner.js";
+import { F_MODE } from "../kernel/permission.js";
 
 // Capture cli output, send it to the corresponding fd
 process.stdout.write = (v) => kernel.getFD(1).write(v);
@@ -23,7 +25,7 @@ class Bash {
   variables = {};
   functions = {};
 
-  async execute(input) {
+  async execute(input, env = process.env) {
     const r = grammar.match(input);
     if (!r.succeeded()) {
       // Render error directly
@@ -31,55 +33,53 @@ class Bash {
     }
     const ast = semantics(r).ast();
 
-    return this.#executeProgram(ast);
+    return this.#executeProgram(ast, env);
   }
 
-  async #executeProgram(program) {
+  async #executeProgram(program, env) {
     for (const s of program) {
       FDStack.init();
-      await this.executeAst(s);
+      await this.executeAst(s, env);
       FDStack.cleanup();
     }
   }
 
-  async executeAst(node) {
+  async executeAst(node, env = process.env) {
     try {
       if (typeof node === "string") {
         return node;
       }
-      if (node.type === "quote") {
+      if (node.type === "substitution") {
         FDStack.push(1, new FileDescriptor("PIPE"));
+        try {
+          await this.executeAst(node.value, env);
+          // Remove trailing new-lines (https://www.gnu.org/software/bash/manual/bash.html#Command-Substitution-1)
+          return kernel.getFD(1).flush().replace(/\n?$/, "");
+        } finally {
+          FDStack.pop(1);
+        }
+      }
+      if (node.type === "quote") {
         const args = [];
         for (const arg of node.args) {
-          if (typeof arg === "string" || arg.type === "expansion") {
-            args.push(await this.executeAst(arg));
-            continue;
-          }
-          await this.executeAst(arg);
-          // Remove trailing new-lines (https://www.gnu.org/software/bash/manual/bash.html#Command-Substitution-1)
-          const buffer = kernel.getFD(1).flush().replace(/\n?$/, "");
-          args.push(buffer);
+          args.push(await this.executeAst(arg, env));
         }
-        FDStack.pop(1);
         return args.join("");
       }
       if (node.type === "array") {
         const a = [];
         for (const e of node.args) {
-          a.push(await this.executeAst(e));
+          a.push(await this.executeAst(e, env));
         }
         return a;
       }
       if (node.type === "export") {
-        const key = await this.executeAst(node.value);
-        process.env[key] = this.variables[key];
+        const key = await this.executeAst(node.value, env);
+        env[key] = this.variables[key];
       }
       if (node.type === "var") {
-        const arg1 = node.args[1];
-        // Wrap value with "quoted" node-type to reuse logic for capturing output
-        const v =
-          typeof arg1 !== "string" && !["quote", "array"].includes(arg1.type) ? { type: "quote", args: [arg1] } : arg1;
-        const r = [node.args[0], await this.executeAst(v)];
+        const [name, value] = node.args;
+        const r = [name, await this.executeAst(value, env)];
         if (node.cmd === true) {
           return r;
         }
@@ -90,26 +90,25 @@ class Bash {
       if (node.type === "expansion") {
         const v = node.args[0];
         // https://www.gnu.org/software/bash/manual/bash.html#Special-Parameters-1
-        if (v === "0") return this.variables["0"] || process.env.SHELL;
+        if (v === "0") return this.variables["0"] || env.SHELL;
         if (v == "?") return process.lastExitCode.toString();
         if (v == "$") return kernel.getpid();
-        return this.variables[v] ?? process.env[v];
+        return this.variables[v] ?? env[v];
       }
       if (node.type === "cmd") {
-        const cliSpec = CLI_COMMANDS[node.cmd];
         const args = [];
         // Process arguments
         for (const arg of node.args) {
-          const av = await this.executeAst(arg);
+          const av = await this.executeAst(arg, env);
           av !== undefined && args.push(...(Array.isArray(av) ? av : [av]));
         }
-        const env = { ...process.env };
+        const newenv = { ...env };
         // Process environment variables
         for (const e of node.env) {
-          const [k, v] = await this.executeAst({ ...e, cmd: true });
-          env[k] = v;
+          const [k, v] = await this.executeAst({ ...e, cmd: true }, newenv);
+          newenv[k] = v;
         }
-        console.log(`[execute::cmd] ${node.cmd} args=${JSON.stringify(args)} env=${JSON.stringify(env)}`);
+        console.trace(`[execute::cmd] ${node.cmd} args=${JSON.stringify(args)} env=${JSON.stringify(newenv)}`);
 
         // Check for function definition
         if (this.functions[node.cmd]) {
@@ -123,7 +122,7 @@ class Bash {
             this.variables[i + 1] = args[i];
           }
           try {
-            await this.#executeProgram(this.functions[node.cmd]);
+            await this.#executeProgram(this.functions[node.cmd], newenv);
           } finally {
             for (const key of Object.keys(this.variables).filter((key) => /^\d+$/.test(key))) {
               delete this.variables[key];
@@ -133,22 +132,38 @@ class Bash {
           return process.exit(process.exitCode);
         }
 
+        // Check for executable file
+        const fp = pathmodule.resolve(pathmodule.getCwd(), node.cmd);
+        const file = await fs.info(fp);
+        if (file && file.metadata?.p & F_MODE.EXECUTE) {
+          const content = await fs.readFile(fp);
+          return this.execute(content, newenv);
+        }
+
+        const cliSpec = CLI_COMMANDS[node.cmd];
         if (!cliSpec) {
           process.stderr.write(`cliersh: command not found: "${node.cmd}"\n`);
           return process.exit(-1);
         }
 
+        const stdin = kernel.getFD(0)?.type === "PIPE" ? kernel.getFD(0).buffer : "";
+
         // Handle "builtins" that need access to internals (e.g. renderer), and would not otherwise work from web-worker
         if (cliSpec.builtin) {
-          await run({ name: node.cmd, cliSpec, args });
+          fs.setStdin(stdin);
+          try {
+            await run({ name: node.cmd, cliSpec, args });
+          } finally {
+            fs.setStdin("");
+          }
           return process.exit(process.exitCode);
         }
 
         // Create and object containing required process properties for the worker
-        const p = { env, stdout: { columns: process.stdout.columns }, stdin: { isTTY: process.stdin.isTTY } };
+        const p = { env: newenv, stdout: { columns: process.stdout.columns }, stdin: { isTTY: process.stdin.isTTY } };
 
         return await new Promise((resolve, reject) => {
-          execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, process: p, cliHandlerUrl }));
+          execWorker.postMessage(serialize({ name: node.cmd, cliSpec, args, process: p, cliHandlerUrl, stdin }));
 
           execWorker.onmessage = ({ data }) => {
             if (data.type === "output") {
@@ -162,37 +177,45 @@ class Bash {
       }
       if (node.type === "and") {
         for (const child of node.args) {
-          await this.executeAst(child);
+          await this.executeAst(child, env);
           if (process.lastExitCode !== 0) break;
         }
       }
       if (node.type === "or") {
         for (const child of node.args) {
-          await this.executeAst(child);
+          await this.executeAst(child, env);
           if (process.lastExitCode === 0) break;
         }
       }
       if (node.type === "pipe") {
-        FDStack.push(1, new FileDescriptor("PIPE"));
-        await this.executeAst(node.args[0], { flush: false });
-        const pipe = FDStack.pop(1);
-        await FDStack.flush();
-
-        // Write captured value (fd=1) into fd=0 (stdin)
-        FDStack.push(0, pipe);
-        await fs.writeFile(fs.getProcessFdPath(0), pipe.buffer);
-
-        await this.executeAst(node.args[1]);
-
-        // Remove fd=0 (stdin)
-        FDStack.pop(0);
-        await fs.deleteFile(fs.getProcessFdPath(0));
+        let stdin;
+        for (let index = 0; index < node.args.length; index++) {
+          const input = stdin;
+          // Write input into fd=0 (stdin)
+          if (input) FDStack.push(0, input);
+          try {
+            if (index === node.args.length - 1) {
+              await this.executeAst(node.args[index], env);
+              continue;
+            }
+            FDStack.push(1, new FileDescriptor("PIPE"));
+            try {
+              await this.executeAst(node.args[index], env);
+            } finally {
+              stdin = FDStack.pop(1);
+              await FDStack.flush();
+            }
+          } finally {
+            // Remove fd=0 (stdin)
+            if (input) FDStack.pop(0);
+          }
+        }
       }
       if (node.type === "redirect") {
         const [{ op, value }, expr] = node.args;
         await fs.writeFile(value, "", { concat: op === ">>" && (await fs.info(value)) });
         FDStack.push(1, new FileDescriptor("FILE", { name: value }));
-        await this.executeAst(expr);
+        await this.executeAst(expr, env);
         await FDStack.flush();
         FDStack.pop(1);
       }

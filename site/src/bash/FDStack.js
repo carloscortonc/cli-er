@@ -1,6 +1,6 @@
-import kernel, { FileDescriptor } from "../kernel";
-import * as renderer from "../renderer";
-import fs from "../fs";
+import kernel, { FileDescriptor } from "../kernel/index.js";
+import * as renderer from "../renderer.js";
+import fs from "../fs.js";
 
 /**
  * Object containing a stack for each FD.

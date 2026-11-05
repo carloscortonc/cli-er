@@ -1,5 +1,5 @@
-import fs from "../fs";
-import path from "../path";
+import fs from "../fs.js";
+import path from "../path.js";
 
 export const mkdir = {
   definition: {

@@ -14,7 +14,7 @@ self.onmessage = async (e) => {
     return self.close();
   }
 
-  const { name, cliSpec, args, process: p, cliHandlerUrl } = data;
+  const { name, cliSpec, args, process: p, cliHandlerUrl, stdin } = data;
 
   // Merge incoming process-data into process object
   merge(process, p);
@@ -24,11 +24,12 @@ self.onmessage = async (e) => {
   // Setup fs bridge
   require("fs").readFileSync = fs.readFileSync.bind(fs);
 
-  const cleanup = await fs.wwPrepareStdinHandle();
-
-  await run({ name, cliSpec, args });
-
-  cleanup();
+  fs.setStdin(stdin);
+  try {
+    await run({ name, cliSpec, args });
+  } finally {
+    fs.setStdin("");
+  }
 
   postMessage({ type: "exit", exitCode: process.exitCode });
 };
