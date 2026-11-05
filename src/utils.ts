@@ -157,7 +157,7 @@ export function findPackageJson(baseLocation: string) {
 export async function getClierVersion() {
   const location = path.join(__dirname, "..", "package.json");
   try {
-    return JSON.parse(await fs.readFile(location, "utf-8")).version;
+    return JSON.parse(await fs.promises.readFile(location, "utf-8")).version;
   } catch {
     return undefined;
   }

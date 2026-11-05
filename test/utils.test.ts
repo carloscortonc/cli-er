@@ -1,4 +1,4 @@
-import { clone, findPackageJson, merge, findFile } from "../src/utils";
+import { clone, findPackageJson, getClierVersion, merge, findFile } from "../src/utils";
 import path from "path";
 import fs from "fs";
 import { CLIER_DEBUG_KEY } from "../src/debug-logger";
@@ -6,6 +6,9 @@ import { CLIER_DEBUG_KEY } from "../src/debug-logger";
 jest.mock("fs", () => ({
   readFileSync: jest.fn(),
   existsSync: jest.fn(() => false),
+  promises: {
+    readFile: jest.fn(),
+  },
 }));
 jest.mock("path", () => ({
   esModule: true,
@@ -90,6 +93,20 @@ describe("findPackageJson", () => {
     (fs.readFileSync as jest.Mock).mockImplementation(() => "*{}");
     const pkgjson = findPackageJson(baseLocation);
     expect(pkgjson).toBe(undefined);
+  });
+});
+
+describe("getClierVersion", () => {
+  it("Returns the version from cli-er's package.json", async () => {
+    (fs.promises.readFile as jest.Mock).mockResolvedValue('{"version":"0.21.2"}');
+
+    await expect(getClierVersion()).resolves.toBe("0.21.2");
+  });
+
+  it("Returns undefined when its package.json cannot be read", async () => {
+    (fs.promises.readFile as jest.Mock).mockRejectedValue(new Error("not found"));
+
+    await expect(getClierVersion()).resolves.toBeUndefined();
   });
 });
 
