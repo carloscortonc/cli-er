@@ -117,8 +117,13 @@ class FileSystem {
     return entry.content;
   }
 
-  async deleteFile(path) {
-    return this.#enqueue(() => this.#delete(path));
+  async delete(path, opts) {
+    let paths = [path];
+    if (opts.recursive) {
+      const p = this.#path(path);
+      paths = await this.#entries().then((entries) => entries.filter((e) => e.path.startsWith(p)).map((e) => e.path));
+    }
+    return this.#enqueue(() => Promise.allSettled(paths.map((p) => this.#delete(p))));
   }
 
   async createDir(path, create) {

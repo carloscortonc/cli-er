@@ -9,3 +9,4 @@ export * from "./cat";
 export * from "./chmod";
 export * from "./mkdir";
 export * from "./clier";
+export * from "./rm";
